@@ -47,7 +47,7 @@
     { "file": "xodus-keyring-session-stop.patch", "sha256": "864e9e427f6298afa012cbbf7586b627e788bcbdc75cabf493274947dce0e8cd" },
     { "file": "xodus-keyring-persistence.patch", "sha256": "78782b557ec3f5457b6e697bb9262ad2403497691d8f23814b42fdd9300b7b46" },
     { "file": "xodus-keyring-create.patch", "sha256": "c79a46f387f7de54e3d3004d646f9e9b141c4d498eebd69a47144450b15442e6" },
-    { "file": "xodus-bundle-membership.patch", "sha256": "a5eacc683d006b40247fbf124a62078080685b814cb09a33756083ab99adb72d" },
+    { "file": "xodus-bundle-membership.patch", "sha256": "e0e78a7be9f6a2e3cf228160c603f91f079d60cf46cd5502be7c84010c841d6f" },
     { "file": "xodus-licensing-jwe.patch", "sha256": "6f0087e657f225e9a770405fbb34c2317f840615742c89b62f241f1b65c590ca" },
     { "file": "xodus-hosted-signin.patch", "sha256": "f52b16944ca7dfc837337e0257be380467f01872706252d7c2e981db0c57a8bc" },
     { "file": "xodus-macos-launch.patch", "sha256": "09e4e53d90ded4bc06745d30b960a4bd2f17750b98282521b3a4a13b5b8bd613" }

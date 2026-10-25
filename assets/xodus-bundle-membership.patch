@@ -153,10 +153,10 @@ index 4365cc7..1072353 100644
  }
 diff --git a/crates/xodus-cli/src/package_plan_http_tests.rs b/crates/xodus-cli/src/package_plan_http_tests.rs
 new file mode 100644
-index 0000000..0648e05
+index 0000000..327df3e
 --- /dev/null
 +++ b/crates/xodus-cli/src/package_plan_http_tests.rs
-@@ -0,0 +1,134 @@
+@@ -0,0 +1,149 @@
 +use super::*;
 +use std::io::{BufRead, BufReader, Write};
 +use std::net::TcpListener;
@@ -191,6 +191,9 @@ index 0000000..0648e05
 +                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => { thread::sleep(Duration::from_millis(5)); continue; }
 +                Err(error) => panic!("synthetic server: {error}"),
 +            };
++            // Darwin can inherit O_NONBLOCK from the listening socket.
++            // Wait for request bytes under the existing bounded read timeout.
++            stream.set_nonblocking(false).unwrap();
 +            stream.set_read_timeout(Some(Duration::from_secs(1))).unwrap();
 +            let mut reader = BufReader::new(stream.try_clone().unwrap());
 +            let mut first = String::new();
@@ -290,4 +293,16 @@ index 0000000..0648e05
 +        }
 +        assert_eq!(from_products(&ids[0],&products).is_ok(),depth==MAX_DEPTH);
 +    }
++}
++
++#[test]
++fn premium_http_fixture_waits_for_request_bytes() {
++    let (endpoint, requests, worker) = server(BTreeMap::from([(ROOT.into(), (404, json!({})))]), 1);
++    let address = endpoint.strip_prefix("http://").unwrap().strip_suffix("/products").unwrap();
++    let mut client = std::net::TcpStream::connect(address).unwrap();
++    // Let accept run before any request bytes arrive, as on a busy CI host.
++    thread::sleep(Duration::from_millis(100));
++    write!(client, "GET /products/{ROOT}?market=US&languages=en,neutral HTTP/1.1\r\n\r\n").unwrap();
++    worker.join().unwrap();
++    assert_eq!(requests.lock().unwrap().as_slice(), [ROOT]);
 +}

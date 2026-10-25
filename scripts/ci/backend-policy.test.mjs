@@ -24,6 +24,7 @@ test('bundle resolution follows declared contents and preserves contributor regr
     'premium_license_only_addon_never_selects_a_game_that_grants_it',
     'premium_game_entitlement_is_not_bundle_membership_either',
     'premium_http_only_reads_declared_bundle_members',
+    'premium_http_fixture_waits_for_request_bytes',
     'premium_http_reports_exact_status_without_exposing_response_body',
     'premium_unavailable_declared_member_still_stops_resolution',
     'premium_nested_bundles_keep_real_addon_choices_and_explicit_selection',
