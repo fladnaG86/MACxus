@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { ChildProcessWithoutNullStreams } from 'node:child_process';
 import type { AppSnapshot, AuthStatus, DownloadTask, Game, GameLaunchOptions, GameOperation, GameUpdate, InstallRequest, MacEngineStatus, Settings } from '../shared/types.js';
+import { appLanguage, translate, translateMessage, type MessageValues } from '../shared/i18n.js';
+import type { MessageKey } from '../shared/messages.js';
 import { downloadFailure, safeProductId } from '../shared/utils.js';
 import { downloadLimitArgs, downloadLimitKiB } from '../shared/download-bandwidth.js';
 import { DownloadBandwidthControls, isBandwidthOnlyPatch } from './download-bandwidth.js';
@@ -74,13 +76,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const downloadNotifications = new DownloadCompletionNotifications({
   isSupported: () => Notification.isSupported(),
   show: options => {
-    const notification = new Notification({ ...options, icon: fileURLToPath(new URL('../../assets/icon.png', import.meta.url)), urgency: 'normal' });
+    const notification = new Notification({ ...options, title: uiMessage(options.title), body: uiMessage(options.body), icon: fileURLToPath(new URL('../../assets/icon.png', import.meta.url)), urgency: 'normal' });
     notification.on('failed', () => console.warn('The desktop could not display a download completion notification.'));
     notification.show();
   },
 });
 let mainWindow: BrowserWindow | null = null;
 let store: StateStore;
+function ui(key: MessageKey, values?: MessageValues): string {
+  return translate(appLanguage(store?.settings.language), key, values);
+}
+function uiMessage(text: string): string {
+  return translateMessage(appLanguage(store?.settings.language), text);
+}
 let backend: BackendManager;
 let backendDiagnostics: BackendDiagnostics;
 let runtime: RuntimeManager;
@@ -184,8 +192,8 @@ async function showLauncher(): Promise<void> {
 }
 async function shortcutError(error: unknown): Promise<void> {
   await showLauncher();
-  await dialog.showMessageBox(mainWindow!, { type: 'error', title: 'Unable to launch game',
-    message: error instanceof Error ? error.message : 'The game could not be launched.' });
+  await dialog.showMessageBox(mainWindow!, { type: 'error', title: ui("Unable to launch game"),
+    message: error instanceof Error ? uiMessage(error.message) : ui('The game could not be launched.') });
 }
 function finishShortcutSession(): void {
   // Account service and game-process cleanup must finish before normal quit.
@@ -198,8 +206,12 @@ function receiveLaunchRequest(id?: string): void {
 }
 
 function snapshot(): AppSnapshot {
-  if (demoMode) return demoSnapshot({ launcher: app.getVersion(), backend: backendLock.version,
-    backendCommit: backendLock.commit, backendCompatibility: backendLock.compatibility }, demoArtwork);
+  if (demoMode) {
+    const data = demoSnapshot({ launcher: app.getVersion(), backend: backendLock.version,
+      backendCommit: backendLock.commit, backendCompatibility: backendLock.compatibility }, demoArtwork);
+    data.settings.language = store.settings.language;
+    return data;
+  }
   return {
     platform: process.platform,
     backend: backend.current,
@@ -289,7 +301,7 @@ async function assertStorageForInstall(destination: string, downloadBytes?: numb
 async function saveReviewedReport(content: unknown): Promise<boolean> {
   validateReportContent(content);
   const options = {
-    title: 'Save diagnostic report',
+    title: ui("Save diagnostic report"),
     defaultPath: path.join(app.getPath('downloads'), `nexus-diagnostics-${Date.now()}.txt`),
     filters: [{ name: 'Text report', extensions: ['txt'] }],
   };
@@ -1347,7 +1359,11 @@ function registerDemoIpc(catalogMarket: () => string): void {
   ipcMain.handle('install-game-vc-runtime', () => {});
   ipcMain.handle('install-highball-engine', () => { throw new Error('Non disponibile in modalità demo.'); });
   ipcMain.handle('cancel-game', () => {});
-  ipcMain.handle('update-settings', (_event, patch: Partial<Settings>) => ({ ...snapshot().settings, ...patch }));
+  ipcMain.handle('update-settings', async (_event, patch: Partial<Settings>) => {
+    if (patch.language !== undefined) await store.setSettings({ language: patch.language });
+    emitSnapshot();
+    return { ...snapshot().settings, ...patch };
+  });
   ipcMain.handle('list-volumes', () => []);
   ipcMain.handle('set-install-root', () => { throw new Error('Unavailable in demo mode.'); });
   ipcMain.handle('create-apfs-image', () => { throw new Error('Unavailable in demo mode.'); });
@@ -1626,19 +1642,19 @@ function registerIpc(): void {
     const artwork = game ? { cover: await gameSteamPortrait(cover ?? fallback).catch(() => cover ?? fallback), wide: wide ?? cover ?? fallback }
       : await nexusSteamArtwork(fallback).catch(() => ({ cover: fallback, wide: fallback }));
     if (await steamRunning()) return addLiveSteamShortcut(accounts, launch, desktop, artwork, undefined, undefined, async existing => {
-      const choice = await dialog.showMessageBox(mainWindow!, { type: 'question', title: 'Steam shortcut already exists',
-        message: 'Reuse an existing shortcut, or ask Steam to add it for the currently signed-in account?',
-        detail: 'Choose an existing profile to avoid creating a duplicate in that account.',
+      const choice = await dialog.showMessageBox(mainWindow!, { type: 'question', title: ui("Steam shortcut already exists"),
+        message: ui("Reuse an existing shortcut, or ask Steam to add it for the currently signed-in account?"),
+        detail: ui("Choose an existing profile to avoid creating a duplicate in that account."),
         cancelId: existing.length + 1, defaultId: existing.length + 1,
-        buttons: [...existing.map(account => `Use Steam profile ${path.basename(path.dirname(account))}`), 'Add for signed-in account', 'Cancel'] });
+        buttons: [...existing.map(account => ui('Use Steam profile {value0}', { value0: path.basename(path.dirname(account)) })), ui("Add for signed-in account"), ui('Cancel')] });
       if (!Number.isInteger(choice.response) || choice.response < 0 || choice.response > existing.length) throw Error('Add to Steam cancelled.');
       return choice.response === existing.length ? undefined : existing[choice.response];
     });
     let selected = 0;
     if (accounts.length > 1) {
-      const choice = await dialog.showMessageBox(mainWindow!, { type: 'question', title: 'Choose Steam profile',
-        message: 'Which Steam profile should receive this shortcut?', cancelId: accounts.length, defaultId: accounts.length,
-        buttons: [...accounts.map(account => `Steam profile ${path.basename(path.dirname(account))}`), 'Cancel'] });
+      const choice = await dialog.showMessageBox(mainWindow!, { type: 'question', title: ui("Choose Steam profile"),
+        message: ui("Which Steam profile should receive this shortcut?"), cancelId: accounts.length, defaultId: accounts.length,
+        buttons: [...accounts.map(account => ui('Steam profile {value0}', { value0: path.basename(path.dirname(account)) })), ui('Cancel')] });
       selected = choice.response;
       if (selected >= accounts.length) throw Error('Add to Steam cancelled.');
     }
@@ -1690,6 +1706,10 @@ function registerIpc(): void {
     }
     if ((['market', 'winePath', 'externalXodusRoot', 'runtimeRoot'] as const).some(key => patch[key] !== undefined && patch[key] !== store.settings[key])) ensureIdle();
     const allowed: Partial<Settings> = {};
+    if (patch.language !== undefined) {
+      if (patch.language !== 'en' && patch.language !== 'it') throw new Error('Unsupported interface language.');
+      allowed.language = patch.language;
+    }
     if (patch.downloadLimitMiB !== undefined) allowed.downloadLimitMiB = patch.downloadLimitMiB;
     if (typeof patch.installRoot === 'string') allowed.installRoot = path.resolve(patch.installRoot);
     if (typeof patch.market === 'string' && /^[A-Za-z-]{2,20}$/.test(patch.market)) allowed.market = patch.market;
@@ -1708,6 +1728,8 @@ function registerIpc(): void {
       try { await downloadLimitControls.apply(settings.downloadLimitMiB ?? 0); }
       catch { emitSnapshot(); throw Error('The speed limit was saved, but could not be sent to the active download. Retry the installation to apply it.'); }
     }
+    // Interface-only changes do not interrupt downloads, games, or authentication.
+    if (Object.keys(patch).length > 0 && Object.keys(patch).every(key => key === 'language')) { emitSnapshot(); return settings; }
     // A bandwidth-only change must not restart authentication or refresh devices.
     if (isBandwidthOnlyPatch(patch)) { emitSnapshot(); return settings; }
     // Choosing the Wine engine only affects the next launch.

@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import type { DownloadTask, Game, Settings } from '../shared/types.js';
 import { downloadLimitKiB } from '../shared/download-bandwidth.js';
+import { appLanguage } from '../shared/i18n.js';
 import { resolvePackageFile } from './windows-path.js';
 import { parsePackageXml } from './package-xml.js';
 import { manifestAttr as attr, manifestText as text, manifestElements, manifestAttribute } from './manifest-xml.js';
@@ -19,6 +20,7 @@ interface PersistedState {
 function defaultSettings(userData: string, platform: NodeJS.Platform): Settings {
   const dataRoot = platform === 'darwin' ? userData : path.join(os.homedir(), '.local', 'share', 'xodus-nexus');
   return {
+    language: 'en',
     installRoot: path.join(os.homedir(), 'Games', platform === 'darwin' ? 'MACxus' : 'Xodus Nexus'),
     market: 'neutral',
     parallelDownloads: 4,
@@ -61,7 +63,7 @@ export class StateStore {
             ...task, status: 'paused' as const, canPause: true, controlPending: false,
             transferRate: undefined, phase: 'Paused — resume to reconnect and restore saved download checkpoints',
           } : task) : [],
-        settings: Object.fromEntries(Object.entries({ ...this.defaults, ...parsed.settings, downloadLimitMiB }).filter(([key]) => key !== 'separateGameProcess')) as unknown as Settings,
+        settings: Object.fromEntries(Object.entries({ ...this.defaults, ...parsed.settings, language: appLanguage(parsed.settings?.language), downloadLimitMiB }).filter(([key]) => key !== 'separateGameProcess')) as unknown as Settings,
       };
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') console.warn('State could not be loaded', error);
@@ -85,6 +87,7 @@ export class StateStore {
   }
 
   async setSettings(patch: Partial<Settings>): Promise<Settings> {
+    if (patch.language !== undefined && patch.language !== 'en' && patch.language !== 'it') throw new Error('Unsupported interface language.');
     if (patch.downloadLimitMiB !== undefined) downloadLimitKiB(patch.downloadLimitMiB);
     this.state.settings = { ...this.state.settings, ...patch };
     await this.save();

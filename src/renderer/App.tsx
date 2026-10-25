@@ -1,3 +1,5 @@
+import type { Translator } from '../shared/i18n';
+import { I18nProvider, useI18n } from './i18n';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   ArrowDownToLine, Check, ChevronRight, CircleAlert, CircleUserRound,
@@ -23,6 +25,7 @@ import { KeyringSetup } from './KeyringSetup';
 import { StoragePicker } from './StoragePicker';
 import { MacEngineCard } from './MacEngineCard';
 import { DiagnosticReportButton } from './DiagnosticReport';
+import { LanguageSettings } from './LanguageSettings';
 import type { DownloadCancelOptions } from '../shared/types';
 export type { LibraryFilters } from './library-preferences';
 
@@ -73,91 +76,99 @@ function NavItem({ active, icon, label, badge, onClick, autoSelect = false }: {
 }
 
 export function Sidebar({ data, page, go, openGame }: { data: AppSnapshot; page: Page; go: (page: Page) => void; openGame?: (id: string) => void }) {
-  const account = data.auth.gamertag ?? data.auth.username ?? (data.auth.stored === true ? 'Microsoft account' : 'Sign in');
+  const { t } = useI18n();
+  const account = data.auth.gamertag ?? data.auth.username ?? (data.auth.stored === true ? t("Microsoft account") : t("Sign in"));
   return <aside className="sidebar">
     {data.platform === 'darwin' ? <div className="mac-drag-strip" aria-hidden="true" /> : null}
     <button className="account-summary" onClick={() => go('settings')}><AccountAvatar auth={data.auth} /><span><strong>{account}</strong><AccountMembership auth={data.auth} /></span><ChevronRight /></button>
-    <nav><NavItem autoSelect active={page === 'home'} icon={<Home />} label="Home" onClick={() => go('home')} /><NavItem autoSelect active={page === 'library'} icon={<Library />} label="My Library" onClick={() => go('library')} /><NavItem autoSelect active={page === 'store'} icon={<Store />} label="Store" onClick={() => go('store')} /></nav>
-    {data.games.length > 0 ? <div className="recents"><span>Most recent</span>{data.games.slice(0, 5).map(game => <button key={game.id} onClick={() => openGame ? openGame(game.id) : go('library')}><Cover game={game} /><GameTitle title={game.title} /></button>)}</div> : null}
-    <div className="sidebar-bottom"><NavItem active={page === 'settings'} icon={<Cog />} label="Settings" onClick={() => go('settings')} /><InstallQueueShortcut downloads={data.downloads} games={data.games} active={page === 'downloads'} openQueue={() => go('downloads')} /></div>
+    <nav><NavItem autoSelect active={page === 'home'} icon={<Home />} label={t("Home")} onClick={() => go('home')} /><NavItem autoSelect active={page === 'library'} icon={<Library />} label={t("My Library")} onClick={() => go('library')} /><NavItem autoSelect active={page === 'store'} icon={<Store />} label={t("Store")} onClick={() => go('store')} /></nav>
+    {data.games.length > 0 ? <div className="recents"><span>{t("Most recent")}</span>{data.games.slice(0, 5).map(game => <button key={game.id} onClick={() => openGame ? openGame(game.id) : go('library')}><Cover game={game} /><GameTitle title={game.title} /></button>)}</div> : null}
+    <div className="sidebar-bottom"><NavItem active={page === 'settings'} icon={<Cog />} label={t("Settings")} onClick={() => go('settings')} /><InstallQueueShortcut downloads={data.downloads} games={data.games} active={page === 'downloads'} openQueue={() => go('downloads')} /></div>
   </aside>;
 }
 
 function AccountMembership({ auth }: { auth: AppSnapshot['auth'] }) {
+  const { t, language } = useI18n();
   const label = auth.stored === true ? subscriptionBadge(auth.subscription) : undefined;
-  if (label) return <small className="account-membership" title={`Subscription verified ${new Date(auth.subscription!.checkedAt).toLocaleString()}`}>{label}</small>;
-  return auth.stored === true ? null : <small>{auth.stored === false ? 'Not signed in' : 'Status unavailable'}</small>;
+  if (label) return <small className="account-membership" title={t("Subscription verified {value0}", { value0: new Date(auth.subscription!.checkedAt).toLocaleString(language) })}>{label}</small>;
+  return auth.stored === true ? null : <small>{auth.stored === false ? t("Not signed in") : t("Status unavailable")}</small>;
 }
 
 function AccountAvatar({ auth, large = false }: { auth: AppSnapshot['auth']; large?: boolean }) {
+  const { t } = useI18n();
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [auth.avatarDataUrl]);
   return <div className={`account-avatar${large ? ' large' : ''}`}>
-    {auth.avatarDataUrl && !failed ? <img src={auth.avatarDataUrl} alt="Xbox profile picture" onError={() => setFailed(true)} /> : <CircleUserRound />}
+    {auth.avatarDataUrl && !failed ? <img src={auth.avatarDataUrl} alt={t("Xbox profile picture")} onError={() => setFailed(true)} /> : <CircleUserRound />}
   </div>;
 }
 
 export function TopStatus({ data, go }: { data: AppSnapshot; go: (page: Page) => void }) {
+  const { t } = useI18n();
   const restart = data.launcherUpdate?.restartRequired;
   const updates = [
-    data.platform !== 'darwin' && data.launcherUpdate?.latestVersion && !restart ? `Launcher ${data.launcherUpdate.latestVersion}` : '',
-    data.backend.releaseAvailable && data.backend.updateAvailable ? `Backend ${data.backend.releaseVersion ?? ''}`.trim() : '',
-    nexusRuntimeUpdateAvailable(data.runtime) ? `Runtime ${data.runtime.nexusVersion?.replace(/^runtime-/, '') ?? ''}`.trim() : '',
+    data.platform !== 'darwin' && data.launcherUpdate?.latestVersion && !restart ? t("Launcher {value0}", { value0: data.launcherUpdate.latestVersion }) : '',
+    data.backend.releaseAvailable && data.backend.updateAvailable ? t("Backend {value0}", { value0: data.backend.releaseVersion ?? '' }).trim() : '',
+    nexusRuntimeUpdateAvailable(data.runtime) ? t("Runtime {value0}", { value0: data.runtime.nexusVersion?.replace(/^runtime-/, '') ?? '' }).trim() : '',
   ].filter(Boolean);
-  const updateTitle = [restart ? 'Restart to finish launcher update.' : '', updates.length ? `Available updates: ${updates.join(', ')}` : ''].filter(Boolean).join(' ');
+  const updateTitle = [restart ? t("Restart to finish launcher update.") : '', updates.length ? t("Available updates: {value0}", { value0: updates.join(', ') }) : ''].filter(Boolean).join(' ');
   return <div className="top-status">
-    {updates.length || restart ? <button className="update-notice" title={updateTitle} aria-label={updateTitle} onClick={() => go('settings')}><ArrowDownToLine /><strong>{restart ? 'Restart available' : 'Update available'}</strong></button> : null}
-    <StatusDot tone={data.backend.available ? 'green' : 'red'} /><span>{data.backend.available ? 'Xodus ready' : 'Backend offline'}</span><button title="Settings" onClick={() => go('settings')}><Settings2 /></button>
+    {updates.length || restart ? <button className="update-notice" title={updateTitle} aria-label={updateTitle} onClick={() => go('settings')}><ArrowDownToLine /><strong>{restart ? t("Restart available") : t("Update available")}</strong></button> : null}
+    <StatusDot tone={data.backend.available ? 'green' : 'red'} /><span>{data.backend.available ? t("Xodus ready") : t("Backend offline")}</span><button title={t("Settings")} onClick={() => go('settings')}><Settings2 /></button>
   </div>;
 }
 
 export function DiagnosticDialog({ log, close, revealFile, copyLog }: { log: DiagnosticLog; close: () => void; revealFile?: () => Promise<void>; copyLog?: () => Promise<void> }) {
-  const [copyStatus, setCopyStatus] = useState('Copy log');
+  const { t, localize } = useI18n();
+  const [copyStatus, setCopyStatus] = useState(t("Copy log"));
   const [copying, setCopying] = useState(false);
   const [copyError, setCopyError] = useState('');
   const [fileError, setFileError] = useState(false);
   async function copy() {
-    setCopying(true); setCopyError(''); setCopyStatus('Copy log');
+    setCopying(true); setCopyError(''); setCopyStatus(t("Copy log"));
     try {
       if (copyLog) await copyLog();
       else if (!log.truncated) await navigator.clipboard.writeText(log.content);
-      else throw Error('The full log is no longer available.');
-      setCopyStatus('Copied');
+      else throw Error(t("The full log is no longer available."));
+      setCopyStatus(t("Copied"));
     } catch (error) {
       setCopyError(error instanceof Error && error.message.includes('too large for the clipboard')
-        ? 'This log is too large for the clipboard. Use Show log file to attach the complete file.'
-        : 'Could not copy the complete log. Try again or use Show log file.');
+        ? t("This log is too large for the clipboard. Use Show log file to attach the complete file.")
+        : t("Could not copy the complete log. Try again or use Show log file."));
     } finally { setCopying(false); }
   }
-  return <div className="dialog-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}><section className="game-dialog diagnostic-dialog" role="dialog" aria-modal="true" aria-label="Diagnostic log"><h2>{log.name}</h2><p>Private diagnostic log, review before sharing.{log.truncated ? ' Preview shows the most recent 512 KiB. Copy log copies the complete file.' : ''}</p><pre>{log.content || 'The log is empty.'}</pre>{fileError ? <p role="alert">The log file is no longer available.</p> : null}{copyError ? <p role="alert">{copyError}</p> : null}<div className="dialog-actions">{revealFile ? <button className="secondary" onClick={() => { setFileError(false); void revealFile().catch(() => setFileError(true)); }}>Show log file</button> : null}<button className="secondary" disabled={copying} onClick={() => void copy()}>{copying ? 'Copying…' : copyStatus}</button><button className="secondary" data-gamepad-cancel onClick={close}>Close</button></div></section></div>;
+  return <div className="dialog-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}><section className="game-dialog diagnostic-dialog" role="dialog" aria-modal="true" aria-label={t("Diagnostic log")}><h2>{log.name}</h2><p>{t("Private diagnostic log, review before sharing.")}{log.truncated ? t(" Preview shows the most recent 512 KiB. Copy log copies the complete file.") : ''}</p><pre>{log.content || t("The log is empty.")}</pre>{fileError ? <p role="alert">{t("The log file is no longer available.")}</p> : null}{copyError ? <p role="alert">{localize(copyError)}</p> : null}<div className="dialog-actions">{revealFile ? <button className="secondary" onClick={() => { setFileError(false); void revealFile().catch(() => setFileError(true)); }}>{t("Show log file")}</button> : null}<button className="secondary" disabled={copying} onClick={() => void copy()}>{copying ? t("Copying…") : copyStatus}</button><button className="secondary" data-gamepad-cancel onClick={close}>{t("Close")}</button></div></section></div>;
 }
 
 export function BackendLogButton({ toast }: { toast: (value: Toast) => void }) {
+  const { t } = useI18n();
   const [log, setLog] = useState<DiagnosticLog>();
   const [loading, setLoading] = useState(false);
   return <>
     <button className="secondary" disabled={loading} onClick={async () => {
       setLoading(true);
       try { setLog(await window.launcher.readBackendDiagnosticLog()); }
-      catch { toast({ kind: 'error', message: 'Backend diagnostics could not be opened safely.' }); }
+      catch { toast({ kind: 'error', message: t("Backend diagnostics could not be opened safely.") }); }
       finally { setLoading(false); }
-    }}>{loading ? <LoaderCircle className="spin" /> : <Terminal />}Open backend diagnostic log</button>
+    }}>{loading ? <LoaderCircle className="spin" /> : <Terminal />}{t("Open backend diagnostic log")}</button>
     {log ? <DiagnosticDialog log={log} close={() => setLog(undefined)} /> : null}
   </>;
 }
 
 export function Cover({ game, className = '', variant = 'cover' }: { game: Game; className?: string; variant?: 'cover' | 'hero' }) {
+  const { t } = useI18n();
   const sources = [...new Set([variant === 'hero' ? game.heroUrl : undefined, game.coverUrl, game.coverDataUrl].filter((url): url is string => Boolean(url)))];
   const key = sources.join('\n');
   const [failure, setFailure] = useState({ key: '', index: 0 });
   const index = failure.key === key ? failure.index : 0;
   const art = sources[index];
-  if (art) return <img className={`game-cover ${art === game.coverDataUrl ? 'cover-local' : 'cover-store'} ${className}`} src={art} alt={`${game.title} artwork`} onError={() => setFailure({ key, index: index + 1 })} />;
+  if (art) return <img className={`game-cover ${art === game.coverDataUrl ? 'cover-local' : 'cover-store'} ${className}`} src={art} alt={t("{value0} artwork", { value0: game.title })} onError={() => setFailure({ key, index: index + 1 })} />;
   return <div className={`cover-placeholder ${className}`}><Gamepad2 /></div>;
 }
 
 function StatePill({ game }: { game: Game }) {
-  const label = game.installState === 'ready' ? 'Ready' : game.installState === 'incomplete' ? 'Incomplete' : 'Imported';
+  const { t } = useI18n();
+  const label = game.installState === 'ready' ? t("Ready") : game.installState === 'incomplete' ? t("Incomplete") : t("Imported");
   return <span className={`state-pill ${game.installState}`}>
     {game.installState === 'ready' ? <Check /> : <CircleAlert />}{label}
   </span>;
@@ -184,6 +195,7 @@ function useGameLaunchOptions(game: Game | undefined, data: AppSnapshot): GameLa
 export function HomePage({ data, go, action }: {
   data: AppSnapshot; go: (page: Page) => void; action: (fn: () => Promise<unknown>, success?: string) => void;
 }) {
+  const { t } = useI18n();
   const featured = data.games[0];
   const active = data.downloads.find((task) => task.status === 'running' || task.status === 'paused');
   const canPlay = Boolean(featured && !data.disconnectedGames?.includes(featured.id) && featured?.installState === 'ready' && data.backend.capabilities.run && (data.settings.winePath || data.runtime.winePath));
@@ -193,53 +205,55 @@ export function HomePage({ data, go, action }: {
   return <main className="page home-page">
     <section className={`spotlight ${spotlightArt ? 'has-art' : ''}`} style={spotlightArt ? { '--spotlight-art': `url(${spotlightArt})` } as React.CSSProperties : undefined}>
       <div className="spotlight-copy">
-        <span className="overline">{featured ? 'CONTINUE PLAYING' : 'XODUS NEXUS'}</span>
-        <h1>{featured?.title ?? 'Your PC games, brought together.'}</h1>
+        <span className="overline">{featured ? t("CONTINUE PLAYING") : 'XODUS NEXUS'}</span>
+        <h1>{featured?.title ?? t("Your PC games, brought together.")}</h1>
         <p>{featured
-          ? featured.installMessage ?? `${featured.publisher ?? 'Local Xbox PC installation'} · Ready in your library`
-          : 'Import an existing Xodus installation or install a game you own using its Microsoft Store Product ID.'}</p>
+          ? featured.installMessage ?? t("{value0} · Ready in your library", { value0: featured.publisher ?? t("Local Xbox PC installation") })
+          : t("Import an existing Xodus installation or install a game you own using its Microsoft Store Product ID.")}</p>
         <div className="button-row">
           {featured && canPlay
-            ? <button className="primary" onClick={() => action(() => window.launcher.launchGame(featured.id))}><Play fill="currentColor" />Play</button>
-            : <button className="primary" onClick={() => go(featured ? 'settings' : 'library')}><ChevronRight />{featured ? 'Finish setup' : 'Import a game'}</button>}
-          <button className="secondary" onClick={() => go('library')}><Library />View library</button>
+            ? <button className="primary" onClick={() => action(() => window.launcher.launchGame(featured.id))}><Play fill="currentColor" />{t("Play")}</button>
+            : <button className="primary" onClick={() => go(featured ? 'settings' : 'library')}><ChevronRight />{featured ? t("Finish setup") : t("Import a game")}</button>}
+          <button className="secondary" onClick={() => go('library')}><Library />{t("View library")}</button>
         </div>
       </div>
-      {featured ? <div className="spotlight-meta"><StatePill game={featured} />{launchOptions?.cloudSaves ? <span>Cloud saves</span> : null}<span>{featured.storeId ? `Store ID ${featured.storeId}` : 'Local import'}</span></div> : null}
+      {featured ? <div className="spotlight-meta"><StatePill game={featured} />{launchOptions?.cloudSaves ? <span>{t("Cloud saves")}</span> : null}<span>{featured.storeId ? t("Store ID {value0}", { value0: featured.storeId }) : t("Local import")}</span></div> : null}
     </section>
 
-    <SectionTitle title="Recently added" action="See all" onClick={() => go('library')} />
+    <SectionTitle title={t("Recently added")} action={t("See all")} onClick={() => go('library')} />
     {data.games.length > 0 ? <div className="poster-row">
       {data.games.slice(0, 6).map((game) => <button className="poster-card" key={game.id} onClick={() => go('library')}>
-        <Cover game={game} /><GameTitle title={game.title} /><span>{game.publisher ?? (game.storeId ? 'Microsoft Store installation' : 'Local installation')}</span>
+        <Cover game={game} /><GameTitle title={game.title} /><span>{game.publisher ?? (game.storeId ? t("Microsoft Store installation") : t("Local installation"))}</span>
       </button>)}
-    </div> : <div className="empty-strip"><Gamepad2 /><div><strong>No games imported</strong><span>Your library is built only from real local manifests.</span></div><button className="secondary" onClick={() => go('library')}>Import folder</button></div>}
+    </div> : <div className="empty-strip"><Gamepad2 /><div><strong>{t("No games imported")}</strong><span>{t("Your library is built only from real local manifests.")}</span></div><button className="secondary" onClick={() => go('library')}>{t("Import folder")}</button></div>}
 
-    <SectionTitle title="Quick access" />
+    <SectionTitle title={t("Quick access")} />
     <div className="quick-grid">
-      <button onClick={() => go('store')}><Store /><span><strong>Install a game</strong><small>Use a verified Product ID</small></span><ChevronRight /></button>
-      <button onClick={() => go('downloads')}><Download /><span><strong>{active ? active.title : 'Install queue'}</strong><small>{active ? active.phase : 'No active downloads'}</small></span><ChevronRight /></button>
-      <button onClick={() => go('settings')}><Settings2 /><span><strong>Xodus runtime</strong><small>{data.runtime.installed ? 'Custom runtime ready' : 'Runtime setup required'}</small></span><ChevronRight /></button>
+      <button onClick={() => go('store')}><Store /><span><strong>{t("Install a game")}</strong><small>{t("Use a verified Product ID")}</small></span><ChevronRight /></button>
+      <button onClick={() => go('downloads')}><Download /><span><strong>{active ? active.title : t("Install queue")}</strong><small>{active ? active.phase : t("No active downloads")}</small></span><ChevronRight /></button>
+      <button onClick={() => go('settings')}><Settings2 /><span><strong>{t("Xodus runtime")}</strong><small>{data.runtime.installed ? t("Custom runtime ready") : t("Runtime setup required")}</small></span><ChevronRight /></button>
     </div>
-    <div className="support-bar"><CircleAlert /><div><strong>Compatibility status</strong><span>Package ownership and installation do not guarantee Wine, GameRuntime, or anti-cheat compatibility. Unsupported features are labelled explicitly.</span></div></div>
+    <div className="support-bar"><CircleAlert /><div><strong>{t("Compatibility status")}</strong><span>{t("Package ownership and installation do not guarantee Wine, GameRuntime, or anti-cheat compatibility. Unsupported features are labelled explicitly.")}</span></div></div>
   </main>;
 }
 
 function CatalogSupportBadge({ product }: { product: CatalogProduct }) {
+  const { t } = useI18n();
   return <span className={`catalog-support ${product.installability}`} title={product.supportNote}
-    aria-label={product.installability === 'unknown' ? 'Package support unknown' : undefined}>{product.installability === 'supported' ? 'PC' : product.installability === 'unknown' ? '?' : 'Unsupported'}</span>;
+    aria-label={product.installability === 'unknown' ? t("Package support unknown") : undefined}>{product.installability === 'supported' ? 'PC' : product.installability === 'unknown' ? '?' : t("Unsupported")}</span>;
 }
 
 export function StoreProductCard({ product, selected, disabled, label, select, install }: {
   product: CatalogProduct; selected: boolean; disabled: boolean; label: string;
   select: (product: CatalogProduct) => void; install: (product: CatalogProduct) => void;
 }) {
+  const { t } = useI18n();
   return <article className={`catalog-card ${selected ? 'selected' : ''}`} data-gamepad-card>
     <button className="catalog-card-main" data-gamepad-auto-select="focus" data-gamepad-card-activate
       onFocus={() => select(product)} onClick={() => select(product)}>
-      {product.posterUrl ? <img src={product.posterUrl} alt={`${product.title} cover`} /> : <div className="catalog-cover-placeholder"><Gamepad2 /></div>}
+      {product.posterUrl ? <img src={product.posterUrl} alt={t("{value0} cover", { value0: product.title })} /> : <div className="catalog-cover-placeholder"><Gamepad2 /></div>}
       <CatalogSupportBadge product={product} />
-      <div><GameTitle title={product.title} /><small>{product.publisher ?? product.productId}</small><span>{product.purchasePrice ?? 'Price unavailable'}{product.includedWith ? ` · ${product.includedWith}` : ''}</span></div>
+      <div><GameTitle title={product.title} /><small>{product.publisher ?? product.productId}</small><span>{product.purchasePrice ?? t("Price unavailable")}{product.includedWith ? ` · ${product.includedWith}` : ''}</span></div>
     </button>
     <button className="catalog-card-install" data-gamepad-skip data-gamepad-card-action disabled={disabled} onClick={() => install(product)}>
       {label === 'Preparing…' ? <LoaderCircle className="spin" /> : label === 'Installed' ? <Check /> : <Download />}{label}
@@ -248,6 +262,7 @@ export function StoreProductCard({ product, selected, disabled, label, select, i
 }
 
 function StorePage({ data, toast, go, initialQuery }: { data: AppSnapshot; toast: (value: Toast) => void; go: (page: Page) => void; initialQuery: string }) {
+  const { t } = useI18n();
   const startPackageInstall = usePackageInstall();
   const [catalog, setCatalog] = useState<CatalogSearchResult>();
   const [featured, setFeatured] = useState<CatalogSearchResult>();
@@ -301,7 +316,7 @@ function StorePage({ data, toast, go, initialQuery }: { data: AppSnapshot; toast
     setBusy(product.productId);
     try {
       if (!await startPackageInstall({ productId: product.installProductId ?? product.productId, title: product.title, destination: target })) return;
-      toast({ kind: 'success', message: `Xodus is checking the license and installing ${product.title}.` });
+      toast({ kind: 'success', message: t("Xodus is checking the license and installing {value0}.", { value0: product.title }) });
       go('downloads');
     } catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
     finally { setBusy(undefined); }
@@ -311,7 +326,7 @@ function StorePage({ data, toast, go, initialQuery }: { data: AppSnapshot; toast
     event.preventDefault(); setBusy('manual');
     try {
       if (!await startPackageInstall({ productId: manualProductId, title: manualTitle, destination })) return;
-      toast({ kind: 'success', message: 'Xodus streaming started.' }); go('downloads');
+      toast({ kind: 'success', message: t("Xodus streaming started.") }); go('downloads');
     } catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
     finally { setBusy(undefined); }
   }
@@ -329,22 +344,22 @@ function StorePage({ data, toast, go, initialQuery }: { data: AppSnapshot; toast
     const installed = isInstalled(product);
     return <StoreProductCard key={product.productId} product={product} selected={selected?.productId === product.productId}
       disabled={product.installability !== 'supported' || Boolean(busy) || !data.backend.capabilities.streaming || installed || isQueued(product)}
-      label={installed ? 'Installed' : isQueued(product) ? 'In Install Queue' : busy === product.productId ? 'Preparing…' : 'Install'}
+      label={installed ? t("Installed") : isQueued(product) ? t("In Install Queue") : busy === product.productId ? t("Preparing…") : t("Install")}
       select={selectProduct} install={install} />;
   })}</div>;
   return <main className="page store-page">
-    <header className="page-header"><div><h1>Store</h1></div><span className="catalog-source"><StatusDot />Microsoft Store</span></header>
-    {!catalog ? <section className="featured-catalog"><SectionTitle title="Featured" />{featuredLoading ? <div className="catalog-loading"><LoaderCircle className="spin" /><span>Loading live Store collection…</span></div> : featured?.products.length ? <><div className="featured-rail">{featured.products.slice(0, 3).map((product) => <button className="featured-tile" key={product.productId} onClick={() => selectProduct(product)}>{product.heroUrl || product.posterUrl ? <img src={product.heroUrl ?? product.posterUrl} alt="" /> : <div className="featured-tile-placeholder"><Gamepad2 /></div>}<span className="featured-tile-copy"><GameTitle title={product.title} /><small>{product.publisher ?? 'Microsoft Store'} · {product.installability === 'supported' ? 'PC package verified' : 'Check package support'}</small></span></button>)}</div><SectionTitle title="Trending PC games" />{productGrid(featured.products.slice(3))}</> : <div className="catalog-empty"><Store /><h2>Featured games are temporarily unavailable</h2><p>{featuredError ?? 'Search still works with live Microsoft Store data.'}</p></div>}</section> : null}
+    <header className="page-header"><div><h1>{t("Store")}</h1></div><span className="catalog-source"><StatusDot />Microsoft Store</span></header>
+    {!catalog ? <section className="featured-catalog"><SectionTitle title={t("Featured")} />{featuredLoading ? <div className="catalog-loading"><LoaderCircle className="spin" /><span>{t("Loading live Store collection…")}</span></div> : featured?.products.length ? <><div className="featured-rail">{featured.products.slice(0, 3).map((product) => <button className="featured-tile" key={product.productId} onClick={() => selectProduct(product)}>{product.heroUrl || product.posterUrl ? <img src={product.heroUrl ?? product.posterUrl} alt="" /> : <div className="featured-tile-placeholder"><Gamepad2 /></div>}<span className="featured-tile-copy"><GameTitle title={product.title} /><small>{product.publisher ?? 'Microsoft Store'} · {product.installability === 'supported' ? t("PC package verified") : t("Check package support")}</small></span></button>)}</div><SectionTitle title={t("Trending PC games")} />{productGrid(featured.products.slice(3))}</> : <div className="catalog-empty"><Store /><h2>{t("Featured games are temporarily unavailable")}</h2><p>{featuredError ?? t("Search still works with live Microsoft Store data.")}</p></div>}</section> : null}
 
     {selected ? <section className={`catalog-selection ${selected.heroUrl ? 'has-art' : ''}`} style={selected.heroUrl ? { '--catalog-hero': `url(${selected.heroUrl})` } as React.CSSProperties : undefined}>
-      <div className="catalog-selection-copy"><span className="overline">SELECTED PRODUCT</span><h2>{selected.title}</h2><div className="catalog-badges">{selected.purchasePrice ? <span>{selected.purchasePrice}</span> : null}{selected.includedWith ? <span className="pass">Available with {selected.includedWith}</span> : null}<span className={selected.installability}>{selected.installability === 'supported' ? 'PC MSIXVC verified' : selected.installability}</span></div><p>{selected.description}</p><small>{selected.publisher ?? 'Publisher unavailable'} · Store ID {selected.productId}{selected.installProductId ? ` · Package ID ${selected.installProductId}` : ''}</small></div>
-      <div className="catalog-install-box"><p className={selected.installability === 'supported' ? 'supported' : 'unsupported'}>{selected.supportNote}</p><label>Install location<div className="input-action"><input value={destination} onChange={(event) => setDestination(event.target.value)} /><button type="button" onClick={chooseDestination} title="Choose folder"><FolderOpen /></button></div></label><div className="button-row"><button className="primary" disabled={selected.installability !== 'supported' || Boolean(busy) || !data.backend.capabilities.streaming || isInstalled(selected) || isQueued(selected)} onClick={() => install(selected, destination)}>{busy === selected.productId ? <LoaderCircle className="spin" /> : isInstalled(selected) ? <Check /> : <ArrowDownToLine />}{isInstalled(selected) ? 'Installed' : isQueued(selected) ? 'In Install Queue' : 'Install with Xodus'}</button>{selected.storeUrl ? <button className="secondary" onClick={() => window.open(selected.storeUrl, '_blank')}>Store page</button> : null}</div></div>
+      <div className="catalog-selection-copy"><span className="overline">{t("SELECTED PRODUCT")}</span><h2>{selected.title}</h2><div className="catalog-badges">{selected.purchasePrice ? <span>{selected.purchasePrice}</span> : null}{selected.includedWith ? <span className="pass">{t("Available with")}{' '}{selected.includedWith}</span> : null}<span className={selected.installability}>{selected.installability === 'supported' ? t("PC MSIXVC verified") : selected.installability}</span></div><p>{selected.description}</p><small>{selected.publisher ?? t("Publisher unavailable")} {' '}{t("· Store ID")}{' '}{selected.productId}{selected.installProductId ? t(" · Package ID {value0}", { value0: selected.installProductId }) : ''}</small></div>
+      <div className="catalog-install-box"><p className={selected.installability === 'supported' ? 'supported' : 'unsupported'}>{selected.supportNote}</p><label>{t("Install location")}<div className="input-action"><input value={destination} onChange={(event) => setDestination(event.target.value)} /><button type="button" onClick={chooseDestination} title={t("Choose folder")}><FolderOpen /></button></div></label><div className="button-row"><button className="primary" disabled={selected.installability !== 'supported' || Boolean(busy) || !data.backend.capabilities.streaming || isInstalled(selected) || isQueued(selected)} onClick={() => install(selected, destination)}>{busy === selected.productId ? <LoaderCircle className="spin" /> : isInstalled(selected) ? <Check /> : <ArrowDownToLine />}{isInstalled(selected) ? t("Installed") : isQueued(selected) ? t("In Install Queue") : t("Install with Xodus")}</button>{selected.storeUrl ? <button className="secondary" onClick={() => window.open(selected.storeUrl, '_blank')}>{t("Store page")}</button> : null}</div></div>
     </section> : null}
 
-    {catalog ? <><SectionTitle title={`Results for “${catalog.query}”`} />{productGrid(catalog.products)}{catalog.products.length === 0 ? <div className="empty-state compact"><div><Search /></div><h2>No games found</h2><p>Try a different title or a Microsoft Store Product ID.</p></div> : null}{catalog.hasMore ? <div className="load-more"><button className="secondary" disabled={loadingMore} onClick={loadMore}>{loadingMore ? <LoaderCircle className="spin" /> : <Plus />}Load more results</button></div> : null}</> : null}
+    {catalog ? <><SectionTitle title={t("Results for “{value0}”", { value0: catalog.query })} />{productGrid(catalog.products)}{catalog.products.length === 0 ? <div className="empty-state compact"><div><Search /></div><h2>{t("No games found")}</h2><p>{t("Try a different title or a Microsoft Store Product ID.")}</p></div> : null}{catalog.hasMore ? <div className="load-more"><button className="secondary" disabled={loadingMore} onClick={loadMore}>{loadingMore ? <LoaderCircle className="spin" /> : <Plus />}{t("Load more results")}</button></div> : null}</> : null}
 
-    <SectionTitle title="Install by Product ID" />
-    <form className="manual-install" onSubmit={manualInstall}><label>Product ID<input value={manualProductId} onChange={(event) => setManualProductId(event.target.value)} placeholder="For example: 9N4PT8HGCDHQ" required /></label><label>Queue name <em>Optional</em><input value={manualTitle} onChange={(event) => setManualTitle(event.target.value)} /></label><label>Install location<div className="input-action"><input value={destination} onChange={(event) => setDestination(event.target.value)} required /><button type="button" onClick={chooseDestination}><FolderOpen /></button></div></label><button className="secondary" disabled={Boolean(busy) || !data.backend.capabilities.streaming}>{busy === 'manual' ? <LoaderCircle className="spin" /> : <Terminal />}Install unlisted ID</button></form>
+    <SectionTitle title={t("Install by Product ID")} />
+    <form className="manual-install" onSubmit={manualInstall}><label>{t("Product ID")}<input value={manualProductId} onChange={(event) => setManualProductId(event.target.value)} placeholder={t("For example: 9N4PT8HGCDHQ")} required /></label><label>{t("Queue name")}{' '}<em>{t("Optional")}</em><input value={manualTitle} onChange={(event) => setManualTitle(event.target.value)} /></label><label>{t("Install location")}<div className="input-action"><input value={destination} onChange={(event) => setDestination(event.target.value)} required /><button type="button" onClick={chooseDestination}><FolderOpen /></button></div></label><button className="secondary" disabled={Boolean(busy) || !data.backend.capabilities.streaming}>{busy === 'manual' ? <LoaderCircle className="spin" /> : <Terminal />}{t("Install unlisted ID")}</button></form>
   </main>;
 }
 
@@ -359,18 +374,19 @@ interface GameMenuActionsProps {
 }
 
 export function GameMenuActions({ game, options, busy, onBrowse, onSettings, onInstallVc, onRemove, onShortcut, onUpdate, updateDisabled, updateLabel, onContent, contentDisabled, hideSteam, hideDesktopShortcuts }: GameMenuActionsProps) {
+  const { t } = useI18n();
   return <>
-    {onUpdate ? <button role="menuitem" disabled={busy || updateDisabled} onClick={onUpdate}><RefreshCw />{updateLabel ?? 'Check for updates'}</button> : null}
-    <button role="menuitem" onClick={onBrowse}><FolderOpen />Browse game files</button>
-    {onContent ? <button role="menuitem" disabled={busy || contentDisabled} onClick={onContent}><PackageCheck />Manage content</button> : null}
-    <button role="menuitem" onClick={onSettings}><Settings2 />Game settings</button>
+    {onUpdate ? <button role="menuitem" disabled={busy || updateDisabled} onClick={onUpdate}><RefreshCw />{updateLabel ?? t("Check for updates")}</button> : null}
+    <button role="menuitem" onClick={onBrowse}><FolderOpen />{t("Browse game files")}</button>
+    {onContent ? <button role="menuitem" disabled={busy || contentDisabled} onClick={onContent}><PackageCheck />{t("Manage content")}</button> : null}
+    <button role="menuitem" onClick={onSettings}><Settings2 />{t("Game settings")}</button>
     {hideDesktopShortcuts ? null : <>
-      <button role="menuitem" disabled={!onShortcut || game.installState !== 'ready'} onClick={() => onShortcut?.('desktop')}><Plus />Create desktop shortcut</button>
-      <button role="menuitem" disabled={!onShortcut || game.installState !== 'ready'} onClick={() => onShortcut?.('applications')}><Plus />Add to applications menu</button>
+      <button role="menuitem" disabled={!onShortcut || game.installState !== 'ready'} onClick={() => onShortcut?.('desktop')}><Plus />{t("Create desktop shortcut")}</button>
+      <button role="menuitem" disabled={!onShortcut || game.installState !== 'ready'} onClick={() => onShortcut?.('applications')}><Plus />{t("Add to applications menu")}</button>
     </>}
-    {hideSteam ? null : <button role="menuitem" disabled={!onShortcut || game.installState !== 'ready'} title="Add a shortcut with available artwork, including while Steam is running." onClick={() => onShortcut?.('steam')}><Plus />Add to Steam</button>}
-    <button role="menuitem" disabled={busy || game.installState !== 'ready' || !options?.vcInstall} title={options?.vcReason} onClick={onInstallVc}><Download />Install / update VC++</button>
-    <button role="menuitem" className="danger" disabled={busy} onClick={onRemove}><Trash2 />Remove game…</button>
+    {hideSteam ? null : <button role="menuitem" disabled={!onShortcut || game.installState !== 'ready'} title={t("Add a shortcut with available artwork, including while Steam is running.")} onClick={() => onShortcut?.('steam')}><Plus />{t("Add to Steam")}</button>}
+    <button role="menuitem" disabled={busy || game.installState !== 'ready' || !options?.vcInstall} title={options?.vcReason} onClick={onInstallVc}><Download />{t("Install / update VC++")}</button>
+    <button role="menuitem" className="danger" disabled={busy} onClick={onRemove}><Trash2 />{t("Remove game…")}</button>
   </>;
 }
 
@@ -385,31 +401,34 @@ interface AccountGamesProps {
 }
 
 export function LibraryPagination({ loading, hasMore, load, searching = false }: { loading: boolean; hasMore: boolean; load: () => void; searching?: boolean }) {
-  if (searching) return <div className="library-pagination"><span className="library-loading" role="status"><LoaderCircle className="spin" />Searching all library games…</span></div>;
+  const { t } = useI18n();
+  if (searching) return <div className="library-pagination"><span className="library-loading" role="status"><LoaderCircle className="spin" />{t("Searching all library games…")}</span></div>;
   if (!loading && !hasMore) return null;
   return <div className="library-pagination">
     {hasMore ? <button className="secondary" disabled={loading} onClick={load}>
-      {loading ? <><LoaderCircle className="spin" />Loading games…</> : 'Load more games'}
-    </button> : <span className="library-loading" role="status"><LoaderCircle className="spin" />Loading account games…</span>}
+      {loading ? <><LoaderCircle className="spin" />{t("Loading games…")}</> : t("Load more games")}
+    </button> : <span className="library-loading" role="status"><LoaderCircle className="spin" />{t("Loading account games…")}</span>}
   </div>;
 }
 
 export function LibraryProductCard({ product, present, downloading, installing, canInstall, install }: {
   product: AccountLibraryPage['products'][number]; present: boolean; downloading: boolean; installing?: string; canInstall: boolean; install: (product: CatalogProduct) => void;
 }) {
+  const { t } = useI18n();
   const disabled = present || downloading || Boolean(installing) || !canInstall || product.installability !== 'supported';
-  const label = present ? 'Installed' : downloading ? 'In Install Queue' : installing === product.productId ? 'Preparing…' : 'Install';
+  const label = present ? t("Installed") : downloading ? t("In Install Queue") : installing === product.productId ? t("Preparing…") : t("Install");
   const card = useRef<HTMLElement>(null);
   useBrowserLayoutEffect(() => {
     if (!disabled && document.activeElement === card.current) card.current?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
   }, [disabled]);
-  return <article ref={card} className="catalog-card" data-gamepad-card tabIndex={disabled ? 0 : -1} aria-label={disabled ? `${product.title}, ${label}. Action unavailable` : undefined}>
-    <div className="catalog-card-main">{product.posterUrl ? <img src={product.posterUrl} alt={`${product.title} cover`} loading="lazy" /> : <div className="catalog-cover-placeholder"><Gamepad2 /></div>}<CatalogSupportBadge product={product} /><div><GameTitle title={product.title} /><small>{product.publisher ?? product.productId}</small><span>{product.access === 'owned' ? 'Owned' : 'Game Pass'}</span></div></div>
+  return <article ref={card} className="catalog-card" data-gamepad-card tabIndex={disabled ? 0 : -1} aria-label={disabled ? t("{value0}, {value1}. Action unavailable", { value0: product.title, value1: label }) : undefined}>
+    <div className="catalog-card-main">{product.posterUrl ? <img src={product.posterUrl} alt={`${product.title} cover`} loading="lazy" /> : <div className="catalog-cover-placeholder"><Gamepad2 /></div>}<CatalogSupportBadge product={product} /><div><GameTitle title={product.title} /><small>{product.publisher ?? product.productId}</small><span>{product.access === 'owned' ? t("Owned") : 'Game Pass'}</span></div></div>
     <button className="catalog-card-install" disabled={disabled} onClick={() => { if (!disabled) install(product); }}>{present ? <Check /> : <Download />}{label}</button>
   </article>;
 }
 
 export function AccountGames({ data, toast, selectedId, select, menu, filters, onFiltersChange }: AccountGamesProps) {
+  const { t, localize } = useI18n();
   const startPackageInstall = usePackageInstall();
   const [localFilters, setLocalFilters] = useState<LibraryFilters>(defaultLibraryFilters);
   const selectedFilters = filters ?? localFilters;
@@ -466,7 +485,7 @@ export function AccountGames({ data, toast, selectedId, select, menu, filters, o
     try {
       const next = await window.launcher.getAccountLibrary(kind, refresh ? undefined : visible?.cursor, refresh);
       if (currentIdentity.current !== identity) return;
-      if (!refresh && visible?.cursor && next.cursor === visible.cursor) throw Error('Library pagination did not advance. Refresh the library to try again.');
+      if (!refresh && visible?.cursor && next.cursor === visible.cursor) throw Error(t("Library pagination did not advance. Refresh the library to try again."));
       // This instance is remounted on identity changes, so pending callbacks
       // cannot publish another account's products into the active component.
       setResult(old => ({ ...next, products: refresh ? next.products : [...(old?.products ?? []), ...next.products.filter(p => !old?.products.some(old => old.productId === p.productId))] }));
@@ -480,29 +499,29 @@ export function AccountGames({ data, toast, selectedId, select, menu, filters, o
       const folder = product.title.normalize('NFKD').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 80) || product.productId;
       if (!await startPackageInstall({ productId: product.installProductId ?? product.productId, title: product.title,
         destination: `${data.settings.installRoot.replace(/\/+$/, '')}/${folder}` })) return;
-      toast({ kind: 'success', message: `${product.title} added to Install Queue.` });
+      toast({ kind: 'success', message: t("{value0} added to Install Queue.", { value0: product.title }) });
     } catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
     finally { setInstalling(undefined); }
   }
   return <section className="account-games">
     <div className="library-filters" data-gamepad-filters>
-      <label>Access<select aria-label="Access" value={kind} onChange={event => setKind(event.target.value as AccountLibraryPage['kind'])}><option value="all">All games</option><option value="owned">Owned</option><option value="gamepass">In Game Pass</option></select></label>
-      <label>Play state<select aria-label="Play state" value={playState} onChange={event => setPlayState(event.target.value as typeof playState)}><option value="all">All states</option><option value="installed">Installed</option><option value="installable">Ready to install</option></select></label>
-      <label className="library-filter-search">Search<input aria-label="Search library" placeholder="Search your games" value={query} onChange={event => setQuery(event.target.value)} /></label>
-      <button className="secondary library-refresh" aria-label="Refresh library" title="Refresh library" disabled={!available || busy} onClick={() => load(true)}>{busy ? <LoaderCircle className="spin" /> : <RefreshCw />}</button>
+      <label>{t("Access")}<select aria-label={t("Access")} value={kind} onChange={event => setKind(event.target.value as AccountLibraryPage['kind'])}><option value="all">{t("All games")}</option><option value="owned">{t("Owned")}</option><option value="gamepass">{t("In Game Pass")}</option></select></label>
+      <label>{t("Play state")}<select aria-label={t("Play state")} value={playState} onChange={event => setPlayState(event.target.value as typeof playState)}><option value="all">{t("All states")}</option><option value="installed">{t("Installed")}</option><option value="installable">{t("Ready to install")}</option></select></label>
+      <label className="library-filter-search">{t("Search")}<input aria-label={t("Search library")} placeholder={t("Search your games")} value={query} onChange={event => setQuery(event.target.value)} /></label>
+      <button className="secondary library-refresh" aria-label={t("Refresh library")} title={t("Refresh library")} disabled={!available || busy} onClick={() => load(true)}>{busy ? <LoaderCircle className="spin" /> : <RefreshCw />}</button>
     </div>
     <div className="account-games-results">
-    {!available ? <p>{data.auth.stored !== true ? 'Sign in to load your account games. Installed games remain available.' : !data.backend.capabilities.library ? 'Update the Xodus backend to load account licenses.' : 'Wait for sign-in to finish.'}</p> : null}
-      {error ? <div className="alert amber"><CircleAlert /><span>{error}</span><BackendLogButton toast={toast} /></div> : null}
-      {visible?.skippedEntitlements ? <div className="alert amber"><CircleAlert /><span>Some license records could not be verified and were omitted. This list may be incomplete.</span><BackendLogButton toast={toast} /></div> : null}
+    {!available ? <p>{data.auth.stored !== true ? t("Sign in to load your account games. Installed games remain available.") : !data.backend.capabilities.library ? t("Update the Xodus backend to load account licenses.") : t("Wait for sign-in to finish.")}</p> : null}
+      {error ? <div className="alert amber"><CircleAlert /><span>{localize(error)}</span><BackendLogButton toast={toast} /></div> : null}
+      {visible?.skippedEntitlements ? <div className="alert amber"><CircleAlert /><span>{t("Some license records could not be verified and were omitted. This list may be incomplete.")}</span><BackendLogButton toast={toast} /></div> : null}
       <div className="catalog-grid" data-gamepad-grid>{rows.map(row => {
         if (row.game) {
           const game = row.game;
           const license = access(game);
           return <div className={`library-card-wrap catalog-card ${selectedId === game.id ? 'selected' : ''}`} data-gamepad-card key={game.id} onContextMenu={event => { event.preventDefault(); menu?.(game, event.clientX, event.clientY); }}>
-            <button className="library-card catalog-card-main" data-gamepad-auto-select="focus" data-gamepad-detail-target={game.id} onFocus={() => select?.(game, false)} onClick={() => select?.(game, true)} onKeyDown={event => { if (event.key === 'F10' && event.shiftKey) { event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect(); menu?.(game, rect.left + 16, rect.top + 16); } }}><Cover game={game} /><div><GameTitle title={game.title} /><small>{game.publisher ?? 'Local installation'}</small><span>{license === 'owned' ? 'Owned' : license === 'gamepass' ? 'Game Pass' : 'Local installation'}</span></div></button>
-            <span className="catalog-card-status" title={game.installMessage}>{game.installState === 'incomplete' ? <><CircleAlert />Incomplete</> : game.installState === 'imported' ? <><FolderOpen />Imported</> : <><Check />{data.gameUpdates?.[game.id]?.available ? 'Update available' : 'Installed'}</>}</span>
-            <button className="library-card-menu-button" data-game-menu-trigger data-gamepad-skip aria-label={`Options for ${game.title}`} aria-haspopup="menu" title={`Options for ${game.title}`} onClick={event => { const rect = event.currentTarget.getBoundingClientRect(); menu?.(game, rect.right, rect.bottom); }}><MoreHorizontal /></button>
+            <button className="library-card catalog-card-main" data-gamepad-auto-select="focus" data-gamepad-detail-target={game.id} onFocus={() => select?.(game, false)} onClick={() => select?.(game, true)} onKeyDown={event => { if (event.key === 'F10' && event.shiftKey) { event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect(); menu?.(game, rect.left + 16, rect.top + 16); } }}><Cover game={game} /><div><GameTitle title={game.title} /><small>{game.publisher ?? t("Local installation")}</small><span>{license === 'owned' ? t("Owned") : license === 'gamepass' ? 'Game Pass' : t("Local installation")}</span></div></button>
+            <span className="catalog-card-status" title={localize(game.installMessage)}>{game.installState === 'incomplete' ? <><CircleAlert />{t("Incomplete")}</> : game.installState === 'imported' ? <><FolderOpen />{t("Imported")}</> : <><Check />{data.gameUpdates?.[game.id]?.available ? t("Update available") : t("Installed")}</>}</span>
+            <button className="library-card-menu-button" data-game-menu-trigger data-gamepad-skip aria-label={t("Options for {value0}", { value0: game.title })} aria-haspopup="menu" title={t("Options for {value0}", { value0: game.title })} onClick={event => { const rect = event.currentTarget.getBoundingClientRect(); menu?.(game, rect.right, rect.bottom); }}><MoreHorizontal /></button>
           </div>;
         }
         const product = row.product!;
@@ -510,9 +529,9 @@ export function AccountGames({ data, toast, selectedId, select, menu, filters, o
         const downloading = queued.has(product.productId) || queued.has(product.installProductId ?? '');
         return <LibraryProductCard key={product.productId} product={product} present={present} downloading={downloading} installing={installing} canInstall={data.backend.capabilities.streaming} install={install} />;
       })}</div>
-      {!busy && !searching && !error && !rows.length ? <p>{visible?.cursor && playState !== 'installed' ? 'No games match these filters in the loaded results. Load more to continue.' : 'No games match these filters.'}</p> : null}
+      {!busy && !searching && !error && !rows.length ? <p>{visible?.cursor && playState !== 'installed' ? t("No games match these filters in the loaded results. Load more to continue.") : t("No games match these filters.")}</p> : null}
       <div data-gamepad-library-footer><LibraryPagination loading={busy} hasMore={Boolean(visible?.cursor)} searching={searching} load={() => { void load(); }} />
-      <p className="account-library-note">Licensed games are listed regardless of package support. Unsupported games cannot be installed. Add-ons are excluded. Installation checks your license again.</p></div>
+      <p className="account-library-note">{t("Licensed games are listed regardless of package support. Unsupported games cannot be installed. Add-ons are excluded. Installation checks your license again.")}</p></div>
     </div>
   </section>;
 }
@@ -523,18 +542,20 @@ function AccountGamesForUser(props: AccountGamesProps) {
 }
 
 export function ContentList({ plan, disabled, pending, install }: { plan: GameContentPlan; disabled: boolean; pending?: string; install: (id: string) => void }) {
+  const { t, localize } = useI18n();
   return <div className="content-list">{plan.items.length ? plan.items.map(item => <article key={item.productId}>
-    <div><strong title={item.title}>{item.title}</strong><small>{item.access === 'owned' ? 'Owned' : item.access === 'gamepass' ? 'Game Pass' : 'License not verified'} · {item.status === 'installed' ? 'Installed' : item.status === 'available' ? 'Not installed' : item.status === 'unsupported' ? 'Unsupported package' : 'Unavailable'}</small>
-      {item.downloadBytes ? <small>Download: {(item.downloadBytes / 1024 ** 2).toFixed(1)} MiB</small> : null}<small>{item.note}</small></div>
-    <button className="secondary" disabled={disabled || Boolean(pending) || !item.access || !['available', 'installed'].includes(item.status)} onClick={() => install(item.productId)}><Download />{pending === item.productId ? 'Preparing…' : item.status === 'installed' ? 'Repair' : 'Install'}</button>
-  </article>) : <p>No related content packages are declared by this game.</p>}</div>;
+    <div><strong title={item.title}>{item.title}</strong><small>{item.access === 'owned' ? t("Owned") : item.access === 'gamepass' ? 'Game Pass' : t("License not verified")} · {item.status === 'installed' ? t("Installed") : item.status === 'available' ? t("Not installed") : item.status === 'unsupported' ? t("Unsupported package") : t("Unavailable")}</small>
+      {item.downloadBytes ? <small>{t("Download:")}{' '}{(item.downloadBytes / 1024 ** 2).toFixed(1)} MiB</small> : null}<small>{localize(item.note)}</small></div>
+    <button className="secondary" disabled={disabled || Boolean(pending) || !item.access || !['available', 'installed'].includes(item.status)} onClick={() => install(item.productId)}><Download />{pending === item.productId ? t("Preparing…") : item.status === 'installed' ? t("Repair") : t("Install")}</button>
+  </article>) : <p>{t("No related content packages are declared by this game.")}</p>}</div>;
 }
 
 function GameContentDialog({ game, data, close, toast }: { game: Game; data: AppSnapshot; close: () => void; toast: (value: Toast) => void }) {
+  const { t, localize } = useI18n();
+  const [loading, setLoading] = useState(true);
   const confirm = useConfirmation();
   const [plan, setPlan] = useState<GameContentPlan>();
   const [error, setError] = useState<string>();
-  const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<string>();
   const [revision, setRevision] = useState(0);
   const queue = data.downloads.filter(task => task.kind === 'content' && task.gameId === game.id);
@@ -550,39 +571,41 @@ function GameContentDialog({ game, data, close, toast }: { game: Game; data: App
   }, [game.id, data.auth.username, data.auth.stored, data.auth.running, data.backend.binaryPath, data.settings.market, revision, queueState]);
   async function install(id: string) {
     const item = plan?.items.find(item => item.productId === id);
-    if (!item || !await confirm({ title: `${item.status === 'installed' ? 'Repair' : 'Install'} ${item.title}?`, message: 'This downloads licensed content into a separate managed folder. Close the game first.', confirmLabel: item.status === 'installed' ? 'Repair' : 'Install' })) return;
+    if (!item || !await confirm({ title: t("{value0} {value1}?", { value0: item.status === 'installed' ? t("Repair") : t("Install"), value1: item.title }), message: t("This downloads licensed content into a separate managed folder. Close the game first."), confirmLabel: item.status === 'installed' ? t("Repair") : t("Install") })) return;
     setPending(id); setError(undefined);
-    try { await window.launcher.installGameContent(game.id, id); toast({ kind: 'success', message: 'Content added to Install Queue.' }); }
+    try { await window.launcher.installGameContent(game.id, id); toast({ kind: 'success', message: t("Content added to Install Queue.") }); }
     catch (error) { setError(errorMessage(error)); }
     finally { setPending(undefined); }
   }
-  return <div className="dialog-backdrop" onMouseDown={event => { if (event.target === event.currentTarget && !pending) close(); }}><section className="game-dialog content-dialog" role="dialog" aria-modal="true" aria-label={`Content for ${game.title}`}>
-    <h2>Manage content</h2><p>{game.title}</p><p>Only verified licensed PC content can be installed. Content stays separate from the base game. Restart the game after installation. Requires a runtime with Store content support.</p>
-    {loading ? <p role="status"><LoaderCircle className="spin" />Checking account licenses and packages…</p> : null}
-    {error ? <p role="alert" className="error-text">{error}</p> : null}
-    {plan?.runtimeSupported === false ? <p className="error-text">Update the Nexus runtime in Settings before installing related content.</p> : null}
+  return <div className="dialog-backdrop" onMouseDown={event => { if (event.target === event.currentTarget && !pending) close(); }}><section className="game-dialog content-dialog" role="dialog" aria-modal="true" aria-label={t("Content for {value0}", { value0: game.title })}>
+    <h2>{t("Manage content")}</h2><p>{game.title}</p><p>{t("Only verified licensed PC content can be installed. Content stays separate from the base game. Restart the game after installation. Requires a runtime with Store content support.")}</p>
+    {loading ? <p role="status"><LoaderCircle className="spin" />{t("Checking account licenses and packages…")}</p> : null}
+    {error ? <p role="alert" className="error-text">{localize(error)}</p> : null}
+    {plan?.runtimeSupported === false ? <p className="error-text">{t("Update the Nexus runtime in Settings before installing related content.")}</p> : null}
     {plan && !loading ? <ContentList plan={plan} disabled={busy || !data.backend.capabilities.streaming || plan.runtimeSupported === false} pending={pending} install={id => { void install(id); }} /> : null}
-    {queue.some(task => ['running', 'paused', 'queued'].includes(task.status)) ? <p>Content download is in Install Queue. Pause, resume or cancel it there.</p> : null}
-    <div className="dialog-actions"><button className="secondary" disabled={loading || Boolean(pending)} onClick={() => setRevision(value => value + 1)}><RefreshCw />Refresh</button><button className="secondary" disabled={Boolean(pending)} data-gamepad-cancel onClick={close}>Close</button></div>
+    {queue.some(task => ['running', 'paused', 'queued'].includes(task.status)) ? <p>{t("Content download is in Install Queue. Pause, resume or cancel it there.")}</p> : null}
+    <div className="dialog-actions"><button className="secondary" disabled={loading || Boolean(pending)} onClick={() => setRevision(value => value + 1)}><RefreshCw />{t("Refresh")}</button><button className="secondary" disabled={Boolean(pending)} data-gamepad-cancel onClick={close}>{t("Close")}</button></div>
   </section></div>;
 }
 
 export function GameLaunchToolFields({ value, change, antiCheat = false }: { value: GameLaunchTools; change: (value: GameLaunchTools) => void; antiCheat?: boolean }) {
+  const { t } = useI18n();
   const update = (patch: Partial<GameLaunchTools>) => change({ ...value, ...patch });
-  return <fieldset className="game-launch-tools"><legend>Launch tools</legend>
-    {antiCheat ? <><label className="tool-checkbox"><input type="checkbox" checked={value.offlineWithoutAntiCheat === true} onChange={event => update({ offlineWithoutAntiCheat: event.target.checked })} /><span>Play offline without anti-cheat</span></label>
-    <small>Easy Anti-Cheat cannot run on macOS. Starts the game executable directly with the EOS Null Client: online multiplayer and other protected features will not work. Do not try to play online in this mode; your account is your responsibility.</small></> : null}
-    <label className="tool-checkbox"><input type="checkbox" checked={value.dualSenseCompatibility === true} onChange={event => update({ dualSenseCompatibility: event.target.checked })} /><span>DualSense compatibility mode</span></label>
-    <small>Try this if a standard DualSense controller is not detected. Disables its native HIDRAW input for this game only. Advanced haptics and adaptive triggers may be unavailable. Does not change Xbox controller settings.</small>
-    <label className="tool-checkbox"><input type="checkbox" checked={value.mangoHud} onChange={event => update({ mangoHud: event.target.checked })} /><span>Enable MangoHud</span></label>
-    <label className="tool-checkbox"><input type="checkbox" checked={value.gamescope} onChange={event => update({ gamescope: event.target.checked })} /><span>Run in gamescope</span></label>
-    {value.gamescope ? <label>Gamescope options<input value={value.gamescopeArgs} maxLength={2048} placeholder="-W 1920 -H 1080 -f" onChange={event => update({ gamescopeArgs: event.target.value })} /><small>Only options. Nexus adds the game command. MangoHud with gamescope requires mangoapp.</small></label> : null}
-    <label>Launch options<textarea rows={3} value={value.launchOptions} maxLength={2048} placeholder="PROTON_ENABLE_WAYLAND=1 gamemoderun %command% --launcher-skip" onChange={event => update({ launchOptions: event.target.value })} /><small>NAME=value and wrappers before %command%, game arguments after it. Quotes are supported, not shell expansion. Variables are passed to Wine; Proton-script-only options depend on runtime support.</small></label>
-    <small>Tools must already be installed. Applies to this game and its shortcuts, not the launcher.</small>
+  return <fieldset className="game-launch-tools"><legend>{t("Launch tools")}</legend>
+    {antiCheat ? <><label className="tool-checkbox"><input type="checkbox" checked={value.offlineWithoutAntiCheat === true} onChange={event => update({ offlineWithoutAntiCheat: event.target.checked })} /><span>{t("Play offline without anti-cheat")}</span></label>
+    <small>{t("Easy Anti-Cheat cannot run on macOS. Starts the game executable directly with the EOS Null Client: online multiplayer and other protected features will not work. Do not try to play online in this mode; your account is your responsibility.")}</small></> : null}
+    <label className="tool-checkbox"><input type="checkbox" checked={value.dualSenseCompatibility === true} onChange={event => update({ dualSenseCompatibility: event.target.checked })} /><span>{t("DualSense compatibility mode")}</span></label>
+    <small>{t("Try this if a standard DualSense controller is not detected. Disables its native HIDRAW input for this game only. Advanced haptics and adaptive triggers may be unavailable. Does not change Xbox controller settings.")}</small>
+    <label className="tool-checkbox"><input type="checkbox" checked={value.mangoHud} onChange={event => update({ mangoHud: event.target.checked })} /><span>{t("Enable MangoHud")}</span></label>
+    <label className="tool-checkbox"><input type="checkbox" checked={value.gamescope} onChange={event => update({ gamescope: event.target.checked })} /><span>{t("Run in gamescope")}</span></label>
+    {value.gamescope ? <label>{t("Gamescope options")}<input value={value.gamescopeArgs} maxLength={2048} placeholder="-W 1920 -H 1080 -f" onChange={event => update({ gamescopeArgs: event.target.value })} /><small>{t("Only options. Nexus adds the game command. MangoHud with gamescope requires mangoapp.")}</small></label> : null}
+    <label>{t("Launch options")}<textarea rows={3} value={value.launchOptions} maxLength={2048} placeholder="PROTON_ENABLE_WAYLAND=1 gamemoderun %command% --launcher-skip" onChange={event => update({ launchOptions: event.target.value })} /><small>{t("NAME=value and wrappers before %command%, game arguments after it. Quotes are supported, not shell expansion. Variables are passed to Wine; Proton-script-only options depend on runtime support.")}</small></label>
+    <small>{t("Tools must already be installed. Applies to this game and its shortcuts, not the launcher.")}</small>
   </fieldset>;
 }
 
 export function LibraryPage({ data, toast, filters, onFiltersChange, selection }: Pick<AccountGamesProps, 'data' | 'toast' | 'filters' | 'onFiltersChange'> & { selection?: { id: string } }) {
+  const { t, localize, language } = useI18n();
   const confirm = useConfirmation();
   const [selectedId, setSelectedId] = useState<string | undefined>(selection?.id);
   const [menu, setMenu] = useState<{ id: string; x: number; y: number }>();
@@ -656,7 +679,7 @@ export function LibraryPage({ data, toast, filters, onFiltersChange, selection }
     setDialogBusy(true);
     try {
       await window.launcher.updateGame(dialogGame.id, { title: editTitle.trim(), locale: editLocale, launchTools: normalizeLaunchTools(editTools) });
-      toast({ kind: 'success', message: 'Game settings saved.' });
+      toast({ kind: 'success', message: t("Game settings saved.") });
       setDialogGame(undefined);
     } catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
     finally { setDialogBusy(false); }
@@ -669,7 +692,7 @@ export function LibraryPage({ data, toast, filters, onFiltersChange, selection }
       await window.launcher.removeGame(dialogGame.id, mode);
       setSelectedId(undefined);
       setDialogGame(undefined);
-      toast({ kind: 'success', message: mode === 'library' ? 'Removed from library. Game files were kept.' : 'Game files permanently deleted.' });
+      toast({ kind: 'success', message: mode === 'library' ? t("Removed from library. Game files were kept.") : t("Game files permanently deleted.") });
     } catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
     finally { setDialogBusy(false); }
   }
@@ -677,7 +700,7 @@ export function LibraryPage({ data, toast, filters, onFiltersChange, selection }
   async function importGame() {
     try {
       const game = await window.launcher.importGame();
-      if (game) { setSelectedId(game.id); toast({ kind: 'success', message: `Imported ${game.title}.` }); }
+      if (game) { setSelectedId(game.id); toast({ kind: 'success', message: t("Imported {value0}.", { value0: game.title }) }); }
     } catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
   }
 
@@ -695,15 +718,15 @@ export function LibraryPage({ data, toast, filters, onFiltersChange, selection }
   async function installVc(game: Game) {
     try {
       await window.launcher.installGameVcRuntime(game.id);
-      toast({ kind: 'success', message: 'Microsoft VC++ is ready in this game’s Proton prefix. Press Play.' });
+      toast({ kind: 'success', message: t("Microsoft VC++ is ready in this game’s Proton prefix. Press Play.") });
     } catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
   }
 
   async function updateInstalledGame(game = selected) {
-    if (!game || !await confirm({ title: `Update ${game.title}?`, message: 'Xodus may replace changed game files in place. Do not run the game until the update finishes.', confirmLabel: 'Update game' })) return;
+    if (!game || !await confirm({ title: t("Update {value0}?", { value0: game.title }), message: t("Xodus may replace changed game files in place. Do not run the game until the update finishes."), confirmLabel: t("Update game") })) return;
     try {
       await window.launcher.updateInstalledGame(game.id);
-      toast({ kind: 'success', message: `Update started for ${game.title}. See Install Queue.` });
+      toast({ kind: 'success', message: t("Update started for {value0}. See Install Queue.", { value0: game.title }) });
     } catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
   }
 
@@ -730,26 +753,26 @@ export function LibraryPage({ data, toast, filters, onFiltersChange, selection }
     onShortcut: destination => {
       setMenu(undefined);
       void (destination === 'steam' ? window.launcher.addToSteam(game.id) : window.launcher.createGameShortcut(game.id, destination))
-        .then(() => toast({ kind: 'success', message: destination === 'steam' ? 'Game added to Steam with available artwork.' : destination === 'desktop' ? 'Desktop shortcut created. Your desktop may ask you to allow launching it.' : 'Game added to applications menu.' }))
+        .then(() => toast({ kind: 'success', message: destination === 'steam' ? t("Game added to Steam with available artwork.") : destination === 'desktop' ? t("Desktop shortcut created. Your desktop may ask you to allow launching it.") : t("Game added to applications menu.") }))
         .catch(error => toast({ kind: 'error', message: errorMessage(error) }));
     },
     onUpdate: () => { setMenu(undefined); if (data.gameUpdates?.[game.id]?.available) void updateInstalledGame(game); else void checkUpdates(game.id); },
-    updateLabel: data.gameUpdates?.[game.id]?.checking ? 'Checking…' : data.gameUpdates?.[game.id]?.available ? 'Update game' : 'Check for updates',
+    updateLabel: data.gameUpdates?.[game.id]?.checking ? t("Checking…") : data.gameUpdates?.[game.id]?.available ? t("Update game") : t("Check for updates"),
     updateDisabled: Boolean(data.gameUpdates?.[game.id]?.checking || !game.storeId || game.installState !== 'ready' || !data.backend.capabilities.streaming || data.downloads.some(task => task.status === 'running')),
     onContent: () => { setMenu(undefined); setContentGameId(game.id); },
     contentDisabled: !game.storeId || data.auth.stored !== true || !data.backend.capabilities.library,
   });
   const selectedPanel = selected && detailOpen ? <GameDetails key={`${selected.id}:${data.auth.username}:${data.auth.stored}:${data.auth.running}:${data.backend.binaryPath}:${data.settings.market}`} game={selected} data={data} back={() => setDetailOpen(false)} play={<>
-          <button className="primary" data-gamepad-play title={data.disconnectedGames?.includes(selected.id) ? 'Disco non collegato' : undefined} disabled={gameBusy || data.disconnectedGames?.includes(selected.id) || selected.installState !== 'ready' || !data.backend.capabilities.run || !(data.settings.winePath || data.runtime.winePath)} onClick={() => play()}>{gameBusy ? <LoaderCircle className="spin" /> : <Play fill="currentColor" />}{gameBusy ? 'Working…' : 'Play'}</button>
-          {gameBusy && !(selectedOperation?.kind === 'prerequisite' && selectedOperation.status === 'running') ? <button className="secondary danger" onClick={stopGame}><X />Stop</button> : null}
-        </>} manage={<GameMenuActions {...managementProps(selected)} />} technical={<dl><div><dt>Store ID</dt><dd>{selected.storeId ?? 'Not found'}</dd></div><div><dt>Executable</dt><dd>{selected.executable ?? 'Not found'}</dd></div><div><dt>Location</dt><dd>{selected.path}</dd></div></dl>} notices={<>
-      {data.disconnectedGames?.includes(selected.id) ? <div className="alert amber"><CircleAlert /><span>Disco non collegato</span></div> : null}{selected.installMessage ? <div className="alert amber"><CircleAlert /><span>{selected.installMessage}</span></div> : null}
-      <div className="game-update-status">{data.gameUpdates?.[selected.id]?.available ? <p className="success-text">Update available · {selected.installedVersion ?? 'Installed version'} → {data.gameUpdates[selected.id].latestVersion}</p> : data.gameUpdates?.[selected.id]?.available === false ? <p>Up to date · {data.gameUpdates[selected.id].latestVersion}</p> : null}{data.gameUpdates?.[selected.id]?.error ? <p className="error-text">{data.gameUpdates[selected.id].error}</p> : null}</div>
-      {selectedOperation ? <details key={selectedOperation.id} className={`game-operation ${selectedOperation.status}`}><summary><strong>{selectedOperation.kind === 'prerequisite' ? selectedOperation.status === 'failed' ? 'Prerequisite failed' : selectedOperation.status === 'complete' ? 'Prerequisite ready' : 'Installing prerequisite' : selectedOperation.status === 'failed' ? 'Launch failed' : selectedOperation.status === 'complete' ? 'Game exited' : 'Launching game'}</strong><span>{selectedOperation.phase}</span></summary>{selectedOperation.log.length > 0 ? <pre>{selectedOperation.log.slice(-12).join('\n')}</pre> : null}{selectedOperation.logPath ? <button className="secondary" onClick={() => openDiagnosticLog(selectedOperation.id)}><FolderOpen />Open diagnostic log</button> : null}</details> : null}
+          <button className="primary" data-gamepad-play title={data.disconnectedGames?.includes(selected.id) ? t("Drive disconnected") : undefined} disabled={gameBusy || data.disconnectedGames?.includes(selected.id) || selected.installState !== 'ready' || !data.backend.capabilities.run || !(data.settings.winePath || data.runtime.winePath)} onClick={() => play()}>{gameBusy ? <LoaderCircle className="spin" /> : <Play fill="currentColor" />}{gameBusy ? t("Working…") : t("Play")}</button>
+          {gameBusy && !(selectedOperation?.kind === 'prerequisite' && selectedOperation.status === 'running') ? <button className="secondary danger" onClick={stopGame}><X />{t("Stop")}</button> : null}
+        </>} manage={<GameMenuActions {...managementProps(selected)} />} technical={<dl><div><dt>{t("Store ID")}</dt><dd>{selected.storeId ?? t("Not found")}</dd></div><div><dt>{t("Executable")}</dt><dd>{selected.executable ?? t("Not found")}</dd></div><div><dt>{t("Location")}</dt><dd>{selected.path}</dd></div></dl>} notices={<>
+      {data.disconnectedGames?.includes(selected.id) ? <div className="alert amber"><CircleAlert /><span>{t("Drive disconnected")}</span></div> : null}{selected.installMessage ? <div className="alert amber"><CircleAlert /><span>{selected.installMessage}</span></div> : null}
+      <div className="game-update-status">{data.gameUpdates?.[selected.id]?.available ? <p className="success-text">{t("Update available ·")}{' '}{selected.installedVersion ?? t("Installed version")} → {data.gameUpdates[selected.id].latestVersion}</p> : data.gameUpdates?.[selected.id]?.available === false ? <p>{t("Up to date ·")}{' '}{data.gameUpdates[selected.id].latestVersion}</p> : null}{data.gameUpdates?.[selected.id]?.error ? <p className="error-text">{data.gameUpdates[selected.id].error}</p> : null}</div>
+      {selectedOperation ? <details key={selectedOperation.id} className={`game-operation ${selectedOperation.status}`}><summary><strong>{selectedOperation.kind === 'prerequisite' ? selectedOperation.status === 'failed' ? t("Prerequisite failed") : selectedOperation.status === 'complete' ? t("Prerequisite ready") : t("Installing prerequisite") : selectedOperation.status === 'failed' ? t("Launch failed") : selectedOperation.status === 'complete' ? t("Game exited") : t("Launching game")}</strong><span>{localize(selectedOperation.phase)}</span></summary>{selectedOperation.log.length > 0 ? <pre>{selectedOperation.log.slice(-12).join('\n')}</pre> : null}{selectedOperation.logPath ? <button className="secondary" onClick={() => openDiagnosticLog(selectedOperation.id)}><FolderOpen />{t("Open diagnostic log")}</button> : null}</details> : null}
     </>} /> : null;
   return <main ref={pageRef} className={`page library-page${detailOpen && selected ? ' library-detail-open' : ''}`}>
     <div hidden={Boolean(detailOpen && selected)}>
-    <header className="page-header" data-gamepad-library-header><div><h1>My Library</h1><p>Your owned games, Game Pass games and local installations.</p></div><div className="button-row"><button className="secondary" disabled={data.auth.stored !== true || gameBusy || Object.values(data.gameUpdates ?? {}).some(update => update.checking)} onClick={() => checkUpdates()}><RefreshCw />Check game updates</button><button className="secondary" onClick={importGame}><Plus />Import game</button></div></header>
+    <header className="page-header" data-gamepad-library-header><div><h1>{t("My Library")}</h1><p>{t("Your owned games, Game Pass games and local installations.")}</p></div><div className="button-row"><button className="secondary" disabled={data.auth.stored !== true || gameBusy || Object.values(data.gameUpdates ?? {}).some(update => update.checking)} onClick={() => checkUpdates()}><RefreshCw />{t("Check game updates")}</button><button className="secondary" onClick={importGame}><Plus />{t("Import game")}</button></div></header>
     <div className="library-layout">
       <AccountGamesForUser data={data} toast={toast} filters={filters} onFiltersChange={onFiltersChange} selectedId={selected?.id} select={selectGame} menu={openMenu} />
     </div>
@@ -758,20 +781,21 @@ export function LibraryPage({ data, toast, filters, onFiltersChange, selection }
     {menu && menuGame ? <GameContextMenu x={menu.x} y={menu.y} {...managementProps(menuGame)} /> : null}
 {diagnosticLog ? <DiagnosticDialog log={diagnosticLog.log} close={() => setDiagnosticLog(undefined)} revealFile={() => window.launcher.revealDiagnosticLog(diagnosticLog.operationId)} copyLog={() => window.launcher.copyDiagnosticLog(diagnosticLog.operationId)} /> : null}
     {contentGameId && data.games.find(game => game.id === contentGameId) ? <GameContentDialog key={`${contentGameId}:${data.auth.username}:${data.auth.stored}`} game={data.games.find(game => game.id === contentGameId)!} data={data} close={() => setContentGameId(undefined)} toast={toast} /> : null}
-    {dialogGame && modalGame ? <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !dialogBusy) setDialogGame(undefined); }}><section className="game-dialog" role="dialog" aria-modal="true" aria-label={dialogGame.kind === 'remove' ? `Remove ${modalGame.title}` : `Settings for ${modalGame.title}`}>
+    {dialogGame && modalGame ? <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !dialogBusy) setDialogGame(undefined); }}><section className="game-dialog" role="dialog" aria-modal="true" aria-label={dialogGame.kind === 'remove' ? t("Remove {value0}", { value0: modalGame.title }) : t("Settings for {value0}", { value0: modalGame.title })}>
       {dialogGame.kind === 'remove' ? <GameRemovalContents game={modalGame} busy={dialogBusy} close={() => setDialogGame(undefined)} remove={mode => { void removeGame(mode); }} /> : <form onSubmit={saveGameSettings}>
-        <h2>Game settings</h2>
-        <label>Display name<input required value={editTitle} onChange={(event) => setEditTitle(event.target.value)} /></label>
-        <label>Game language<select value={editLocale} onChange={(event) => setEditLocale(event.target.value)}><option value="">System default</option>{localeOptions.map((locale) => <option key={locale} value={locale}>{locale}</option>)}{editLocale && !localeOptions.some((locale) => locale.toLowerCase() === editLocale.toLowerCase()) ? <option value={editLocale}>{editLocale}</option> : null}</select></label>
-        <p>Available languages come from the game manifest. All games use the active Xodus Runtime.</p>
+        <h2>{t("Game settings")}</h2>
+        <label>{t("Display name")}<input required value={editTitle} onChange={(event) => setEditTitle(event.target.value)} /></label>
+        <label>{t("Game language")}<select value={editLocale} onChange={(event) => setEditLocale(event.target.value)}><option value="">{t("System default")}</option>{localeOptions.map((locale) => <option key={locale} value={locale}>{locale}</option>)}{editLocale && !localeOptions.some((locale) => locale.toLowerCase() === editLocale.toLowerCase()) ? <option value={editLocale}>{editLocale}</option> : null}</select></label>
+        <p>{t("Available languages come from the game manifest. All games use the active Xodus Runtime.")}</p>
         <GameLaunchToolFields value={editTools} change={setEditTools} antiCheat={Boolean(modalGame.antiCheat?.executable)} />
-        <div className="dialog-actions"><button type="button" className="secondary" disabled={dialogBusy} data-gamepad-cancel onClick={() => setDialogGame(undefined)}>Cancel</button><button className="primary" disabled={dialogBusy || !editTitle.trim()}><Check />Save</button></div>
+        <div className="dialog-actions"><button type="button" className="secondary" disabled={dialogBusy} data-gamepad-cancel onClick={() => setDialogGame(undefined)}>{t("Cancel")}</button><button className="primary" disabled={dialogBusy || !editTitle.trim()}><Check />{t("Save")}</button></div>
       </form>}
     </section></div> : null}
   </main>;
 }
 
 export function DownloadsPage({ data, toast }: { data: AppSnapshot; toast: (value: Toast) => void }) {
+  const { t, localize } = useI18n();
   const startPackageInstall = usePackageInstall();
   const [expanded, setExpanded] = useState<string>();
   const [retrying, setRetrying] = useState<string>();
@@ -782,14 +806,14 @@ export function DownloadsPage({ data, toast }: { data: AppSnapshot; toast: (valu
     if (!cancelId) return;
     let current = true; setCancelOptions(undefined); setCheckingCancel(true); setCancelError(undefined);
     void window.launcher.getDownloadCancelOptions(cancelId).then(options => { if (current) setCancelOptions(options); })
-      .catch(() => { if (current) setCancelOptions({ deleteFilesAllowed: false, reason: 'File ownership could not be verified. You can still cancel and keep the files.' }); })
+      .catch(() => { if (current) setCancelOptions({ deleteFilesAllowed: false, reason: t("File ownership could not be verified. You can still cancel and keep the files.") }); })
       .finally(() => { if (current) setCheckingCancel(false); });
     return () => { current = false; };
   }, [cancelId]);
   async function cancel(mode: 'keep' | 'delete-files') {
     if (!cancelId || cancelling) return;
     setCancelling(true); setCancelError(undefined);
-    try { await window.launcher.cancelDownload(cancelId, mode); setCancelId(undefined); toast({ kind: 'success', message: mode === 'delete-files' ? 'Download cancelled. Downloaded files were deleted.' : 'Download cancelled. Files were kept.' }); }
+    try { await window.launcher.cancelDownload(cancelId, mode); setCancelId(undefined); toast({ kind: 'success', message: mode === 'delete-files' ? t("Download cancelled. Downloaded files were deleted.") : t("Download cancelled. Files were kept.") }); }
     catch (error) { setCancelError(errorMessage(error)); }
     finally { setCancelling(false); }
   }
@@ -804,7 +828,7 @@ export function DownloadsPage({ data, toast }: { data: AppSnapshot; toast: (valu
     catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
   }
   async function clearFinished() {
-    try { await window.launcher.clearFinishedDownloads(); setExpanded(undefined); toast({ kind: 'success', message: 'Finished queue entries cleared. Game files were kept.' }); }
+    try { await window.launcher.clearFinishedDownloads(); setExpanded(undefined); toast({ kind: 'success', message: t("Finished queue entries cleared. Game files were kept.") }); }
     catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
   }
   async function retry(task: AppSnapshot['downloads'][number]) {
@@ -812,11 +836,11 @@ export function DownloadsPage({ data, toast }: { data: AppSnapshot; toast: (valu
     try {
       if (task.kind === 'update' && task.gameId) await window.launcher.updateInstalledGame(task.gameId);
       else if (task.kind === 'content') {
-        if (!task.gameId) throw Error('This content download has no parent game.');
+        if (!task.gameId) throw Error(t("This content download has no parent game."));
         await window.launcher.installGameContent(task.gameId, task.productId);
       }
       else if (!await startPackageInstall({ productId: task.productId, title: task.title, destination: task.destination })) return;
-      toast({ kind: 'success', message: `Retrying ${task.title} with Xodus.` });
+      toast({ kind: 'success', message: t("Retrying {value0} with Xodus.", { value0: task.title }) });
     } catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
     finally { setRetrying(undefined); }
   }
@@ -829,17 +853,17 @@ export function DownloadsPage({ data, toast }: { data: AppSnapshot; toast: (valu
     ...data.downloads.filter(task => !['running', 'paused', 'queued'].includes(task.status)),
   ];
   return <main className="page downloads-page">
-    <header className="page-header"><div><h1>Install Queue</h1></div>{finishedCount ? <button className="secondary" disabled={data.downloads.some(task => task.cancelling)} onClick={clearFinished}><Trash2 />Clear finished</button> : null}</header>
-    {data.downloadProgressSupported === false ? <div className="alert amber"><CircleAlert /><span>Update the Nexus backend in Settings for numeric download progress and Pause/Resume. Downloads still work with an older backend.</span></div> : null}
-    {data.downloads.length === 0 ? <div className="empty-state"><div><Download /></div><h2>Nothing in the queue</h2><p>Installations started from Store will appear here.</p></div> : <div className="download-list">{ordered.map((task) => {
+    <header className="page-header"><div><h1>{t("Install Queue")}</h1></div>{finishedCount ? <button className="secondary" disabled={data.downloads.some(task => task.cancelling)} onClick={clearFinished}><Trash2 />{t("Clear finished")}</button> : null}</header>
+    {data.downloadProgressSupported === false ? <div className="alert amber"><CircleAlert /><span>{t("Update the Nexus backend in Settings for numeric download progress and Pause/Resume. Downloads still work with an older backend.")}</span></div> : null}
+    {data.downloads.length === 0 ? <div className="empty-state"><div><Download /></div><h2>{t("Nothing in the queue")}</h2><p>{t("Installations started from Store will appear here.")}</p></div> : <div className="download-list">{ordered.map((task) => {
       const running = task.status === 'running'; const paused = task.status === 'paused'; const queued = task.status === 'queued'; const active = running || paused || queued; const failed = task.status === 'failed';
       return <article className={`download-item ${task.status}`} key={task.id}>
-        <div className="download-status">{task.coverUrl ? <img className="download-cover" src={task.coverUrl} alt={`${task.title} artwork`} /> : running ? <LoaderCircle className="spin" /> : queued ? <Clock3 /> : paused ? <Pause /> : failed ? <CircleAlert /> : task.status === 'complete' ? <PackageCheck /> : <X />}{task.coverUrl && (running || failed) ? <span className={`download-badge ${failed ? 'failed' : ''}`}>{running ? <LoaderCircle className="spin" /> : <CircleAlert />}</span> : null}</div>
-        <div className="download-main"><div className="download-heading"><div><h3>{task.kind === 'update' ? `Update · ${task.title}` : task.title}</h3><span>{task.productId} · {task.destination}</span></div><strong>{task.progress === null ? (running ? 'Active' : task.status) : `${Math.round(task.progress)}%`}</strong></div><div className={`progress-track ${task.progress === null && running ? 'indeterminate' : ''}`}><i style={task.progress !== null ? { width: `${task.progress}%` } : undefined} /></div><p className={failed ? 'error-text' : ''}>{task.error ?? task.phase}{task.totalBytes ? ` · ${size(task.downloadedBytes ?? 0)} / ${size(task.totalBytes)}` : ''}{task.transferRate ? ` · ${task.transferRate}` : ''}{running && estimateTimeRemaining(task.transferRate, task.downloadedBytes, task.totalBytes) ? ` · ${estimateTimeRemaining(task.transferRate, task.downloadedBytes, task.totalBytes)}` : ''}</p>{expanded === task.id ? <pre className="task-log">{task.log.length ? task.log.join('\n') : 'Xodus has not emitted text output yet.'}</pre> : null}</div>
-        <div className="download-actions">{active ? <>{!queued ? <button disabled={task.cancelling || !task.canPause || task.controlPending} onClick={() => pauseOrResume(task)} title={paused ? 'Resume download' : task.canPause ? 'Pause download' : 'Pause is available while downloading game files'}>{task.controlPending ? <LoaderCircle className="spin" /> : paused ? <Play /> : <Pause />}</button> : null}<button disabled={task.cancelling} onClick={() => setCancelId(task.id)} title="Cancel download">{task.cancelling ? <LoaderCircle className="spin" /> : <X />}</button></> : null}{failed || task.status === 'cancelled' ? <button disabled={task.cancelling || Boolean(retrying) || (task.kind === 'update' || task.kind === 'content') && data.downloads.some((entry) => ['running', 'paused', 'queued'].includes(entry.status))} onClick={() => retry(task)} title="Retry installation"><RefreshCw className={retrying === task.id ? 'spin' : ''} /></button> : null}<button onClick={() => setExpanded(expanded === task.id ? undefined : task.id)} title="Show log"><Terminal /></button><button onClick={() => window.launcher.openPath(task.destination)} title="Open folder"><FolderOpen /></button>{!active ? <button disabled={task.cancelling} onClick={() => remove(task.id)} title="Remove from queue"><Trash2 /></button> : null}</div>
+        <div className="download-status">{task.coverUrl ? <img className="download-cover" src={task.coverUrl} alt={t("{value0} artwork", { value0: task.title })} /> : running ? <LoaderCircle className="spin" /> : queued ? <Clock3 /> : paused ? <Pause /> : failed ? <CircleAlert /> : task.status === 'complete' ? <PackageCheck /> : <X />}{task.coverUrl && (running || failed) ? <span className={`download-badge ${failed ? 'failed' : ''}`}>{running ? <LoaderCircle className="spin" /> : <CircleAlert />}</span> : null}</div>
+        <div className="download-main"><div className="download-heading"><div><h3>{task.kind === 'update' ? t("Update · {value0}", { value0: task.title }) : task.title}</h3><span>{task.productId} · {task.destination}</span></div><strong>{task.progress === null ? (running ? t("Active") : task.status) : `${Math.round(task.progress)}%`}</strong></div><div className={`progress-track ${task.progress === null && running ? 'indeterminate' : ''}`}><i style={task.progress !== null ? { width: `${task.progress}%` } : undefined} /></div><p className={failed ? 'error-text' : ''}>{localize(task.error ?? task.phase)}{task.totalBytes ? ` · ${size(task.downloadedBytes ?? 0)} / ${size(task.totalBytes)}` : ''}{task.transferRate ? ` · ${task.transferRate}` : ''}{running && estimateTimeRemaining(task.transferRate, task.downloadedBytes, task.totalBytes) ? ` · ${estimateTimeRemaining(task.transferRate, task.downloadedBytes, task.totalBytes)}` : ''}</p>{expanded === task.id ? <pre className="task-log">{task.log.length ? task.log.join('\n') : t("Xodus has not emitted text output yet.")}</pre> : null}</div>
+        <div className="download-actions">{active ? <>{!queued ? <button disabled={task.cancelling || !task.canPause || task.controlPending} onClick={() => pauseOrResume(task)} title={paused ? t("Resume download") : task.canPause ? t("Pause download") : t("Pause is available while downloading game files")}>{task.controlPending ? <LoaderCircle className="spin" /> : paused ? <Play /> : <Pause />}</button> : null}<button disabled={task.cancelling} onClick={() => setCancelId(task.id)} title={t("Cancel download")}>{task.cancelling ? <LoaderCircle className="spin" /> : <X />}</button></> : null}{failed || task.status === 'cancelled' ? <button disabled={task.cancelling || Boolean(retrying) || (task.kind === 'update' || task.kind === 'content') && data.downloads.some((entry) => ['running', 'paused', 'queued'].includes(entry.status))} onClick={() => retry(task)} title={t("Retry installation")}><RefreshCw className={retrying === task.id ? 'spin' : ''} /></button> : null}<button onClick={() => setExpanded(expanded === task.id ? undefined : task.id)} title={t("Show log")}><Terminal /></button><button onClick={() => window.launcher.openPath(task.destination)} title={t("Open folder")}><FolderOpen /></button>{!active ? <button disabled={task.cancelling} onClick={() => remove(task.id)} title={t("Remove from queue")}><Trash2 /></button> : null}</div>
       </article>;
     })}</div>}
-    {cancelTask ? <DownloadCancelDialog task={cancelTask} options={cancelOptions} loading={checkingCancel} busy={cancelling || Boolean(cancelTask.cancelling)} error={cancelError} close={() => setCancelId(undefined)} choose={mode => { void cancel(mode); }} /> : null}
+    {cancelTask ? <DownloadCancelDialog task={cancelTask} options={cancelOptions} loading={checkingCancel} busy={cancelling || Boolean(cancelTask.cancelling)} error={localize(cancelError)} close={() => setCancelId(undefined)} choose={mode => { void cancel(mode); }} /> : null}
   </main>;
 }
 
@@ -848,12 +872,21 @@ function ToggleStatus({ ok, label }: { ok: boolean; label: string }) {
 }
 
 export function SettingsPage({ data, toast }: { data: AppSnapshot; toast: (value: Toast) => void }) {
+  const { t, localize, language } = useI18n();
   const confirm = useConfirmation();
   const [form, setForm] = useState<Settings>(data.settings);
   const [busy, setBusy] = useState<string>();
   const [logs, setLogs] = useState<string[]>([]);
   const [runtimeLogs, setRuntimeLogs] = useState<string[]>([]);
-  useEffect(() => setForm(data.settings), [data.settings]);
+  const previousSettings = useRef(data.settings);
+  useEffect(() => {
+    const { language: oldLanguage, ...oldSettings } = previousSettings.current;
+    const { language: nextLanguage, ...nextSettings } = data.settings;
+    // A language-only snapshot preserves unsaved edits in the other settings cards.
+    if (JSON.stringify(oldSettings) === JSON.stringify(nextSettings)) setForm(current => ({ ...current, language: nextLanguage }));
+    else setForm(data.settings);
+    previousSettings.current = data.settings;
+  }, [data.settings]);
   useEffect(() => window.launcher.onOperationLog(({ scope, line }) => {
     if (scope === 'backend') setLogs((items) => [...items.slice(-199), line]);
     if (scope === 'runtime') setRuntimeLogs((items) => [...items.slice(-199), line]);
@@ -877,91 +910,94 @@ export function SettingsPage({ data, toast }: { data: AppSnapshot; toast: (value
   const runtimeInfo = runtimeDisplay(data.runtime);
   const isMac = data.platform === 'darwin';
   return <main className="page settings-page">
-    <header className="page-header"><div><h1>Settings</h1><p>Account, backend, runtime, and storage.</p></div></header>
+    <header className="page-header"><div><h1>{t("Settings")}</h1><p>{t("Account, backend, runtime, and storage.")}</p></div></header>
+    <LanguageSettings />
 
     {isMac ? null : <section className="settings-card compact launcher-card">
-      {data.launcherUpdate?.phase ? <p>{data.launcherUpdate.phase}</p> : null}
+      {data.launcherUpdate?.phase ? <p>{localize(data.launcherUpdate.phase)}</p> : null}
       {data.launcherUpdate?.updating ? <div className="progress-track"><i style={{ width: `${data.launcherUpdate.progress ?? 0}%` }} /></div> : null}
-      {data.launcherUpdate?.error ? <div className="alert amber"><CircleAlert /><span>{data.launcherUpdate.error}</span></div> : null}
-      <div className="settings-heading"><div className="settings-icon"><Rocket /></div><div><span className="overline">XODUS NEXUS</span><h2>{data.launcherUpdate?.currentVersion ?? 'Development build'}</h2><p>{data.launcherUpdate?.latestVersion ? `Version ${data.launcherUpdate.latestVersion} is available.` : 'Check GitHub for launcher updates.'}</p></div></div>
+      {data.launcherUpdate?.error ? <div className="alert amber"><CircleAlert /><span>{localize(data.launcherUpdate.error)}</span></div> : null}
+      <div className="settings-heading"><div className="settings-icon"><Rocket /></div><div><span className="overline">XODUS NEXUS</span><h2>{data.launcherUpdate?.currentVersion ?? t("Development build")}</h2><p>{data.launcherUpdate?.latestVersion ? t("Version {value0} is available.", { value0: data.launcherUpdate.latestVersion }) : t("Check GitHub for launcher updates.")}</p></div></div>
       <div className="button-row">
-        {data.launcherUpdate?.latestVersion && data.launcherUpdate.canInstall && !data.launcherUpdate.restartRequired ? <button className="primary" disabled={data.launcherUpdate.updating || Boolean(busy)} onClick={async () => { if (await confirm({ title: 'Install launcher update?', message: 'The current AppImage will be backed up. Games and downloads must be stopped first.', confirmLabel: 'Install update' })) void invoke('launcher-install', () => window.launcher.installLauncherUpdate()); }}><ArrowDownToLine />{data.launcherUpdate.updating ? 'Updating…' : 'Install launcher update'}</button> : null}
-        {data.launcherUpdate?.releaseUrl && !data.launcherUpdate.canInstall ? <a className="primary" href={data.launcherUpdate.releaseUrl} target="_blank" rel="noreferrer"><ArrowDownToLine />Download update</a> : null}
-        {data.launcherUpdate?.restartRequired ? <button className="primary" onClick={() => invoke('launcher-restart', () => window.launcher.restartLauncher())}><RefreshCw />Restart launcher</button> : null}
-        {data.launcherUpdate?.canRollback ? <button className="secondary" disabled={data.launcherUpdate.updating || Boolean(busy)} onClick={async () => { if (await confirm({ title: 'Restore previous launcher?', message: 'Your settings and games will not change.', confirmLabel: 'Restore launcher' })) void invoke('launcher-rollback', () => window.launcher.rollbackLauncherUpdate()); }}>Restore previous launcher</button> : null}
-        <button className="secondary" disabled={data.launcherUpdate?.checking || data.launcherUpdate?.updating || data.launcherUpdate?.restartRequired} onClick={() => invoke('update-check', () => window.launcher.checkLauncherUpdate(), 'Update check finished.')}>{data.launcherUpdate?.checking ? <LoaderCircle className="spin" /> : <RefreshCw />}Check for updates</button>
-        <button className="secondary" disabled={Boolean(busy)} title="Add Nexus with artwork, including while Steam is running." onClick={() => invoke('steam-launcher', () => window.launcher.addToSteam(), 'Nexus added to Steam.')}><Plus />Add Nexus to Steam</button>
+        {data.launcherUpdate?.latestVersion && data.launcherUpdate.canInstall && !data.launcherUpdate.restartRequired ? <button className="primary" disabled={data.launcherUpdate.updating || Boolean(busy)} onClick={async () => { if (await confirm({ title: t("Install launcher update?"), message: t("The current AppImage will be backed up. Games and downloads must be stopped first."), confirmLabel: t("Install update") })) void invoke('launcher-install', () => window.launcher.installLauncherUpdate()); }}><ArrowDownToLine />{data.launcherUpdate.updating ? t("Updating…") : t("Install launcher update")}</button> : null}
+        {data.launcherUpdate?.releaseUrl && !data.launcherUpdate.canInstall ? <a className="primary" href={data.launcherUpdate.releaseUrl} target="_blank" rel="noreferrer"><ArrowDownToLine />{t("Download update")}</a> : null}
+        {data.launcherUpdate?.restartRequired ? <button className="primary" onClick={() => invoke('launcher-restart', () => window.launcher.restartLauncher())}><RefreshCw />{t("Restart launcher")}</button> : null}
+        {data.launcherUpdate?.canRollback ? <button className="secondary" disabled={data.launcherUpdate.updating || Boolean(busy)} onClick={async () => { if (await confirm({ title: t("Restore previous launcher?"), message: t("Your settings and games will not change."), confirmLabel: t("Restore launcher") })) void invoke('launcher-rollback', () => window.launcher.rollbackLauncherUpdate()); }}>{t("Restore previous launcher")}</button> : null}
+        <button className="secondary" disabled={data.launcherUpdate?.checking || data.launcherUpdate?.updating || data.launcherUpdate?.restartRequired} onClick={() => invoke('update-check', () => window.launcher.checkLauncherUpdate(), t("Update check finished."))}>{data.launcherUpdate?.checking ? <LoaderCircle className="spin" /> : <RefreshCw />}{t("Check for updates")}</button>
+        <button className="secondary" disabled={Boolean(busy)} title={t("Add Nexus with artwork, including while Steam is running.")} onClick={() => invoke('steam-launcher', () => window.launcher.addToSteam(), t("Nexus added to Steam."))}><Plus />{t("Add Nexus to Steam")}</button>
       </div>
     </section>}
 
     <section className="settings-card account-card">
-      <div className="settings-heading"><AccountAvatar auth={data.auth} large /><div><span className="overline">MICROSOFT ACCOUNT</span><h2>{data.auth.gamertag ?? data.auth.username ?? (data.auth.stored === false ? 'Not signed in' : 'Account status unavailable')}</h2><p>{data.auth.stored === true ? 'Credentials stored by Xodus' : 'Authentication uses the original Xodus webview'}</p></div><span className={`status-label ${data.auth.stored === true ? 'ready' : data.auth.stored === false ? 'off' : 'unknown'}`}><StatusDot tone={data.auth.stored === true ? 'green' : data.auth.stored === false ? 'red' : 'amber'} />{data.auth.stored === true ? 'STORED' : data.auth.stored === false ? 'SIGNED OUT' : 'UNKNOWN'}</span></div>
-      <div className="account-note"><CircleAlert /><span>{data.auth.note}</span></div>
+      <div className="settings-heading"><AccountAvatar auth={data.auth} large /><div><span className="overline">{t("MICROSOFT ACCOUNT")}</span><h2>{data.auth.gamertag ?? data.auth.username ?? (data.auth.stored === false ? t("Not signed in") : t("Account status unavailable"))}</h2><p>{data.auth.stored === true ? t("Credentials stored by Xodus") : t("Authentication uses the original Xodus webview")}</p></div><span className={`status-label ${data.auth.stored === true ? 'ready' : data.auth.stored === false ? 'off' : 'unknown'}`}><StatusDot tone={data.auth.stored === true ? 'green' : data.auth.stored === false ? 'red' : 'amber'} />{data.auth.stored === true ? t("STORED") : data.auth.stored === false ? t("SIGNED OUT") : t("UNKNOWN")}</span></div>
+      <div className="account-note"><CircleAlert /><span>{localize(data.auth.note)}</span></div>
       <KeyringSetup compact disabled={data.auth.running} />
-      <div className="button-row"><button className="primary" disabled={!caps.login || data.auth.running} onClick={() => invoke('login', () => window.launcher.login(), 'Xodus sign-in completed.')}>{data.auth.running ? <LoaderCircle className="spin" /> : <LogIn />}{data.auth.stored ? 'Sign in again' : 'Sign in with Xodus'}</button><button className="secondary" disabled={!caps.logout || data.auth.running || data.auth.stored === false} title="Remove saved sign-in credentials and local device registration. Games and saves are kept." onClick={() => invoke('logout', () => window.launcher.logout(), 'Saved sign-in credentials and local device registration were removed.')}>Sign out</button><button className="secondary" disabled={!caps.account || data.auth.running} onClick={() => invoke('account', () => window.launcher.refreshAccount())}><RefreshCw />Refresh status</button></div>
+      <div className="button-row"><button className="primary" disabled={!caps.login || data.auth.running} onClick={() => invoke('login', () => window.launcher.login(), t("Xodus sign-in completed."))}>{data.auth.running ? <LoaderCircle className="spin" /> : <LogIn />}{data.auth.stored ? t("Sign in again") : t("Sign in with Xodus")}</button><button className="secondary" disabled={!caps.logout || data.auth.running || data.auth.stored === false} title={t("Remove saved sign-in credentials and local device registration. Games and saves are kept.")} onClick={() => invoke('logout', () => window.launcher.logout(), t("Saved sign-in credentials and local device registration were removed."))}>{t("Sign out")}</button><button className="secondary" disabled={!caps.account || data.auth.running} onClick={() => invoke('account', () => window.launcher.refreshAccount())}><RefreshCw />{t("Refresh status")}</button></div>
       <PasskeySignInNotice />
     </section>
 
     <section className="settings-card">
-      <div className="settings-heading"><div className="settings-icon"><Terminal /></div><div><h2>Xodus backend</h2><p>{data.backend.version ? `Nexus backend ${data.backend.version}` : data.backend.available ? `Backend CLI ${data.backend.capabilities.version ?? 'unknown version'}` : isMac ? 'Compila il backend Nexus dal codice sorgente' : 'Install the prebuilt Nexus backend'}</p></div><span className={`status-label ${data.backend.available ? 'ready' : 'off'}`}><StatusDot tone={data.backend.available ? 'green' : 'red'} />{data.backend.available ? 'VALIDATED' : 'OFFLINE'}</span></div>
-      {data.backend.blockReason ? <div className="alert amber"><CircleAlert /><span>{data.backend.blockReason}</span></div> : null}
-      {data.backend.phase ? <p className="runtime-phase">{data.backend.phase}</p> : null}
-      <div className="backend-diagnostic-action"><BackendLogButton toast={toast} /><p className="fine-print">Local operation results and safe error codes. No passwords, tokens or account contents are recorded.</p></div>
+      <div className="settings-heading"><div className="settings-icon"><Terminal /></div><div><h2>{t("Xodus backend")}</h2><p>{data.backend.version ? t("Nexus backend {value0}", { value0: data.backend.version }) : data.backend.available ? t("Backend CLI {value0}", { value0: data.backend.capabilities.version ?? t("unknown version") }) : isMac ? t("Build the Nexus backend from source") : t("Install the prebuilt Nexus backend")}</p></div><span className={`status-label ${data.backend.available ? 'ready' : 'off'}`}><StatusDot tone={data.backend.available ? 'green' : 'red'} />{data.backend.available ? t("VALIDATED") : t("OFFLINE")}</span></div>
+      {data.backend.blockReason ? <div className="alert amber"><CircleAlert /><span>{localize(data.backend.blockReason)}</span></div> : null}
+      {data.backend.phase ? <p className="runtime-phase">{localize(data.backend.phase)}</p> : null}
+      <div className="backend-diagnostic-action"><BackendLogButton toast={toast} /><p className="fine-print">{t("Local operation results and safe error codes. No passwords, tokens or account contents are recorded.")}</p></div>
       {isMac ? <>
-        <p className="fine-print">Su macOS il backend Nexus si compila sul tuo Mac dal codice sorgente bloccato: non esiste una versione precompilata per Mac. Servono Git, Rust (Cargo) e protoc; la compilazione richiede alcuni minuti.</p>
-        {!data.backend.signingIdentity ? <div className="alert amber"><CircleAlert /><span>Senza il certificato «MACxus Local Signing» macOS chiederà di nuovo l’accesso al Portachiavi dopo ogni ricompilazione del backend. Per evitarlo: apri Accesso Portachiavi → menu Accesso Portachiavi → Assistente Certificato → Crea un certificato…, chiamalo «MACxus Local Signing», scegli tipo identità «Radice autofirmata» e tipo di certificato «Firma del codice»; poi riavvia MACxus.</span></div> : null}
-        <div className="button-row end"><button className="primary" disabled={Boolean(busy) || data.backend.updating || data.backend.checking} onClick={() => invoke('backend-rebuild', () => window.launcher.rebuildBackend(), 'Il backend è stato compilato e attivato.')}>{busy === 'backend-rebuild' || data.backend.updating ? <LoaderCircle className="spin" /> : <Github />}Compila il backend</button></div>
-        {data.backend.updating || logs.length > 0 ? <pre className="build-log">{logs.join('\n') || 'In attesa dell’output della compilazione…'}</pre> : null}
-      </> : <div className="button-row end"><button className="secondary" disabled={Boolean(busy) || data.backend.checking || data.backend.updating} onClick={() => invoke('backend-check', () => window.launcher.checkBackendUpdate())}>{busy === 'backend-check' || data.backend.checking ? <LoaderCircle className="spin" /> : <RefreshCw />}Check for updates</button>{data.backend.releaseAvailable && data.backend.updateAvailable ? <button className="primary" disabled={Boolean(busy) || data.backend.updating || data.backend.checking} onClick={() => invoke('backend-update', () => window.launcher.updateBackend(), 'The Nexus backend was verified, installed and activated.')}>{busy === 'backend-update' || data.backend.updating ? <LoaderCircle className="spin" /> : <ArrowDownToLine />}{data.backend.available ? 'Update backend' : 'Install backend'}</button> : null}</div>}
+        <p className="fine-print">{t("On macOS, the Nexus backend is built on your Mac from pinned source code. There is no prebuilt Mac version. Git, Rust (Cargo) and protoc are required; building takes a few minutes.")}</p>
+        {!data.backend.signingIdentity ? <div className="alert amber"><CircleAlert /><span>{t("Without the “MACxus Local Signing” certificate, macOS will ask for Keychain access again after each backend rebuild. To avoid this, open Keychain Access → Keychain Access menu → Certificate Assistant → Create a Certificate…, name it “MACxus Local Signing”, choose “Self Signed Root” as the identity type and “Code Signing” as the certificate type, then restart MACxus.")}</span></div> : null}
+        <div className="button-row end"><button className="primary" disabled={Boolean(busy) || data.backend.updating || data.backend.checking} onClick={() => invoke('backend-rebuild', () => window.launcher.rebuildBackend(), t("The backend was built and activated."))}>{busy === 'backend-rebuild' || data.backend.updating ? <LoaderCircle className="spin" /> : <Github />}{t("Build backend")}</button></div>
+        {data.backend.updating || logs.length > 0 ? <pre className="build-log">{logs.join('\n') || t("Waiting for build output…")}</pre> : null}
+      </> : <div className="button-row end"><button className="secondary" disabled={Boolean(busy) || data.backend.checking || data.backend.updating} onClick={() => invoke('backend-check', () => window.launcher.checkBackendUpdate())}>{busy === 'backend-check' || data.backend.checking ? <LoaderCircle className="spin" /> : <RefreshCw />}{t("Check for updates")}</button>{data.backend.releaseAvailable && data.backend.updateAvailable ? <button className="primary" disabled={Boolean(busy) || data.backend.updating || data.backend.checking} onClick={() => invoke('backend-update', () => window.launcher.updateBackend(), t("The Nexus backend was verified, installed and activated."))}>{busy === 'backend-update' || data.backend.updating ? <LoaderCircle className="spin" /> : <ArrowDownToLine />}{data.backend.available ? t("Update backend") : t("Install backend")}</button> : null}</div>}
     </section>
 
     {isMac ? <MacEngineCard engine={data.settings.macEngine} status={data.macEngine} /> : null}
 
     <section className="settings-card">
-      <div className="settings-heading"><div className="settings-icon"><Gamepad2 /></div><div><h2>Nexus runtime</h2><p>{data.runtime.installed ? `Active: ${runtimeInfo.title} · ${runtimeInfo.version}` : 'No runtime selected'}</p></div><span className={`status-label ${data.runtime.installed && runtimeInfo.source === 'Nexus runtime' ? 'ready' : 'unknown'}`}><StatusDot tone={data.runtime.installed && runtimeInfo.source === 'Nexus runtime' ? 'green' : 'amber'} />{!data.runtime.installed ? 'MISSING' : runtimeInfo.source === 'Nexus runtime' ? 'READY' : 'OTHER RUNTIME'}</span></div>
-      {data.runtime.nexusError ? <div className="alert amber"><CircleAlert /><span>{data.runtime.nexusError}</span></div> : null}
-      {data.runtime.error ? <div className="alert amber"><CircleAlert /><span>{data.runtime.error}</span></div> : null}{data.runtime.phase ? <div className="runtime-phase"><LoaderCircle className={data.runtime.updating ? 'spin' : ''} /><span>{data.runtime.phase}</span></div> : null}
+      <div className="settings-heading"><div className="settings-icon"><Gamepad2 /></div><div><h2>{t("Nexus runtime")}</h2><p>{data.runtime.installed ? `${t("Active")}: ${localize(runtimeInfo.title)} · ${localize(runtimeInfo.version)}` : t("No runtime selected")}</p></div><span className={`status-label ${data.runtime.installed && runtimeInfo.source === 'Nexus runtime' ? 'ready' : 'unknown'}`}><StatusDot tone={data.runtime.installed && runtimeInfo.source === 'Nexus runtime' ? 'green' : 'amber'} />{!data.runtime.installed ? t("MISSING") : runtimeInfo.source === 'Nexus runtime' ? t("READY") : t("OTHER RUNTIME")}</span></div>
+      {data.runtime.nexusError ? <div className="alert amber"><CircleAlert /><span>{localize(data.runtime.nexusError)}</span></div> : null}
+      {data.runtime.error ? <div className="alert amber"><CircleAlert /><span>{localize(data.runtime.error)}</span></div> : null}{data.runtime.phase ? <div className="runtime-phase"><LoaderCircle className={data.runtime.updating ? 'spin' : ''} /><span>{localize(data.runtime.phase)}</span></div> : null}
       <div className="button-row end">
-        <button className="secondary" disabled={Boolean(busy) || data.runtime.nexusChecking} onClick={() => invoke('runtime-check', () => window.launcher.checkNexusRuntime())}>{busy === 'runtime-check' || data.runtime.nexusChecking ? <LoaderCircle className="spin" /> : <RefreshCw />}Check for updates</button>
-        {nexusRuntimeUpdateAvailable(data.runtime) ? <button className="primary" disabled={Boolean(busy) || data.runtime.updating} onClick={() => invoke('runtime-install-nexus', () => window.launcher.installNexusRuntime(), 'Nexus runtime was verified, installed, and selected.')}>{busy === 'runtime-install-nexus' || data.runtime.updating ? <LoaderCircle className="spin" /> : <ArrowDownToLine />}Install Nexus runtime{data.runtime.nexusVersion ? ` ${data.runtime.nexusVersion.replace(/^runtime-/, '')}` : ''}</button> : null}
+        <button className="secondary" disabled={Boolean(busy) || data.runtime.nexusChecking} onClick={() => invoke('runtime-check', () => window.launcher.checkNexusRuntime())}>{busy === 'runtime-check' || data.runtime.nexusChecking ? <LoaderCircle className="spin" /> : <RefreshCw />}{t("Check for updates")}</button>
+        {nexusRuntimeUpdateAvailable(data.runtime) ? <button className="primary" disabled={Boolean(busy) || data.runtime.updating} onClick={() => invoke('runtime-install-nexus', () => window.launcher.installNexusRuntime(), t("Nexus runtime was verified, installed, and selected."))}>{busy === 'runtime-install-nexus' || data.runtime.updating ? <LoaderCircle className="spin" /> : <ArrowDownToLine />}{t("Install Nexus runtime")}{data.runtime.nexusVersion ? ` ${data.runtime.nexusVersion.replace(/^runtime-/, '')}` : ''}</button> : null}
       </div>
-      {data.runtime.updating || runtimeLogs.length > 0 ? <pre className="build-log">{runtimeLogs.join('\n') || 'Waiting for output…'}</pre> : null}
+      {data.runtime.updating || runtimeLogs.length > 0 ? <pre className="build-log">{runtimeLogs.join('\n') || t("Waiting for output…")}</pre> : null}
     </section>
 
     <div className="settings-storage">
       <section className="settings-card compact">
-        <div className="settings-heading"><div className="settings-icon"><Download /></div><div><h2>Downloads</h2><p>Limit the combined game download speed across all parallel streams.</p></div></div>
-        <div className="form-grid"><label>Download speed limit (MiB/s)<input type="number" min="0" max="1024" step="0.1" value={form.downloadLimitMiB ?? 0} onChange={event => setForm({...form, downloadLimitMiB:Number(event.target.value)})} /></label></div>
-        <div className="save-row"><span>0 = unlimited. Applies to active and future game downloads.</span><button className="primary" disabled={Boolean(busy) || Boolean((form.downloadLimitMiB ?? 0) > 0 && !data.backend.capabilities.streamingBandwidthLimit)} onClick={() => invoke('save-bandwidth', () => window.launcher.updateSettings({downloadLimitMiB:form.downloadLimitMiB ?? 0}), 'Download speed limit saved.')}>{busy === 'save-bandwidth' ? <LoaderCircle className="spin" /> : <Check />}Save download limit</button></div>
+        <div className="settings-heading"><div className="settings-icon"><Download /></div><div><h2>{t("Downloads")}</h2><p>{t("Limit the combined game download speed across all parallel streams.")}</p></div></div>
+        <div className="form-grid"><label>{t("Download speed limit (MiB/s)")}<input type="number" min="0" max="1024" step="0.1" value={form.downloadLimitMiB ?? 0} onChange={event => setForm({...form, downloadLimitMiB:Number(event.target.value)})} /></label></div>
+        <div className="save-row"><span>{t("0 = unlimited. Applies to active and future game downloads.")}</span><button className="primary" disabled={Boolean(busy) || Boolean((form.downloadLimitMiB ?? 0) > 0 && !data.backend.capabilities.streamingBandwidthLimit)} onClick={() => invoke('save-bandwidth', () => window.launcher.updateSettings({downloadLimitMiB:form.downloadLimitMiB ?? 0}), t("Download speed limit saved."))}>{busy === 'save-bandwidth' ? <LoaderCircle className="spin" /> : <Check />}{t("Save download limit")}</button></div>
       </section>
-      {isMac ? <section className="settings-card compact"><StoragePicker installRoot={data.settings.installRoot} storageError={data.storageError} /></section> : null}
-      <section className="settings-card compact"><div className="settings-heading"><div className="settings-icon"><HardDrive /></div><div><h2>Storage and launch paths</h2><p>The external Xodus checkout is never modified.</p></div></div><div className="form-grid">{isMac ? null : <label>Default game location<div className="input-action"><input value={form.installRoot} onChange={(event) => setForm({ ...form, installRoot: event.target.value })} /><button onClick={() => pick('install')}><FolderOpen /></button></div></label>}<label>Market<input value={form.market} onChange={(event) => setForm({ ...form, market: event.target.value })} /></label><label>Parallel streams<input type="number" min="1" max="16" value={form.parallelDownloads} onChange={(event) => setForm({ ...form, parallelDownloads: Number(event.target.value) })} /></label><label>External Xodus source<div className="input-action"><input value={form.externalXodusRoot} onChange={(event) => setForm({ ...form, externalXodusRoot: event.target.value })} /><button onClick={() => pick('backend')}><FolderOpen /></button></div></label><label>Versioned runtime directory<div className="input-action"><input value={form.runtimeRoot} onChange={(event) => setForm({ ...form, runtimeRoot: event.target.value })} /><button onClick={() => pick('runtime')}><FolderOpen /></button></div></label><label>Wine / Xodus Proton binary<div className="input-action"><input value={form.winePath} onChange={(event) => setForm({ ...form, winePath: event.target.value })} placeholder="Selected automatically by the runtime manager" /><button onClick={() => pick('wine')}><FolderOpen /></button></div></label></div><div className="save-row"><span>Settings are stored locally in Electron userData.</span><button className="primary" disabled={busy === 'save'} onClick={() => invoke('save', () => window.launcher.updateSettings(form), 'Settings saved.')}>{busy === 'save' ? <LoaderCircle className="spin" /> : <Check />}Save</button></div></section>
+      {isMac ? <section className="settings-card compact"><StoragePicker installRoot={data.settings.installRoot} storageError={localize(data.storageError)} /></section> : null}
+      <section className="settings-card compact"><div className="settings-heading"><div className="settings-icon"><HardDrive /></div><div><h2>{t("Storage and launch paths")}</h2><p>{t("The external Xodus checkout is never modified.")}</p></div></div><div className="form-grid">{isMac ? null : <label>{t("Default game location")}<div className="input-action"><input value={form.installRoot} onChange={(event) => setForm({ ...form, installRoot: event.target.value })} /><button onClick={() => pick('install')}><FolderOpen /></button></div></label>}<label>{t("Market")}<input value={form.market} onChange={(event) => setForm({ ...form, market: event.target.value })} /></label><label>{t("Parallel streams")}<input type="number" min="1" max="16" value={form.parallelDownloads} onChange={(event) => setForm({ ...form, parallelDownloads: Number(event.target.value) })} /></label><label>{t("External Xodus source")}<div className="input-action"><input value={form.externalXodusRoot} onChange={(event) => setForm({ ...form, externalXodusRoot: event.target.value })} /><button onClick={() => pick('backend')}><FolderOpen /></button></div></label><label>{t("Versioned runtime directory")}<div className="input-action"><input value={form.runtimeRoot} onChange={(event) => setForm({ ...form, runtimeRoot: event.target.value })} /><button onClick={() => pick('runtime')}><FolderOpen /></button></div></label><label>{t("Wine / Xodus Proton binary")}<div className="input-action"><input value={form.winePath} onChange={(event) => setForm({ ...form, winePath: event.target.value })} placeholder={t("Selected automatically by the runtime manager")} /><button onClick={() => pick('wine')}><FolderOpen /></button></div></label></div><div className="save-row"><span>{t("Settings are stored locally in Electron userData.")}</span><button className="primary" disabled={busy === 'save'} onClick={() => invoke('save', () => window.launcher.updateSettings(form), t("Settings saved."))}>{busy === 'save' ? <LoaderCircle className="spin" /> : <Check />}{t("Save")}</button></div></section>
     </div>
     <details className="settings-card settings-diagnostics">
-      <summary><Settings2 /><span>Advanced / Diagnostics</span><ChevronRight /></summary>
+      <summary><Settings2 /><span>{t("Advanced / Diagnostics")}</span><ChevronRight /></summary>
       <div className="diagnostics-content">
         <DiagnosticReportButton games={data.games} />
-        <section><h3>Game logging</h3><div className="toggle-row"><label className="toggle"><input type="checkbox" checked={form.verboseLogs} onChange={(event) => setForm({ ...form, verboseLogs: event.target.checked })} /><span>Verbose game logs</span></label><p>Writes full Wine, vkd3d-proton and Xodus diagnostics to the per-game log file and stops coalescing repeated lines. Slower and much larger logs; use temporarily when diagnosing a crash.</p></div><div className="button-row"><button className="secondary" disabled={Boolean(busy)} onClick={() => invoke('save-diagnostics', () => window.launcher.updateSettings({ verboseLogs: form.verboseLogs }), 'Logging settings saved.')}>Save diagnostics</button></div></section>
-        <section><h3>Backend details</h3><p className="diagnostic-path mono">{data.backend.binaryPath ?? 'No backend selected'}</p><div className="meta-grid"><div><span>SOURCE</span><strong>{data.backend.source === 'external' ? 'External installation · read-only' : data.backend.delivery === 'release' ? 'Nexus GitHub Release' : data.backend.source === 'managed' ? 'Local versioned build' : '—'}</strong></div><div><span>COMMIT</span><strong className="mono">{data.backend.commit?.slice(0, 12) ?? '—'}</strong></div></div><div className="button-row"><button className="secondary" disabled={Boolean(busy) || data.backend.updating || data.backend.checking} onClick={() => invoke('backend-rebuild', () => window.launcher.rebuildBackend(), 'Pinned backend source was built and activated.')}><Github />Build backend from source</button></div>{data.backend.updating || logs.length > 0 ? <pre className="build-log">{logs.join('\n') || 'Waiting for backend output…'}</pre> : null}</section>
-        <section><h3>Runtime details</h3><p className="diagnostic-path mono">{data.runtime.winePath ?? 'No runtime selected'}</p><div className="meta-grid"><div><span>SOURCE</span><strong>{runtimeInfo.source}</strong></div><div><span>BUILD</span><strong className="mono">{data.runtime.commit ?? '—'}</strong></div></div></section>
-        <section><h3>Build dependencies</h3><div className="dependency-grid"><ToggleStatus ok={data.backend.prerequisites.git} label="Git" /><ToggleStatus ok={data.backend.prerequisites.cargo} label="Cargo" /><ToggleStatus ok={data.backend.prerequisites.rustc} label="Rust 1.99" /><ToggleStatus ok={data.backend.prerequisites.protoc} label="protoc" /></div><p className="fine-print">Building Xodus also requires a C/C++ toolchain, CMake, OpenSSL 3 and D-Bus development packages.</p></section>
+        <section><h3>{t("Game logging")}</h3><div className="toggle-row"><label className="toggle"><input type="checkbox" checked={form.verboseLogs} onChange={(event) => setForm({ ...form, verboseLogs: event.target.checked })} /><span>{t("Verbose game logs")}</span></label><p>{t("Writes full Wine, vkd3d-proton and Xodus diagnostics to the per-game log file and stops coalescing repeated lines. Slower and much larger logs; use temporarily when diagnosing a crash.")}</p></div><div className="button-row"><button className="secondary" disabled={Boolean(busy)} onClick={() => invoke('save-diagnostics', () => window.launcher.updateSettings({ verboseLogs: form.verboseLogs }), t("Logging settings saved."))}>{t("Save diagnostics")}</button></div></section>
+        <section><h3>{t("Backend details")}</h3><p className="diagnostic-path mono">{data.backend.binaryPath ?? t("No backend selected")}</p><div className="meta-grid"><div><span>{t("SOURCE")}</span><strong>{data.backend.source === 'external' ? t("External installation · read-only") : data.backend.delivery === 'release' ? t("Nexus GitHub Release") : data.backend.source === 'managed' ? t("Local versioned build") : '—'}</strong></div><div><span>{t("COMMIT")}</span><strong className="mono">{data.backend.commit?.slice(0, 12) ?? '—'}</strong></div></div><div className="button-row"><button className="secondary" disabled={Boolean(busy) || data.backend.updating || data.backend.checking} onClick={() => invoke('backend-rebuild', () => window.launcher.rebuildBackend(), t("Pinned backend source was built and activated."))}><Github />{t("Build backend from source")}</button></div>{data.backend.updating || logs.length > 0 ? <pre className="build-log">{logs.join('\n') || t("Waiting for backend output…")}</pre> : null}</section>
+        <section><h3>{t("Runtime details")}</h3><p className="diagnostic-path mono">{data.runtime.winePath ?? t("No runtime selected")}</p><div className="meta-grid"><div><span>{t("SOURCE")}</span><strong>{localize(runtimeInfo.source)}</strong></div><div><span>{t("BUILD")}</span><strong className="mono">{data.runtime.commit ?? '—'}</strong></div></div></section>
+        <section><h3>{t("Build dependencies")}</h3><div className="dependency-grid"><ToggleStatus ok={data.backend.prerequisites.git} label="Git" /><ToggleStatus ok={data.backend.prerequisites.cargo} label="Cargo" /><ToggleStatus ok={data.backend.prerequisites.rustc} label="Rust 1.99" /><ToggleStatus ok={data.backend.prerequisites.protoc} label="protoc" /></div><p className="fine-print">{t("Building Xodus also requires a C/C++ toolchain, CMake, OpenSSL 3 and D-Bus development packages.")}</p></section>
       </div>
     </details>
   </main>;
 }
 
-function backendSetupHint(backend: AppSnapshot['backend']): string {
-  if (backend.checking) return 'Checking for the Xodus backend…';
-  if (backend.updating) return backend.phase ? `Installing the Xodus backend… ${backend.phase}` : 'Installing the Xodus backend…';
+function backendSetupHint(backend: AppSnapshot['backend'], t: Translator): string {
+  if (backend.checking) return t("Checking for the Xodus backend…");
+  if (backend.updating) return backend.phase ? t("Installing the Xodus backend… {value0}", { value0: backend.phase }) : t("Installing the Xodus backend…");
   if (backend.blockReason) return backend.blockReason;
-  return 'Sign-in unlocks once the Xodus backend is installed.';
+  return t("Sign-in unlocks once the Xodus backend is installed.");
 }
 
 function PasskeySignInNotice() {
-  return <p className="passkey-sign-in-notice">Passkey sign-in requires Google Chrome installed on this computer. Other browsers are not supported. If Microsoft sign-in gets stuck, choose Continue in browser in the sign-in window.</p>;
+  const { t } = useI18n();
+  return <p className="passkey-sign-in-notice">{t("Passkey sign-in requires Google Chrome installed on this computer. Other browsers are not supported. If Microsoft sign-in gets stuck, choose Continue in browser in the sign-in window.")}</p>;
 }
 
 export function FirstRunWizard({ data, toast }: { data: AppSnapshot; toast: (value: Toast) => void }) {
+  const { t, localize } = useI18n();
   const [installRoot, setInstallRoot] = useState(data.settings.installRoot);
   const [saving, setSaving] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
@@ -982,37 +1018,36 @@ export function FirstRunWizard({ data, toast }: { data: AppSnapshot; toast: (val
     setSaving(true);
     try {
       await window.launcher.updateSettings({ installRoot, firstRunCompleted: true });
-      toast({ kind: 'success', message: 'Welcome to Xodus Nexus. Install a game from the Store to get started.' });
+      toast({ kind: 'success', message: t("Welcome to Xodus Nexus. Install a game from the Store to get started.") });
     } catch (error) { toast({ kind: 'error', message: errorMessage(error) }); }
     finally { setSaving(false); }
   }
 
   return <div className="wizard-overlay">
-    <div className="wizard" role="dialog" aria-modal="true" aria-label="Set up Xodus Nexus">
-      <div><span className="overline">WELCOME</span><h1>Set up Xodus Nexus</h1></div>
+    <div className="wizard" role="dialog" aria-modal="true" aria-label={t("Set up Xodus Nexus")}>
+      <div><span className="overline">{t("WELCOME")}</span><h1>{t("Set up Xodus Nexus")}</h1></div>
       <section className="wizard-disclaimer" role="note" aria-labelledby="wizard-disclaimer-title">
         <CircleAlert aria-hidden="true" />
-        <div><h2 id="wizard-disclaimer-title">Independent, unofficial project</h2>
-          <p>Xodus Nexus is built on Xodus, but it is <strong>not an official Xodus project</strong> and is not developed or maintained by the upstream Xodus developers.</p>
+        <div><h2 id="wizard-disclaimer-title">{t("Independent, unofficial project")}</h2>
+          <p>{t("Xodus Nexus is built on Xodus, but it is")}{' '}<strong>{t("not an official Xodus project")}</strong> {' '}{t("and is not developed or maintained by the upstream Xodus developers.")}</p>
           {data.platform === 'darwin'
-            ? <p>MACxus is an independent macOS port of Xodus Nexus. Please report problems only in the <a href="https://github.com/fladnaG86/MACxus/issues" target="_blank" rel="noopener noreferrer">MACxus repository</a>, not to Xodus or Xodus Nexus: a problem on macOS may not exist on Linux.</p>
-            : <p>Please report Nexus issues only in the <a href="https://github.com/domsvoboda/xodus-nexus/issues" target="_blank" rel="noopener noreferrer">Nexus repository</a>, not upstream. A problem in Nexus may not exist in upstream Xodus.</p>}
+            ? <p>{t("MACxus is an independent macOS port of Xodus Nexus. Please report problems only in the")}{' '}<a href="https://github.com/fladnaG86/MACxus/issues" target="_blank" rel="noopener noreferrer">{t("MACxus repository")}</a>{t(", not to Xodus or Xodus Nexus: a problem on macOS may not exist on Linux.")}</p>
+            : <p>{t("Please report Nexus issues only in the")}{' '}<a href="https://github.com/domsvoboda/xodus-nexus/issues" target="_blank" rel="noopener noreferrer">{t("Nexus repository")}</a>{t(", not upstream. A problem in Nexus may not exist in upstream Xodus.")}</p>}
         </div>
       </section>
-      <p>Choose where games install. Everything else can be changed later in Settings.</p>
-      <label className="wizard-field">Games folder
-        <div className="input-action"><input data-gamepad-initial value={installRoot} onChange={(event) => setInstallRoot(event.target.value)} /><button onClick={() => void browse()} title="Browse"><FolderOpen /></button></div>
-        <small>New games download and extract into this folder.</small>
+      <p>{t("Choose where games install. Everything else can be changed later in Settings.")}</p>
+      <label className="wizard-field">{t("Games folder")}{' '}<div className="input-action"><input data-gamepad-initial value={installRoot} onChange={(event) => setInstallRoot(event.target.value)} /><button onClick={() => void browse()} title={t("Browse")}><FolderOpen /></button></div>
+        <small>{t("New games download and extract into this folder.")}</small>
       </label>
       <KeyringSetup compact disabled={signingIn || data.auth.running} />
       <div className="wizard-account">
-        <div><strong>Microsoft account</strong><small>{data.backend.available ? (data.auth.stored === true ? `Signed in as ${data.auth.username ?? 'stored account'}` : data.auth.stored === false ? 'Not signed in yet — Store browsing works without an account' : 'Account status is still being checked') : backendSetupHint(data.backend)}</small></div>
-        <button className="secondary" disabled={!data.backend.capabilities.login || signingIn || data.auth.running} onClick={() => void signIn()}>{signingIn ? <LoaderCircle className="spin" /> : <LogIn />}{data.auth.stored ? 'Sign in again' : 'Sign in'}</button>
+        <div><strong>{t("Microsoft account")}</strong><small>{data.backend.available ? (data.auth.stored === true ? t("Signed in as {value0}", { value0: data.auth.username ?? t("stored account") }) : data.auth.stored === false ? t("Not signed in yet — Store browsing works without an account") : t("Account status is still being checked")) : localize(backendSetupHint(data.backend, t))}</small></div>
+        <button className="secondary" disabled={!data.backend.capabilities.login || signingIn || data.auth.running} onClick={() => void signIn()}>{signingIn ? <LoaderCircle className="spin" /> : <LogIn />}{data.auth.stored ? t("Sign in again") : t("Sign in")}</button>
       </div>
       <div className="wizard-actions">
         <PasskeySignInNotice />
-        <span>Signing in can also be done later from Settings.</span>
-        <button className="primary" disabled={saving} onClick={() => void finish()}>{saving ? <LoaderCircle className="spin" /> : <Check />}Start using Xodus Nexus</button>
+        <span>{t("Signing in can also be done later from Settings.")}</span>
+        <button className="primary" disabled={saving} onClick={() => void finish()}>{saving ? <LoaderCircle className="spin" /> : <Check />}{t("Start using Xodus Nexus")}</button>
       </div>
     </div>
   </div>;
@@ -1022,6 +1057,7 @@ export function GlobalSearch({ games, page, query, change, submit, select }: {
   games: Game[]; page: Page; query: string; change: (value: string) => void;
   submit: (value: string) => void; select: (id: string) => void;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [page]);
   const term = query.trim().toLowerCase();
@@ -1032,27 +1068,22 @@ export function GlobalSearch({ games, page, query, change, submit, select }: {
   }}><Search /><input value={query} onChange={event => { change(event.target.value); setOpen(true); }} onKeyDown={event => {
     if (event.key === 'Escape') setOpen(false);
     if (event.key === 'Enter' && term.length >= 2) { setOpen(false); submit(query.trim()); }
-  }} aria-expanded={visible} aria-controls={visible ? 'global-search-results' : undefined} placeholder="Search games, add-ons and your library" />
-    {query ? <button aria-label="Clear search" onClick={() => { change(''); setOpen(false); }}><X /></button> : null}
+  }} aria-expanded={visible} aria-controls={visible ? 'global-search-results' : undefined} placeholder={t("Search games, add-ons and your library")} />
+    {query ? <button aria-label={t("Clear search")} onClick={() => { change(''); setOpen(false); }}><X /></button> : null}
     {visible ? <div className="search-results" id="global-search-results">{results.map(game => <button key={game.id} onClick={() => { setOpen(false); change(''); select(game.id); }}><Cover game={game} /><span><GameTitle title={game.title} /><small>{game.storeId ?? game.path}</small></span></button>)}</div> : null}
   </div>;
 }
 
-export default function App() {
+function Launcher({ data, initialError }: { data: AppSnapshot; initialError?: Toast }) {
+  const { t, localize } = useI18n();
   const [page, setPage] = useState<Page>(() => window.location.hash === '#store' ? 'store' : 'home');
-  const [data, setData] = useState<AppSnapshot>(emptySnapshot);
-  const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<Toast>();
+  const [toast, setToast] = useState<Toast | undefined>(initialError);
   const [search, setSearch] = useState('');
   const [submittedSearch, setSubmittedSearch] = useState('');
   // App stays mounted while pages change, unlike LibraryPage/AccountGames.
   const [libraryFilters, setLibraryFilters] = useState<LibraryFilters>(() => loadLibraryFilters());
   const [librarySelection, setLibrarySelection] = useState<{ id: string }>();
 
-  useEffect(() => {
-    void window.launcher.getSnapshot().then((value) => { setData(value); setLoading(false); }).catch((error) => { setToast({ kind: 'error', message: errorMessage(error) }); setLoading(false); });
-    return window.launcher.onSnapshot(setData);
-  }, []);
   useEffect(() => { if (!toast) return; const timeout = window.setTimeout(() => setToast(undefined), 5000); return () => window.clearTimeout(timeout); }, [toast]);
   useEffect(() => {
     // XODUS_DEMO_TOUR=1 cycles through the pages for screenshot capture.
@@ -1066,7 +1097,7 @@ export default function App() {
 
   function changeLibraryFilters(filters: LibraryFilters) {
     setLibraryFilters(filters);
-    if (!saveLibraryFilters(filters)) setToast({ kind: 'error', message: 'Library filters could not be saved. They may reset after restarting Nexus.' });
+    if (!saveLibraryFilters(filters)) setToast({ kind: 'error', message: t("Library filters could not be saved. They may reset after restarting Nexus.") });
   }
 
   function openLibraryGame(id: string) {
@@ -1079,7 +1110,7 @@ export default function App() {
 
   function action(fn: () => Promise<unknown>, success?: string) { void fn().then(() => success && setToast({ kind: 'success', message: success })).catch((error) => setToast({ kind: 'error', message: errorMessage(error) })); }
 
-  if (loading) return <div className="boot"><div className="brand-mark">X</div><LoaderCircle className="spin" /><span>Loading Xodus Nexus</span></div>;
+
   return <ConfirmationProvider><PackageInstallProvider><div className={data.platform === 'darwin' ? 'app-shell platform-darwin' : 'app-shell'}>
     {!data.settings.firstRunCompleted ? <FirstRunWizard data={data} toast={(value) => setToast(value)} /> : null}
     <Sidebar data={data} page={page} go={setPage} openGame={openLibraryGame} />
@@ -1088,10 +1119,26 @@ export default function App() {
       <header className="topbar"><GlobalSearch games={data.games} page={page} query={search} change={setSearch} submit={value => { setSubmittedSearch(value); setPage('store'); }} select={openLibraryGame} /><TopStatus data={data} go={setPage} /></header>
       <div className="page-scroll">{page === 'home' ? <HomePage data={data} go={setPage} action={action} /> : null}{page === 'store' ? <StorePage data={data} toast={setToast} go={setPage} initialQuery={submittedSearch} /> : null}{page === 'library' ? <LibraryPage data={data} toast={setToast} filters={libraryFilters} onFiltersChange={changeLibraryFilters} selection={librarySelection} /> : null}{page === 'downloads' ? <DownloadsPage data={data} toast={setToast} /> : null}{page === 'settings' ? <SettingsPage data={data} toast={setToast} /> : null}</div>
     </section>
-    {toast ? <div className={`toast ${toast.kind}`}>{toast.kind === 'success' ? <Check /> : toast.kind === 'error' ? <CircleAlert /> : <Terminal />}<span>{toast.message}</span><button onClick={() => setToast(undefined)}><X /></button></div> : null}
+    {toast ? <div className={`toast ${toast.kind}`}>{toast.kind === 'success' ? <Check /> : toast.kind === 'error' ? <CircleAlert /> : <Terminal />}<span>{localize(toast.message)}</span><button onClick={() => setToast(undefined)}><X /></button></div> : null}
   </div><GamepadNavigation back={() => setPage('home')} page={delta => setPage(current => {
     const pages: Page[] = ['home', 'library', 'store'];
     const index = pages.indexOf(current);
     return index === -1 ? pages[delta > 0 ? 0 : pages.length - 1] : pages[(index + delta + pages.length) % pages.length];
   })} /></PackageInstallProvider></ConfirmationProvider>;
+}
+
+
+export default function App() {
+  const [data, setData] = useState<AppSnapshot>(emptySnapshot);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Toast>();
+  useEffect(() => {
+    let live = true;
+    void window.launcher.getSnapshot().then(value => { if (live) { setData(value); setLoading(false); } })
+      .catch(error => { if (live) { setError({ kind: 'error', message: errorMessage(error) }); setLoading(false); } });
+    const unsubscribe = window.launcher.onSnapshot(value => { if (live) setData(value); });
+    return () => { live = false; unsubscribe(); };
+  }, []);
+  if (loading) return <div className="boot"><div className="brand-mark">X</div><LoaderCircle className="spin" /><span>Loading MACxus</span></div>;
+  return <I18nProvider language={data.settings.language}><Launcher data={data} initialError={error} /></I18nProvider>;
 }

@@ -171,6 +171,8 @@ export interface GameOperation {
 }
 
 export interface Settings {
+  /** Launcher interface language; independent of game/package language and Store market. */
+  language?: import('./i18n.js').AppLanguage;
   installRoot: string;
   market: string;
   parallelDownloads: number;

@@ -1,3 +1,4 @@
+import { useI18n } from './i18n';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Download, Gamepad2 } from 'lucide-react';
 import type { DownloadTask, Game } from '../shared/types';
@@ -26,16 +27,18 @@ function Artwork({ cover }: { cover?: string }) {
 }
 
 function Progress({ task }: { task: DownloadTask }) {
+  const { t } = useI18n();
   const progress = task.progress !== null && Number.isFinite(task.progress) ? Math.max(0, Math.min(100, task.progress)) : undefined;
-  const state = task.status === 'paused' ? 'Paused' : task.status === 'queued' ? 'Queued' : 'In progress';
+  const state = task.status === 'paused' ? t("Paused") : task.status === 'queued' ? t("Queued") : t("In progress");
   return <div className="queue-preview-progress"><div className={`progress-track ${progress === undefined && task.status === 'running' ? 'indeterminate' : ''}`}
-    role="progressbar" aria-label={`${task.title} download`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}
+    role="progressbar" aria-label={t("{value0} download", { value0: task.title })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}
     aria-valuetext={progress === undefined ? state : `${state}, ${Math.round(progress)}%`}>
     <i style={progress !== undefined ? { width: `${progress}%` } : task.status === 'running' ? undefined : { width: 0 }} /></div>
     <span>{progress === undefined ? state : `${Math.round(progress)}%`}</span></div>;
 }
 
 export function QueuePreview({ tasks, games }: { tasks: readonly DownloadTask[]; games: readonly Game[] }) {
+  const { t } = useI18n();
   return <div className="queue-preview-card">
     <ul className="queue-preview-list">{tasks.map(task => {
       const current = Number.isFinite(task.downloadedBytes) && task.downloadedBytes! >= 0 ? task.downloadedBytes : undefined;
@@ -43,10 +46,10 @@ export function QueuePreview({ tasks, games }: { tasks: readonly DownloadTask[];
       return <li className={`queue-preview-item ${task.status}`} key={task.id}>
         <Artwork cover={coverFor(task, games)} />
         <div className="queue-preview-main"><strong title={task.title}>{task.title}</strong>
-          <small>{total !== undefined ? `${current !== undefined ? size(current) : 'Size pending'} / ${size(total)}`
-            : current !== undefined ? `${size(current)} downloaded` : task.status === 'queued' ? 'Waiting to start' : 'Size not reported yet'}</small>
+          <small>{total !== undefined ? `${current !== undefined ? size(current) : t("Size pending")} / ${size(total)}`
+            : current !== undefined ? t("{value0} downloaded", { value0: size(current) }) : task.status === 'queued' ? t("Waiting to start") : t("Size not reported yet")}</small>
           <Progress task={task} />
-          {task.status === 'paused' ? <small className="queue-preview-state">Paused</small> : null}
+          {task.status === 'paused' ? <small className="queue-preview-state">{t("Paused")}</small> : null}
         </div>
       </li>;
     })}</ul>
@@ -56,12 +59,13 @@ export function QueuePreview({ tasks, games }: { tasks: readonly DownloadTask[];
 export function InstallQueueShortcut({ downloads, games, active, openQueue }: {
   downloads: readonly DownloadTask[]; games: readonly Game[]; active: boolean; openQueue: () => void;
 }) {
+  const { t } = useI18n();
   const tasks = previewTasks(downloads), [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null), panelId = useId();
   const visible = open && tasks.length > 0;
   const current = tasks[0];
-  const state = current?.status === 'running' ? 'Downloading' : current?.status === 'paused' ? 'Paused' : 'Queued';
-  const label = current ? `${state} (${1}/${tasks.length})` : 'Install Queue';
+  const state = current?.status === 'running' ? t("Downloading") : current?.status === 'paused' ? t("Paused") : t("Queued");
+  const label = current ? `${state} (${1}/${tasks.length})` : t("Install Queue");
   const navigate = () => { setOpen(false); openQueue(); };
   useEffect(() => {
     if (!visible) return;
@@ -75,14 +79,14 @@ export function InstallQueueShortcut({ downloads, games, active, openQueue }: {
     onPointerLeave={() => { if (!wrapper.current?.contains(document.activeElement)) setOpen(false); }}
     onFocus={() => setOpen(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false); }}>
     <button className={`queue-summary ${active ? 'active' : ''}`} aria-current={active ? 'page' : undefined}
-      aria-label={`Install Queue${current ? `, ${tasks.length} active installations, ${state}, ${current.title}` : ''}`}
+      aria-label={`${t("Install Queue")}${current ? t(", {value0} active installations, {value1}, {value2}", { value0: tasks.length, value1: state, value2: current.title }) : ''}`}
       aria-expanded={tasks.length ? visible : undefined} aria-controls={visible ? panelId : undefined} onClick={navigate}>
       {current ? <Artwork cover={coverFor(current, games)} /> : <Download />}
       <div className="queue-summary-copy"><strong>{label}</strong>
-        <small title={current?.title}>{current?.title ?? 'Manage installations'}</small>
+        <small title={current?.title}>{current?.title ?? t("Manage installations")}</small>
         {current ? <Progress task={current} /> : null}</div>
     </button>
-    {visible ? <div className="queue-preview" id={panelId} role="region" aria-label="Installation progress">
+    {visible ? <div className="queue-preview" id={panelId} role="region" aria-label={t("Installation progress")}>
       <QueuePreview tasks={tasks} games={games} />
     </div> : null}
   </div>;

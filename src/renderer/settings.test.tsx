@@ -77,8 +77,8 @@ describe('Settings diagnostics', () => {
     data.backend.updateAvailable = false;
     const html = renderToStaticMarkup(<SettingsPage data={data} toast={() => {}} />);
     const main = html.replace(/<details\b[^>]*>[\s\S]*?<\/details>/, '');
-    expect(main).toMatch(/<button[^>]*>(?:<svg[\s\S]*?<\/svg>)?Compila il backend<\/button>/);
-    expect(main).toContain('Su macOS il backend Nexus si compila sul tuo Mac dal codice sorgente');
+    expect(main).toMatch(/<button[^>]*>(?:<svg[\s\S]*?<\/svg>)?Build backend<\/button>/);
+    expect(main).toContain('On macOS, the Nexus backend is built on your Mac from pinned source code');
     expect(main).not.toContain('Install the prebuilt Nexus backend');
     expect(main).not.toContain('Install backend');
   });

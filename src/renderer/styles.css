@@ -649,3 +649,7 @@ button.primary, button.secondary { border-radius: 5px; min-height: 40px; font-si
 .platform-darwin .sidebar { position: relative; }
 .platform-darwin .topbar { -webkit-app-region: drag; }
 .platform-darwin .topbar :is(input, button, a, select, textarea, [role="listbox"], [role="option"], [tabindex]) { -webkit-app-region: no-drag; }
+
+.language-card label { display: grid; gap: 7px; max-width: 320px; font-size: 11px; }
+.language-card select { width: 100%; min-height: 40px; padding: 0 11px; border: 1px solid #4b5056; border-radius: 2px; background: #17191c; color: inherit; }
+.language-card .settings-heading p { white-space: normal; }
