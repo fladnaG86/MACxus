@@ -19,13 +19,19 @@ export async function buildCompatibility(output) {
   const env = { ...process.env };
   for (const key of ['LD_LIBRARY_PATH', 'LD_PRELOAD', 'CPATH', 'LIBRARY_PATH']) delete env[key];
   const run = (command, args) => execFileSync(command, args, { env, stdio: 'inherit' });
+  // InitOnce/SRW locks and TaskDialog require Vista APIs. Older MinGW headers
+  // default to an earlier Windows version, so declare the API baseline rather
+  // than relying on the compiler distribution's default.
+  const windowsTarget = ['-D_WIN32_WINNT=0x0600'];
   run('x86_64-w64-mingw32-gcc', ['-shared', '-O2', '-Wall', '-Wextra', '-Werror',
+    ...windowsTarget,
     '-Wl,--no-insert-timestamp', '-o', path.join(output, 'PlayFabGameSave.dll'),
     path.join(source, 'playfab-save-folder.c'), path.join(source, 'playfab-session.c'),
     path.join(source, 'playfab-save-folder.def')]);
   run('gcc', ['-O2', '-Wall', '-Wextra', '-Werror', '-I', output,
     '-o', path.join(output, 'wine-launcher'), path.join(source, 'wine-launcher.c')]);
   run('x86_64-w64-mingw32-gcc', ['-O2', '-Wall', '-Wextra', '-Werror', '-Wl,--no-insert-timestamp',
+    ...windowsTarget,
     '-o', path.join(output, 'gaming-services-version.exe'), path.join(source, 'gaming-services-version.c'), '-ladvapi32']);
   const elf = execFileSync('objdump', ['-T', path.join(output, 'wine-launcher')], { env, encoding: 'utf8' });
   for (const [, major, minor] of elf.matchAll(/GLIBC_(\d+)\.(\d+)/g)) {
