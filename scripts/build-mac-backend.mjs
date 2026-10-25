@@ -6,18 +6,22 @@ import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { backendLock as lock, backendRecipeSha256 } from '../dist-electron/main/backend-package.js';
 import { MAC_BACKEND_FILES, readBundledBackend } from '../dist-electron/main/bundled-backend.js';
+import { resolveMacSigningIdentity, signMacBackend, verifyMacBackendSigning } from './mac-backend-signing.mjs';
 
 if (process.platform !== 'darwin' || process.arch !== 'arm64') throw Error('Build the bundled backend on an Apple Silicon Mac.');
 const root = fileURLToPath(new URL('../', import.meta.url));
 const checkOnly = process.argv.includes('--check');
 if (process.argv.slice(2).some(arg => arg !== '--check')) throw Error('Usage: build-mac-backend.mjs [--check]');
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-const buildRecipeSha256 = sha(await fs.readFile(fileURLToPath(import.meta.url)));
+const buildRecipeSha256 = sha(Buffer.concat([await fs.readFile(fileURLToPath(import.meta.url)), await fs.readFile(new URL('./mac-backend-signing.mjs', import.meta.url))]));
+const signingIdentity = checkOnly ? null : resolveMacSigningIdentity(process.env.MACXUS_SIGNING_IDENTITY);
 const output = path.join(root, 'bundled/mac-backend');
 if (!checkOnly) {
   try {
     const current = await readBundledBackend(output, 'arm64');
     if (current.manifest.buildRecipeSha256 !== buildRecipeSha256) throw Error('The cached backend has an older build recipe. Remove the generated bundled/mac-backend directory and rebuild.');
+    if (current.manifest.signingIdentity !== signingIdentity) throw Error('The cached backend uses another signing identity. Remove the generated bundled/mac-backend directory and rebuild.');
+    verifyMacBackendSigning(output, signingIdentity);
     console.log('Reusing the verified backend built from the current pinned recipe.');
     process.exit(0);
   } catch (error) { if (error.code !== 'ENOENT') throw error; }
@@ -87,6 +91,7 @@ for (const name of ['xodus-cli', 'xodus-service']) {
   await fs.copyFile(path.join(target, 'release', name), path.join(bundle, name));
   await fs.chmod(path.join(bundle, name), 0o755);
 }
+signMacBackend(bundle, signingIdentity);
 await fs.copyFile(path.join(source, 'LICENSE'), path.join(bundle, 'LICENSE'));
 // Include complete corresponding source, vendored dependencies and exact recipe.
 const vendor = command('rustup', ['run', lock.rust, 'cargo', 'vendor', '--locked', 'vendor'], true);
@@ -98,6 +103,7 @@ await fs.mkdir(path.join(recipe, 'scripts'));
 await fs.copyFile(path.join(root, 'assets/backend-source.lock.json'), path.join(recipe, 'assets/backend-source.lock.json'));
 for (const patch of lock.patches) await fs.copyFile(path.join(root, 'assets', patch.file), path.join(recipe, 'assets', patch.file));
 await fs.copyFile(fileURLToPath(import.meta.url), path.join(recipe, 'scripts/build-mac-backend.mjs'));
+await fs.copyFile(new URL('./mac-backend-signing.mjs', import.meta.url), path.join(recipe, 'scripts/mac-backend-signing.mjs'));
 await fs.writeFile(path.join(recipe, 'BUILD.txt'), `GPL-3.0 backend; dependency licenses retained in source/vendor.\nRust ${lock.rust}; macOS SDK and protoc required for rebuilding only.\nFrom source/: MACOSX_DEPLOYMENT_TARGET=13.0 cargo +${lock.rust} build --locked --offline --release --no-default-features -p xodus-cli -p xodus-service\nAuth UI: Electron. Never run xodus-service to inspect it; it accesses account services.\n`);
 // Supply an explicit file list instead of BSD/GNU tar exclusion semantics. Preserve
 // nested dependency directories named target while excluding checkout metadata.
@@ -106,7 +112,7 @@ command('tar', ['-cJf', path.join(bundle, 'source.tar.xz'), '-C', work, 'recipe'
 const files = {};
 for (const name of MAC_BACKEND_FILES) files[name] = sha(await fs.readFile(path.join(bundle, name)));
 const manifest = { schema: 1, platform: 'darwin', arch: 'arm64', authUi: 'electron', version: lock.version,
-  commit: lock.commit, recipeSha256: backendRecipeSha256, compatibility: lock.macCompatibility, buildRecipeSha256, rustc, files };
+  commit: lock.commit, recipeSha256: backendRecipeSha256, compatibility: lock.macCompatibility, buildRecipeSha256, signingIdentity, rustc, files };
 await fs.writeFile(path.join(bundle, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 await readBundledBackend(bundle, 'arm64');
 await fs.mkdir(path.dirname(output), { recursive: true });

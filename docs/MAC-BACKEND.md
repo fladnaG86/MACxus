@@ -34,6 +34,35 @@ The image is detached after testing. The CLI is checked using help commands;
 Both executables must link only macOS system libraries and carry valid code
 signatures. The existing beta distribution is still unsigned at the app level.
 
+### Optional stable backend signing
+
+For release builds, a maintainer can sign the two backend executables with an
+existing code-signing certificate and private key in the build Mac's Keychain:
+
+```sh
+MACXUS_SIGNING_IDENTITY='Developer ID Application: Your Name (TEAMID)' npm run dist:mac
+```
+
+Use the exact identity name or its SHA-1 fingerprint from
+`security find-identity -v -p codesigning`. Both executables receive stable
+identifiers (`io.macxus.xodus-cli` and `io.macxus.xodus-service`) and are verified
+against the selected certificate before their hashes are recorded. A missing,
+ambiguous or unusable requested identity fails the build; it never silently
+falls back. An unset variable retains the linker's ad-hoc signatures and requires
+no certificate lookup. PR native checks never use a signing identity.
+
+The cache records the certificate fingerprint. Changing the signing selection
+requires removing `bundled/mac-backend` and rebuilding; a cached signed backend
+is reverified against its certificate before reuse and after packaging. Signing
+does not modify Cargo's build output or run on an end user's Mac. The manual
+hosted workflow uses the ad-hoc default unless the maintainer separately sets up
+certificate provisioning; this change does not install or upload private keys.
+
+Reusing the certificate and identifiers allows Keychain grants to survive backend
+rebuilds. Switching from an older locally built backend can still prompt once.
+Ad-hoc builds can prompt again after each app update; signing only the backend
+does not sign or notarize the app or remove its Gatekeeper prompts.
+
 The generated `bundled/mac-backend` directory is ignored by Git. It contains the
 CLI, service, GPL-3.0 license, manifest and a complete corresponding-source archive
 with vendored dependency sources/licenses, patched upstream source and recipe.

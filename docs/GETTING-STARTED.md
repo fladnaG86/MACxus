@@ -5,22 +5,32 @@
 ## English
 
 These steps apply to releases that include the bundled Apple Silicon backend.
-The first beta (`0.3.11-mac.1`) required a local backend build; use a newer bundled
-release when available. Developers building from source can follow
+The betas through `0.3.11-mac.3` required a local backend build; choose a release
+whose notes say the backend is included. Developers building from source can follow
 [the maintainer guide](MAC-BACKEND.md).
 
 ### 1. Check your Mac
 
 MACxus needs an Apple Silicon Mac (M1 or later), Rosetta 2 and CrossOver 26.x in
-`/Applications`. CrossOver is paid software with a free trial. If Rosetta is not
-installed, macOS offers to install it when you open an Intel app such as CrossOver.
+`/Applications`. CrossOver is paid software with a free trial and runs natively;
+install Rosetta explicitly for the Windows games. Open **Terminal**, paste this
+command and press Return (it accepts Apple's Rosetta license):
+
+```sh
+softwareupdate --install-rosetta --agree-to-license
+```
 
 ### 2. Install MACxus
 
 Download the Apple Silicon `.dmg` from
 [Releases](https://github.com/fladnaG86/MACxus/releases), open it, and drag MACxus
-to Applications. The beta app is unsigned: for the first launch, right-click
-MACxus in Applications and choose **Open**. Follow the macOS prompts.
+to Applications. The beta app is unsigned. Try opening it once, then go to
+**System Settings → Privacy & Security → Open Anyway**. Alternatively, open
+Terminal and run this command for the app you just installed:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/MACxus.app
+```
 
 The Xodus backend is included and becomes ready automatically. **You do not need
 Homebrew, Git, Rust or protoc**, and you do not need to create a signing certificate.
@@ -58,22 +68,32 @@ tokens, Keychain contents, game files or saves.
 ## Italiano
 
 Questi passi valgono per le release con il backend Apple Silicon incluso.
-La prima beta (`0.3.11-mac.1`) richiedeva la compilazione locale: usa una release
-più recente con backend incluso quando disponibile. Per compilare dal sorgente,
+Le beta fino alla `0.3.11-mac.3` richiedevano la compilazione locale: scegli una
+release le cui note indicano il backend incluso. Per compilare dal sorgente,
 consulta [la guida per sviluppatori](MAC-BACKEND.md).
 
 ### 1. Controlla il Mac
 
 Servono un Mac Apple Silicon (M1 o successivo), Rosetta 2 e CrossOver 26.x in
-`/Applications`. CrossOver è a pagamento, con una prova gratuita. Se Rosetta non
-è installato, macOS ne propone l'installazione quando apri un'app Intel come CrossOver.
+`/Applications`. CrossOver è a pagamento, con una prova gratuita, ed è un'app
+nativa: installa esplicitamente Rosetta per i giochi Windows. Apri **Terminale**,
+incolla il comando e premi Invio (accetta la licenza Rosetta di Apple):
+
+```sh
+softwareupdate --install-rosetta --agree-to-license
+```
 
 ### 2. Installa MACxus
 
 Scarica il `.dmg` Apple Silicon dalle
 [release](https://github.com/fladnaG86/MACxus/releases), aprilo e trascina MACxus in
-Applicazioni. La beta non è firmata: al primo avvio fai clic destro su MACxus e
-scegli **Apri**, seguendo le richieste di macOS.
+Applicazioni. La beta non è firmata. Prova ad aprirla una volta, poi vai in
+**Impostazioni di Sistema → Privacy e sicurezza → Apri comunque**. In alternativa,
+apri Terminale ed esegui questo comando per l'app appena installata:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/MACxus.app
+```
 
 Il backend Xodus è incluso e diventa pronto automaticamente. **Non servono
 Homebrew, Git, Rust o protoc**, né un certificato di firma locale. Se il backend

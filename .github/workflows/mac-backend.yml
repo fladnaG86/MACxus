@@ -1,10 +1,10 @@
 name: Native Mac backend
 on:
   pull_request:
-    paths: ['assets/**', 'src/main/**', 'src/shared/**', 'scripts/build-mac-backend.mjs', 'scripts/verify-mac-bundle.mjs', 'scripts/launcher-fonts-after-pack.cjs', 'package*.json', 'tsconfig*.json', '.github/workflows/mac-backend.yml']
+    paths: ['assets/**', 'src/main/**', 'src/shared/**', 'scripts/build-mac-backend.mjs', 'scripts/mac-backend-signing.mjs', 'scripts/verify-mac-bundle.mjs', 'scripts/launcher-fonts-after-pack.cjs', 'package*.json', 'tsconfig*.json', '.github/workflows/mac-backend.yml']
   push:
     branches: [main, 'feat/**', 'fix/**']
-    paths: ['assets/**', 'src/main/**', 'src/shared/**', 'scripts/build-mac-backend.mjs', 'scripts/verify-mac-bundle.mjs', 'scripts/launcher-fonts-after-pack.cjs', 'package*.json', 'tsconfig*.json', '.github/workflows/mac-backend.yml']
+    paths: ['assets/**', 'src/main/**', 'src/shared/**', 'scripts/build-mac-backend.mjs', 'scripts/mac-backend-signing.mjs', 'scripts/verify-mac-bundle.mjs', 'scripts/launcher-fonts-after-pack.cjs', 'package*.json', 'tsconfig*.json', '.github/workflows/mac-backend.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             work/mac-backend-target
-          key: mac-backend-${{ runner.arch }}-${{ hashFiles('assets/backend-source.lock.json', 'scripts/build-mac-backend.mjs') }}
+          key: mac-backend-${{ runner.arch }}-${{ hashFiles('assets/backend-source.lock.json', 'scripts/build-mac-backend.mjs', 'scripts/mac-backend-signing.mjs') }}
       - run: npm ci
       - name: Check native backend without creating a distribution candidate
         if: github.event_name != 'workflow_dispatch'

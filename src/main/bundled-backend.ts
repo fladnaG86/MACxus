@@ -7,7 +7,7 @@ export const MAC_BACKEND_FILES = ['xodus-cli', 'xodus-service', 'LICENSE', 'sour
 export interface BundledBackendManifest {
   schema: 1; platform: 'darwin'; arch: 'arm64'; authUi: 'electron';
   version: string; commit: string; compatibility: string; recipeSha256: string;
-  buildRecipeSha256: string; rustc: string;
+  buildRecipeSha256: string; signingIdentity: string | null; rustc: string;
   files: Record<typeof MAC_BACKEND_FILES[number], string>;
 }
 
@@ -16,6 +16,7 @@ export function validateBundledBackendManifest(value: unknown, arch: string): Bu
   if (!item || item.schema !== 1 || item.platform !== 'darwin' || item.arch !== arch || arch !== 'arm64' || item.authUi !== 'electron' ||
       item.version !== backendLock.version || item.commit !== backendLock.commit || item.compatibility !== backendLock.macCompatibility ||
       item.recipeSha256 !== backendRecipeSha256 || !/^[a-f0-9]{64}$/.test(item.buildRecipeSha256 ?? '') ||
+      (item.signingIdentity !== null && (typeof item.signingIdentity !== 'string' || !/^[A-F\d]{40}$/.test(item.signingIdentity))) ||
       !item.rustc?.startsWith(`rustc ${backendLock.rust} `) ||
       !item.files || Object.keys(item.files).sort().join() !== [...MAC_BACKEND_FILES].sort().join() ||
       Object.values(item.files).some(hash => typeof hash !== 'string' || !/^[a-f0-9]{64}$/.test(hash))) {

@@ -5,7 +5,9 @@ module.exports = async function afterPack(context) {
   if (context.electronPlatformName === 'darwin') {
     const { readBundledBackend } = await import('../dist-electron/main/bundled-backend.js');
     const backend = path.join(context.appOutDir, 'MACxus.app', 'Contents', 'Resources', 'backend');
-    await readBundledBackend(backend, 'arm64');
+    const { manifest } = await readBundledBackend(backend, 'arm64');
+    const { verifyMacBackendSigning } = await import('./mac-backend-signing.mjs');
+    verifyMacBackendSigning(backend, manifest.signingIdentity);
     return;
   }
   if (context.electronPlatformName !== 'linux') return;

@@ -26,7 +26,7 @@ async function fixture() {
   }
   const manifest = { schema: 1, platform: 'darwin', arch: 'arm64', authUi: 'electron', version: backendLock.version,
     commit: backendLock.commit, compatibility: backendLock.macCompatibility, recipeSha256: backendRecipeSha256,
-    buildRecipeSha256: 'a'.repeat(64), rustc: `rustc ${backendLock.rust} (fixture)`, files };
+    buildRecipeSha256: 'a'.repeat(64), signingIdentity: null, rustc: `rustc ${backendLock.rust} (fixture)`, files };
   const save = () => fs.writeFile(path.join(root, 'manifest.json'), JSON.stringify(manifest));
   await save(); return { root, manifest, save };
 }
@@ -57,9 +57,10 @@ it('rejects symlinks and an executable for a different architecture', async () =
 });
 it('binds bundles to the exact pinned source, recipe, platform and full source/license payload', async () => {
   const f = await fixture();
-  for (const patch of [{ commit: 'b'.repeat(40) }, { recipeSha256: 'b'.repeat(64) }, { compatibility: 'old' }, { arch: 'x64' }, { platform: 'linux' }, { files: { 'xodus-cli': 'a'.repeat(64) } }]) {
+  for (const patch of [{ commit: 'b'.repeat(40) }, { recipeSha256: 'b'.repeat(64) }, { compatibility: 'old' }, { arch: 'x64' }, { platform: 'linux' }, { signingIdentity: undefined }, { signingIdentity: 'unknown' }, { files: { 'xodus-cli': 'a'.repeat(64) } }]) {
     expect(() => validateBundledBackendManifest({ ...f.manifest, ...patch }, 'arm64')).toThrow();
   }
+  expect(validateBundledBackendManifest({ ...f.manifest, signingIdentity: 'AB'.repeat(20) }, 'arm64').signingIdentity).toBe('AB'.repeat(20));
 });
 it('preserves an explicitly selected developer checkout without changing the bundle', async () => {
   const f = await fixture();
