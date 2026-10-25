@@ -33,7 +33,10 @@ game installation, saves or Xodus checkout. Keep credentials, raw diagnostics,
 prefixes and agent handoffs outside Git. Include redacted reproduction steps,
 versions and actual test results in bug reports and PRs.
 
-Active CI runs source checks without distribution builds. The retained upstream
+Active PR CI runs source checks and account-free native backend checks without
+distribution builds. The native Mac workflow can also build a DMG candidate when
+manually dispatched on `main`; see [the bundled-backend guide](docs/MAC-BACKEND.md).
+The retained upstream
 distribution and promotion workflows are archived and inactive in this fork.
 When a maintainer prepares a release, promotion reuses the exact validated
 candidate files without rebuilding.

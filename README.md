@@ -45,16 +45,18 @@ Tested on one machine only (MacBook Pro M1 Max, macOS 27.2, CrossOver 26.3). Exp
 
 - Apple Silicon Mac with **Rosetta 2** (`softwareupdate --install-rosetta`).
 - **[CrossOver](https://www.codeweavers.com/crossover) 26.x** in `/Applications`: it provides D3DMetal and libraries used by both engines (paid software with a free trial).
-- To build the backend once: **Git**, **Rust** (`rustup`) and **protoc** (`brew install protobuf`).
+- Packaged Apple Silicon builds include the backend. Git, Rust and protoc are needed only for developer builds, not for users.
 - A Microsoft account that owns the game or has PC Game Pass.
 
 ### Install
+
+These steps apply to bundled builds. The original `0.3.11-mac.1` beta required a local backend build; use a bundled release when available.
 
 **New to Mac or to Terminal?** Follow the step-by-step [Getting started guide](docs/GETTING-STARTED.md#english): every command is ready to copy and paste.
 
 1. Download `MACxus-…-arm64.dmg` from [Releases](https://github.com/fladnaG86/MACxus/releases) and drag MACxus to Applications.
 2. The beta is **not signed**: the first time, right-click MACxus → **Open**, or run `xattr -dr com.apple.quarantine /Applications/MACxus.app`.
-3. **Settings → Xodus backend → Build backend** (Rust builds it locally, a few minutes).
+3. The included **Xodus backend** is ready automatically; no compilation or extra build tools are needed.
 4. **Settings → Nexus runtime**: install the runtime. MACxus picks the release its patched DLLs were built for.
 5. **Settings → Wine engine → Install Highball engine** (recommended for D3D12 / Unreal games); otherwise CrossOver is used.
 6. Sign in, install a game, press **Play**. If macOS asks for Keychain access, choose **Always Allow**.
@@ -102,16 +104,18 @@ Provato su una sola macchina (MacBook Pro M1 Max, macOS 27.2, CrossOver 26.3). A
 
 - Mac Apple Silicon con **Rosetta 2** (`softwareupdate --install-rosetta`).
 - **[CrossOver](https://www.codeweavers.com/crossover) 26.x** in Applicazioni: fornisce D3DMetal e librerie usate da entrambi i motori (a pagamento, con prova gratuita).
-- Per compilare il backend la prima volta: **Git**, **Rust** (`rustup`) e **protoc** (`brew install protobuf`).
+- Il backend è incluso nelle build Apple Silicon. Git, Rust e protoc servono solo per le build di sviluppo, non agli utenti.
 - Un account Microsoft che possiede il gioco o ha PC Game Pass.
 
 ### Installazione
+
+Questi passi valgono per le build con backend incluso. La beta originale `0.3.11-mac.1` richiedeva la compilazione locale: usa una release con backend incluso quando disponibile.
 
 **Nuovo sul Mac o sul Terminale?** Segui la [guida passo per passo](docs/GETTING-STARTED.md#italiano): ogni comando è pronto da copiare e incollare.
 
 1. Scarica `MACxus-…-arm64.dmg` da [Releases](https://github.com/fladnaG86/MACxus/releases) e trascina MACxus in Applicazioni.
 2. La beta **non è firmata**: la prima volta tasto destro su MACxus → **Apri**, oppure `xattr -dr com.apple.quarantine /Applications/MACxus.app`.
-3. **Impostazioni → Backend Xodus → Compila il backend** (Rust lo compila in locale, qualche minuto).
+3. Il **backend Xodus** incluso è pronto automaticamente: non servono compilazione o strumenti di sviluppo.
 4. **Impostazioni → Runtime Nexus**: installa il runtime. MACxus sceglie la versione per cui sono state compilate le sue DLL patchate.
 5. **Impostazioni → Motore Wine → Installa motore Highball** (consigliato per giochi D3D12 / Unreal); altrimenti si usa CrossOver.
 6. Accedi, installa un gioco, premi **Play**. Se macOS chiede l'accesso al Portachiavi, scegli **Consenti sempre**.

@@ -2,6 +2,12 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 
 module.exports = async function afterPack(context) {
+  if (context.electronPlatformName === 'darwin') {
+    const { readBundledBackend } = await import('../dist-electron/main/bundled-backend.js');
+    const backend = path.join(context.appOutDir, 'MACxus.app', 'Contents', 'Resources', 'backend');
+    await readBundledBackend(backend, 'arm64');
+    return;
+  }
   if (context.electronPlatformName !== 'linux') return;
   const root = context.appOutDir;
   const executable = path.join(root, 'xodus-nexus');

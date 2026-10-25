@@ -7,6 +7,7 @@ import { parseBackendHelp } from '../shared/utils.js';
 import { run } from './process.js';
 import { findLocalSigningIdentity, isSignedWithLocalIdentity, signBackendBinary } from './codesign.js';
 import { backendLock, backendRecipeSha256, backendAssets, compareVersions } from './backend-package.js';
+import { readBundledBackend } from './bundled-backend.js';
 import { discoverBackend, installBackend, type BackendArtifact } from './backend-releases.js';
 
 const REPOSITORY = backendLock.repository;
@@ -34,7 +35,7 @@ export function buildToolEnvironment(env: NodeJS.ProcessEnv, platform: NodeJS.Pl
   return { ...env, PATH: [...extra, ...current].join(':') };
 }
 
-interface ManagedPointer { commit: string; binaryPath: string; builtAt: string; linuxRunPatch?: string; recipeSha256?: string; version?: string; delivery?: 'release' | 'local' }
+interface ManagedPointer { commit: string; binaryPath: string; builtAt: string; linuxRunPatch?: string; recipeSha256?: string; version?: string; delivery?: 'release' | 'local'; preferLocal?: boolean }
 
 export class BackendManager {
   private status: BackendStatus;
@@ -51,6 +52,7 @@ export class BackendManager {
     isOperationActive: () => boolean,
     private readonly fetcher: typeof fetch = fetch,
     private readonly platform: NodeJS.Platform = process.platform,
+    private readonly bundle?: { root: string; arch: string },
   ) {
     this.managedRoot = path.join(userData, 'xodus-backends');
     this.pointerFile = path.join(this.managedRoot, 'current.json');
@@ -104,7 +106,7 @@ export class BackendManager {
 
   /** macOS startup: sign the current managed backend if it is not yet signed with the local certificate. */
   async ensureSigned(onStatus: () => void = () => {}): Promise<void> {
-    if (this.platform !== 'darwin') return;
+    if (this.platform !== 'darwin' || this.status.delivery === 'bundled') return;
     try {
       if (this.status.updating || this.isOperationActive()) {
         // Re-signing rewrites the file in place; never do it under a running backend or build.
@@ -158,6 +160,43 @@ export class BackendManager {
   }
 
   async refresh(): Promise<BackendStatus> {
+    if (this.platform === 'darwin' && this.bundle) {
+      // An explicit developer checkout is preserved. Otherwise use the shipped
+      // backend before probing Git/Cargo: /usr/bin/git can open an Xcode-tools
+      // install prompt on a clean Mac, even for --version.
+      const external = this.status.externalRoot ? path.join(this.status.externalRoot, 'target', 'release', 'xodus-cli') : undefined;
+      const capabilities = external ? await this.validate(external) : undefined;
+      if (external && capabilities) {
+        Object.assign(this.status, { available: true, source: 'external', binaryPath: external, capabilities,
+          commit: undefined, version: undefined, delivery: undefined, linuxRunPatch: undefined, blockReason: undefined });
+        return this.current;
+      }
+      const local = await this.readPointer();
+      if (local?.preferLocal && local.delivery === 'local' && local.recipeSha256 === backendRecipeSha256 && local.linuxRunPatch === backendCompatibility(this.platform)) {
+        const capabilities = await this.validate(local.binaryPath);
+        if (capabilities) {
+          Object.assign(this.status, { available: true, source: 'managed', binaryPath: local.binaryPath, capabilities,
+            commit: local.commit, version: local.version, delivery: 'local', linuxRunPatch: local.linuxRunPatch, blockReason: undefined });
+          return this.current;
+        }
+      }
+      try {
+        const bundled = await readBundledBackend(this.bundle.root, this.bundle.arch);
+        const capabilities = await this.validate(bundled.cli);
+        const runHelp = await run(bundled.cli, ['run', '--help'], { maxOutput: 100_000 });
+        if (!capabilities?.account || !capabilities.externalAuth || !capabilities.packageSelection || !capabilities.run ||
+            !capabilities.streamingProgressJson || !capabilities.streamingControls || !capabilities.streamingBandwidthLimit ||
+            runHelp.code !== 0 || !runHelp.output.includes('--materialize-chain')) throw Error('Bundled backend command validation failed. Reinstall MACxus.');
+        Object.assign(this.status, { available: true, source: 'bundled', binaryPath: bundled.cli, capabilities,
+          commit: bundled.manifest.commit, version: bundled.manifest.version, delivery: 'bundled',
+          linuxRunPatch: bundled.manifest.compatibility, blockReason: undefined, updateAvailable: false });
+      } catch (error) {
+        Object.assign(this.status, { available: false, source: 'none', binaryPath: undefined, capabilities: EMPTY_CAPABILITIES,
+          commit: undefined, version: undefined, delivery: 'bundled', linuxRunPatch: undefined,
+          blockReason: `Bundled backend could not be verified. Reinstall MACxus. ${(error as Error).message}` });
+      }
+      return this.current;
+    }
     const [git, cargo, rustc, protoc] = await Promise.all([
       this.commandExists('git'), this.commandExists('cargo'), this.commandExists('rustc'), this.commandExists('protoc'),
     ]);
@@ -215,10 +254,11 @@ export class BackendManager {
 
   async checkUpdate(): Promise<BackendStatus> {
     if (this.platform === 'darwin') {
-      // The published prebuilt backend is linux/x64 only; macOS builds from source.
+      // Packaged Macs update the backend with the app. Developer builds retain
+      // the local-build hint; preserve verification errors for packaged apps.
       this.artifact = undefined;
       Object.assign(this.status, { releaseAvailable: false, updateAvailable: false, releaseVersion: undefined,
-        blockReason: this.status.available ? undefined : MAC_BACKEND_BUILD_HINT });
+        blockReason: this.status.available ? undefined : this.bundle ? this.status.blockReason : MAC_BACKEND_BUILD_HINT });
       return this.current;
     }
     this.status.checking = true;
@@ -280,6 +320,11 @@ export class BackendManager {
   async rebuild(onStatus: () => void): Promise<void> {
     await this.assertUpdateAllowed();
     if (this.status.updating) throw new Error('A backend installation is already running.');
+    // Developer rebuild is explicit; bundled startup never probes these tools.
+    if (this.bundle) {
+      const [git, cargo, rustc, protoc] = await Promise.all(['git', 'cargo', 'rustc', 'protoc'].map(command => this.commandExists(command)));
+      this.status.prerequisites = { git, cargo, rustc, protoc };
+    }
     if (!this.status.prerequisites.git || !this.status.prerequisites.cargo || !this.status.prerequisites.rustc || !this.status.prerequisites.protoc) {
       throw new Error('Git, Cargo, Rust, or protoc is missing. Check the build dependencies in Settings.');
     }
@@ -331,15 +376,16 @@ export class BackendManager {
       const builtService = path.join(target, 'release', 'xodus-service');
       await fs.copyFile(builtService, path.join(releaseDir, 'xodus-service'));
       await fs.chmod(path.join(releaseDir, 'xodus-service'), 0o755);
-      await fs.writeFile(path.join(releaseDir, 'metadata.json'), JSON.stringify({ commit, builtAt: new Date().toISOString(), capabilities, linuxRunPatch: LINUX_RUN_PATCH }, null, 2));
-      const pointer: ManagedPointer = { commit, binaryPath: managedCli, builtAt: new Date().toISOString(), linuxRunPatch: LINUX_RUN_PATCH,
-        recipeSha256: backendRecipeSha256, version: backendLock.version, delivery: 'local' };
+      await fs.writeFile(path.join(releaseDir, 'metadata.json'), JSON.stringify({ commit, builtAt: new Date().toISOString(), capabilities, linuxRunPatch: backendCompatibility(this.platform) }, null, 2));
+      const pointer: ManagedPointer = { commit, binaryPath: managedCli, builtAt: new Date().toISOString(), linuxRunPatch: backendCompatibility(this.platform),
+        recipeSha256: backendRecipeSha256, version: backendLock.version, delivery: 'local', preferLocal: Boolean(this.bundle) };
       const pointerTmp = `${this.pointerFile}.tmp`;
       await fs.writeFile(pointerTmp, JSON.stringify(pointer, null, 2));
       await fs.rename(pointerTmp, this.pointerFile);
       Object.assign(this.status, {
         available: true, source: 'managed', binaryPath: managedCli, commit,
-        upstreamCommit: commit, updateAvailable: false, capabilities, linuxRunPatch: LINUX_RUN_PATCH,
+        upstreamCommit: commit, updateAvailable: false, capabilities, linuxRunPatch: backendCompatibility(this.platform),
+        version: backendLock.version, delivery: 'local',
       });
       log('The new backend passed validation and was activated atomically. Older builds were preserved.');
     } catch (error) {

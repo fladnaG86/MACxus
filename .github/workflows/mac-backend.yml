@@ -1,0 +1,57 @@
+name: Native Mac backend
+on:
+  pull_request:
+    paths: ['assets/**', 'src/main/**', 'src/shared/**', 'scripts/build-mac-backend.mjs', 'scripts/verify-mac-bundle.mjs', 'scripts/launcher-fonts-after-pack.cjs', 'package*.json', 'tsconfig*.json', '.github/workflows/mac-backend.yml']
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+    paths: ['assets/**', 'src/main/**', 'src/shared/**', 'scripts/build-mac-backend.mjs', 'scripts/verify-mac-bundle.mjs', 'scripts/launcher-fonts-after-pack.cjs', 'package*.json', 'tsconfig*.json', '.github/workflows/mac-backend.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: macos-15-arm64
+    timeout-minutes: 45
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install build prerequisites for maintainers
+        run: |
+          test "$(uname -m)" = arm64
+          brew install protobuf gnu-tar
+          rustup toolchain install "$(node -p "require('./assets/backend-source.lock.json').rust")" --profile minimal
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            work/mac-backend-target
+          key: mac-backend-${{ runner.arch }}-${{ hashFiles('assets/backend-source.lock.json', 'scripts/build-mac-backend.mjs') }}
+      - run: npm ci
+      - name: Check native backend without creating a distribution candidate
+        if: github.event_name != 'workflow_dispatch'
+        run: npm run build:mac-backend -- --check
+      - name: Build a manual candidate on main only
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: ''
+        run: |
+          node node_modules/electron/install.js
+          npm run build
+          npm run dist:mac
+          node scripts/verify-mac-bundle.mjs release/mac-arm64/MACxus.app
+          shasum -a 256 release/*.dmg > release/SHA256SUMS
+      - name: Retain the tested candidate for maintainer review
+        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: MACxus-arm64-candidate
+          path: |
+            release/*.dmg
+            release/SHA256SUMS
+          if-no-files-found: error

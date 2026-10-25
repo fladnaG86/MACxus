@@ -637,7 +637,10 @@ export const italianMessages = {
   "Checking account status…": "Verifica dello stato dell’account…",
   "Git, Cargo, Rust, or protoc is missing. Check the build dependencies in Settings.": "Manca Git, Cargo, Rust o protoc. Controlla le dipendenze di compilazione nelle Impostazioni.",
   "No validated backend is installed.": "Non è installato alcun backend validato.",
-  "Credentials are stored.": "Le credenziali sono memorizzate."
+  "Credentials are stored.": "Le credenziali sono memorizzate.",
+  "The backend is included with MACxus. Git, Rust and protoc are not needed to sign in or play.": "Il backend è incluso in MACxus. Git, Rust e protoc non servono per accedere o giocare.",
+  "Included with MACxus": "Incluso in MACxus",
+  "Building from source is only needed for backend development. The included backend is ready to use.": "La compilazione dal sorgente serve solo per sviluppare il backend. Il backend incluso è pronto all’uso."
 } as const;
 
 export type MessageKey = keyof typeof italianMessages;

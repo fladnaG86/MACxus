@@ -2,182 +2,108 @@
 
 **[English](#english)** · **[Italiano](#italiano)**
 
----
-
 ## English
 
-### Installing MACxus on a Mac, step by step (no experience needed)
+These steps apply to releases that include the bundled Apple Silicon backend.
+The first beta (`0.3.11-mac.1`) required a local backend build; use a newer bundled
+release when available. Developers building from source can follow
+[the maintainer guide](MAC-BACKEND.md).
 
-Installing apps on a Mac is mostly drag-and-drop. MACxus needs a few extra tools, and we install them by **copying and pasting commands** into an app called **Terminal**. You don't need to understand the commands. Paste them, press **Return**, and wait.
+### 1. Check your Mac
 
-The whole setup takes about 30–45 minutes, mostly waiting. You only do it once.
+MACxus needs an Apple Silicon Mac (M1 or later), Rosetta 2 and CrossOver 26.x in
+`/Applications`. CrossOver is paid software with a free trial. If Rosetta is not
+installed, macOS offers to install it when you open an Intel app such as CrossOver.
 
-### Step 0: Check your Mac
-Click the **Apple menu ()** (top-left corner of the screen) → **About This Mac**. Next to **Chip** it must say **Apple M1, M2, M3, M4 or M5**. On an Intel Mac, MACxus will not work.
+### 2. Install MACxus
 
-### Step 1: Open Terminal
-Press **Command (⌘) + Space**, type **Terminal**, press **Return**. A window with text opens. This is where you paste commands.
+Download the Apple Silicon `.dmg` from
+[Releases](https://github.com/fladnaG86/MACxus/releases), open it, and drag MACxus
+to Applications. The beta app is unsigned: for the first launch, right-click
+MACxus in Applications and choose **Open**. Follow the macOS prompts.
 
-How to paste a command:
-1. Select the command below and copy it (**⌘ + C**).
-2. Click inside the Terminal window and paste (**⌘ + V**).
-3. Press **Return**.
-4. Wait until a new line with a `%` symbol appears. That means it finished.
+The Xodus backend is included and becomes ready automatically. **You do not need
+Homebrew, Git, Rust or protoc**, and you do not need to create a signing certificate.
+If MACxus says its bundled backend cannot be verified, reinstall the app from the
+release instead of installing developer tools.
 
-If Terminal asks for your **Password**, type your Mac login password and press **Return**. **Nothing appears while you type, not even dots.** That's normal.
+### 3. Install the runtime and sign in
 
-### Step 2: Install Rosetta 2 (lets Windows games run on Apple chips)
-```
-softwareupdate --install-rosetta --agree-to-license
-```
+In **Settings**, choose **Install Nexus runtime** if no runtime is selected.
+MACxus verifies and installs it. Optionally install the **Highball** Wine engine
+for supported D3D12/Unreal games; CrossOver remains the default.
 
-### Step 3: Install Homebrew (a tool that installs other tools)
-```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-- It asks for your password, then says **"Press RETURN to continue"**. Press **Return**.
-- It may install the "Command Line Tools". Let it, it can take 5–10 minutes.
-- At the end it shows **"Next steps"**. Paste these two commands to finish:
-```
-echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-```
-```
-eval "$(/opt/homebrew/bin/brew shellenv)"
-```
+Choose **Sign in with Xodus**. Sign-in uses MACxus's own window: Chrome is not
+needed. Use your Microsoft password, a code or the Authenticator app. Passkeys
+are not supported on macOS yet; choose **Other ways to sign in** if Microsoft asks
+for one. You need to own the game or have an appropriate PC Game Pass subscription.
 
-### Step 4: Install Git and protoc (needed to build part of MACxus)
-```
-brew install git protobuf
-```
+### 4. Install a game
 
-### Step 5: Install Rust (also needed to build MACxus)
-```
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-When it asks you to choose, press **Return** (the default option). When it's done, **close Terminal completely** (**⌘ + Q**) so it picks up the new tools.
+Choose a game in **My Library** or **Store**, then choose the drive/folder for it.
+APFS and Mac OS Extended drives work directly. For exFAT/FAT/NTFS drives, use
+**Create APFS image**. Wait for installation to finish, then press **Play**.
+Not every game works; kernel anti-cheat games are unsupported. See the README's
+compatibility notes.
 
-### Step 6: Install CrossOver
-CrossOver provides the graphics layer that runs DirectX games on Macs. It is paid software with a free trial.
-1. Download it from **https://www.codeweavers.com/crossover**.
-2. Open the downloaded file. If you see a CrossOver app, drag it into the **Applications** folder.
-3. Open CrossOver once from Applications and choose **Try Now** (trial) or enter your license. Then you can close it.
+### Updates and help
 
-### Step 7: Install MACxus
-1. Go to **https://github.com/fladnaG86/MACxus/releases** and download the latest **`MACxus-…-arm64.dmg`**.
-2. Double-click the `.dmg` and drag **MACxus** into **Applications**.
-3. MACxus is a beta and **not signed by Apple**, so macOS blocks it the first time. Open Terminal again and paste:
-```
-xattr -dr com.apple.quarantine /Applications/MACxus.app
-```
-Now open MACxus from Applications. (Alternative without Terminal: try to open it once, then go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway**.)
-
-### Step 8: First-time setup inside MACxus
-Open **Settings** in MACxus. (Prefer Italian? **Settings → Language → Interface language**.) Then:
-1. **Xodus backend → "Build backend"**. Takes a few minutes; you'll see text scrolling. Wait until it says it's done.
-2. **Nexus runtime → "Install Nexus runtime"**.
-3. **Wine engine → "Install Highball engine"**. Recommended for newer games (Unreal Engine, DirectX 12).
-4. **Sign in with Xodus**: log in with your Microsoft account (the one that owns the game or has PC Game Pass).
-5. If macOS asks to access the **Keychain** (where passwords are stored), type your Mac password and click **Always Allow**. You may see this a few times.
-
-### Step 9: Play
-Go to the **Store** or **My Library**, install a game, and press **Play**.
-
-**Low on disk space?** Settings → **"Game storage"** lets you install games on an external SSD. See [Games on an external SSD](../README.md#games-on-an-external-ssd).
-
-### Updating MACxus later
-Download the new `.dmg`, drag MACxus into Applications again (choose **Replace**), and run the `xattr` command from step 7 again. If the release notes say so, press **"Build backend"** again.
-
-### Good to know
-- Results depend on the game and on your chip. Games that **require ray tracing** need an **M3 or newer**. Games with **kernel anti-cheat** (for example Call of Duty) don't work.
-- For games with **Easy Anti-Cheat**, the game's settings have **"Play offline without anti-cheat"**, for campaign / offline play only. **Don't play online in this mode.**
-- Something not working? Enable **Settings → Game logging**, try again, and attach the file `~/Library/Application Support/MACxus/logs/<id>-latest.log` (review it first) to an issue: https://github.com/fladnaG86/MACxus/issues
-
----
+Replace the app with the new `.dmg` version. Its included backend updates with
+the app; there is no normal user rebuild step. Your library and settings remain
+in your profile. **Settings → Language** switches between English and Italian.
+For a problem, enable game logging temporarily and review the log before sharing
+it in a [MACxus issue](https://github.com/fladnaG86/MACxus/issues). Never share account
+tokens, Keychain contents, game files or saves.
 
 ## Italiano
 
-### Installare MACxus sul Mac, passo per passo (nessuna esperienza richiesta)
+Questi passi valgono per le release con il backend Apple Silicon incluso.
+La prima beta (`0.3.11-mac.1`) richiedeva la compilazione locale: usa una release
+più recente con backend incluso quando disponibile. Per compilare dal sorgente,
+consulta [la guida per sviluppatori](MAC-BACKEND.md).
 
-Sul Mac le app si installano quasi sempre trascinandole. MACxus ha bisogno di qualche strumento in più, che installiamo **copiando e incollando comandi** in un'app chiamata **Terminale**. Non serve capire i comandi: incollali, premi **Invio** e aspetta.
+### 1. Controlla il Mac
 
-Tutta la preparazione richiede circa 30–45 minuti, quasi tutti di attesa. Si fa una volta sola.
+Servono un Mac Apple Silicon (M1 o successivo), Rosetta 2 e CrossOver 26.x in
+`/Applications`. CrossOver è a pagamento, con una prova gratuita. Se Rosetta non
+è installato, macOS ne propone l'installazione quando apri un'app Intel come CrossOver.
 
-### Passo 0: controlla il Mac
-Clicca sul **menu Apple ()** (in alto a sinistra) → **Informazioni su questo Mac**. Accanto a **Chip** deve esserci **Apple M1, M2, M3, M4 o M5**. Sui Mac Intel MACxus non funziona.
+### 2. Installa MACxus
 
-### Passo 1: apri il Terminale
-Premi **Comando (⌘) + Spazio**, scrivi **Terminale**, premi **Invio**. Si apre una finestra con del testo: è lì che incolli i comandi.
+Scarica il `.dmg` Apple Silicon dalle
+[release](https://github.com/fladnaG86/MACxus/releases), aprilo e trascina MACxus in
+Applicazioni. La beta non è firmata: al primo avvio fai clic destro su MACxus e
+scegli **Apri**, seguendo le richieste di macOS.
 
-Come incollare un comando:
-1. Seleziona il comando qui sotto e copialo (**⌘ + C**).
-2. Clicca nella finestra del Terminale e incollalo (**⌘ + V**).
-3. Premi **Invio**.
-4. Aspetta che compaia una nuova riga con il simbolo `%`: vuol dire che ha finito.
+Il backend Xodus è incluso e diventa pronto automaticamente. **Non servono
+Homebrew, Git, Rust o protoc**, né un certificato di firma locale. Se il backend
+incluso non supera la verifica, reinstalla l'app dalla release invece di installare
+strumenti di sviluppo.
 
-Se il Terminale chiede la **Password**, scrivi la password con cui accedi al Mac e premi **Invio**. **Mentre scrivi non compare nulla, nemmeno i puntini.** È normale.
+### 3. Installa il runtime e accedi
 
-### Passo 2: installa Rosetta 2 (fa girare i giochi Windows sui chip Apple)
-```
-softwareupdate --install-rosetta --agree-to-license
-```
+In **Impostazioni**, scegli **Installa runtime Nexus** se non è selezionato alcun
+runtime. MACxus lo verifica e lo installa. Puoi anche installare il motore Wine
+**Highball** per i giochi D3D12/Unreal supportati; CrossOver resta il predefinito.
 
-### Passo 3: installa Homebrew (uno strumento che installa altri strumenti)
-```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-- Chiede la password, poi scrive **"Press RETURN to continue"**: premi **Invio**.
-- Potrebbe installare i "Command Line Tools". Lascialo fare, possono servire 5–10 minuti.
-- Alla fine mostra **"Next steps"**. Incolla questi due comandi per completare:
-```
-echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-```
-```
-eval "$(/opt/homebrew/bin/brew shellenv)"
-```
+Scegli **Accedi con Xodus**. L'accesso avviene nella finestra di MACxus: Chrome non
+serve. Usa la password Microsoft, un codice o l'app Authenticator. Le passkey non
+sono ancora supportate su macOS: scegli **Altri modi per accedere** se Microsoft
+ne richiede una. Devi possedere il gioco o avere un abbonamento PC Game Pass adatto.
 
-### Passo 4: installa Git e protoc (servono per compilare una parte di MACxus)
-```
-brew install git protobuf
-```
+### 4. Installa un gioco
 
-### Passo 5: installa Rust (serve anche lui per compilare MACxus)
-```
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-Quando chiede di scegliere, premi **Invio** (opzione predefinita). Alla fine **chiudi del tutto il Terminale** (**⌘ + Q**), così riconosce i nuovi strumenti.
+Scegli un gioco da **La mia libreria** o **Negozio**, poi il disco e la cartella.
+I dischi APFS e Mac OS esteso funzionano direttamente. Per exFAT/FAT/NTFS usa
+**Crea immagine APFS**. Attendi la fine dell'installazione e premi **Gioca**.
+Non tutti i giochi funzionano; gli anti-cheat a livello kernel non sono supportati.
+Consulta le note di compatibilità nel README.
 
-### Passo 6: installa CrossOver
-CrossOver fornisce lo strato grafico che fa girare i giochi DirectX sul Mac. È a pagamento, con una prova gratuita.
-1. Scaricalo da **https://www.codeweavers.com/crossover**.
-2. Apri il file scaricato. Se vedi l'app CrossOver, trascinala nella cartella **Applicazioni**.
-3. Apri CrossOver una volta da Applicazioni e scegli **Try Now** (prova) o inserisci la licenza. Poi puoi chiuderlo.
+### Aggiornamenti e aiuto
 
-### Passo 7: installa MACxus
-1. Vai su **https://github.com/fladnaG86/MACxus/releases** e scarica l'ultimo **`MACxus-…-arm64.dmg`**.
-2. Fai doppio clic sul `.dmg` e trascina **MACxus** in **Applicazioni**.
-3. MACxus è una beta **non firmata da Apple**, quindi macOS la blocca la prima volta. Riapri il Terminale e incolla:
-```
-xattr -dr com.apple.quarantine /Applications/MACxus.app
-```
-Ora apri MACxus da Applicazioni. (In alternativa, senza Terminale: prova ad aprirla una volta, poi vai in **Impostazioni di Sistema → Privacy e sicurezza**, scorri in basso e clicca **Apri comunque**.)
-
-### Passo 8: prima configurazione dentro MACxus
-Apri **Settings** in MACxus e, per avere l'interfaccia in italiano, scegli **Language → Interface language → Italiano**. Poi cerca queste voci in **Impostazioni**:
-1. **Backend Xodus → "Compila il backend"**. Ci vogliono alcuni minuti e vedrai scorrere del testo. Aspetta che dica che ha finito.
-2. **Runtime Nexus → "Installa runtime Nexus"**.
-3. **Motore Wine → "Installa motore Highball"**. Consigliato per i giochi recenti (Unreal Engine, DirectX 12).
-4. **Accedi con Xodus**: accedi con il tuo account Microsoft (quello che possiede il gioco o ha PC Game Pass).
-5. Se macOS chiede l'accesso al **Portachiavi** (dove sono salvate le password), scrivi la password del Mac e clicca **Consenti sempre**. Può succedere più volte.
-
-### Passo 9: gioca
-Vai nel **Negozio** o in **La mia libreria**, installa un gioco e premi **Gioca**.
-
-**Poco spazio sul disco?** Impostazioni → **"Dove salvare i giochi"** permette di installare i giochi su un SSD esterno. Vedi [Giochi su SSD esterno](../README.md#giochi-su-ssd-esterno).
-
-### Aggiornare MACxus in seguito
-Scarica il nuovo `.dmg`, trascina di nuovo MACxus in Applicazioni (scegli **Sostituisci**) e ripeti il comando `xattr` del passo 7. Se le note della release lo indicano, premi di nuovo **"Compila il backend"**.
-
-### Da sapere
-- I risultati dipendono dal gioco e dal chip. I giochi che **richiedono il ray tracing** hanno bisogno di un **M3 o successivo**. I giochi con **anti-cheat a livello kernel** (per esempio Call of Duty) non funzionano.
-- Per i giochi con **Easy Anti-Cheat**, nelle impostazioni del gioco c'è **"Gioca offline senza anti-cheat"**, solo per la campagna o il gioco offline. **Non giocare online in questa modalità.**
-- Qualcosa non va? Attiva **Impostazioni → Registrazione dei giochi**, riprova e allega il file `~/Library/Application Support/MACxus/logs/<id>-latest.log` (controllalo prima) a una segnalazione: https://github.com/fladnaG86/MACxus/issues
+Sostituisci l'app con la nuova versione `.dmg`. Il backend incluso si aggiorna
+insieme all'app: normalmente non devi ricompilarlo. Libreria e impostazioni restano
+nel tuo profilo. **Impostazioni → Lingua** permette di scegliere inglese o italiano.
+Per un problema, attiva temporaneamente i log e rileggili prima di allegarli a una
+[issue MACxus](https://github.com/fladnaG86/MACxus/issues). Non condividere token,
+contenuti del Portachiavi, file dei giochi o salvataggi.

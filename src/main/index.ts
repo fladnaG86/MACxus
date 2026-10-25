@@ -2004,7 +2004,7 @@ app.whenReady().then(async () => {
     } catch { /* Keep an unavailable imported entry visible. */ }
   }
   runtime = new RuntimeManager(store.settings.runtimeRoot, emitLog, () => downloadCancellations.size > 0 || operations.size > 0 || installQueue.size > 0 || preparingInstall || backend?.current.updating === true);
-  backend = new BackendManager(app.getPath('userData'), store.settings.externalXodusRoot, emitLog, () => keyringSupport.busy || downloadCancellations.size > 0 || operations.size > 0 || installQueue.size > 0 || preparingInstall || runtime?.current.updating === true);
+  backend = new BackendManager(app.getPath('userData'), store.settings.externalXodusRoot, emitLog, () => keyringSupport.busy || downloadCancellations.size > 0 || operations.size > 0 || installQueue.size > 0 || preparingInstall || runtime?.current.updating === true, fetch, process.platform, process.platform === 'darwin' && app.isPackaged ? { root: path.join(process.resourcesPath, 'backend'), arch: process.arch } : undefined);
   await backend.refresh();
   if (process.platform === 'darwin') void backend.ensureSigned(() => emitSnapshot());
   await runtime.refresh();
@@ -2013,7 +2013,7 @@ app.whenReady().then(async () => {
     // wizard's sign-in step works without a detour into Settings. Users who
     // configured a validated external backend are left alone; the managed
     // release never touches an external checkout.
-    // macOS has no prebuilt backend (it is linux/x64); Settings points to building it.
+    // Packaged macOS apps select their verified bundled backend during refresh.
     if (process.platform !== 'darwin' && !store.settings.firstRunCompleted && !backend.current.available &&
         backend.current.releaseAvailable && backend.current.updateAvailable) {
       try {

@@ -53,3 +53,13 @@ describe('English and Italian interface', () => {
     expect(html).not.toContain('Il motore Highball');
   });
 });
+
+it.each([true, false])('shows bundled delivery without first-run build or certificate requirements (available: %s)', available => {
+  const bundled = { ...data, backend: { ...data.backend, source: available ? 'bundled' as const : 'none' as const, delivery: 'bundled' as const, available, blockReason: available ? undefined : 'Reinstall MACxus' } };
+  const html = renderToStaticMarkup(<SettingsPage data={bundled} toast={() => {}} />);
+  const main = html.replace(/<details\b[^>]*>[\s\S]*?<\/details>/, '');
+  expect(main).toContain('The backend is included with MACxus');
+  expect(main).not.toContain('Build backend');
+  expect(main).not.toContain('MACxus Local Signing');
+  expect(html).toContain(available ? 'Included with MACxus' : 'Reinstall MACxus');
+});

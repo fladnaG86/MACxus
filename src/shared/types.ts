@@ -40,7 +40,7 @@ export interface GamePassSubscription {
 
 export interface BackendStatus {
   available: boolean;
-  source: 'external' | 'managed' | 'none';
+  source: 'external' | 'managed' | 'bundled' | 'none';
   binaryPath?: string;
   commit?: string;
   upstreamCommit?: string;
@@ -55,7 +55,7 @@ export interface BackendStatus {
   signingIdentity: boolean;
   linuxRunPatch?: string;
   version?: string;
-  delivery?: 'release' | 'local';
+  delivery?: 'release' | 'local' | 'bundled';
   releaseAvailable?: boolean;
   releaseVersion?: string;
   phase?: string;

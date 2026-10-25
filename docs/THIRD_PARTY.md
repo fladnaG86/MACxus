@@ -41,3 +41,11 @@ pinned SHA-256). They are not bundled.
 0007 from <https://github.com/Jfishin/winevideo>, which modify Wine (LGPL-2.1-or-later). The
 repository has no license file; DLLs built from it are not distributed until the author confirms
 the license.
+
+## Bundled Xodus backend — GPL-3.0
+
+Apple Silicon app bundles include `xodus-cli` and `xodus-service` built from the
+pinned Xodus source and MACxus patches. Their GPL license and complete
+corresponding source (including vendored dependency sources/licenses and build
+recipe) ship beside the executables under `Contents/Resources/backend/`.
+See [the maintainer guide](MAC-BACKEND.md) for verification and offline rebuilds.
