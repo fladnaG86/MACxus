@@ -12,6 +12,7 @@ html[data-gamepad-navigation] .gd-back-hint { display: inline-grid; }
 .gd-hero-copy { position: absolute; left: 28px; right: 22px; bottom: 26px; }
 .gd-ready { display: inline-flex; align-items: center; gap: 5px; color: #b7dea5; font-size: 11px; }
 .gd-ready svg { width: 14px; height: 14px; }
+.gd-ready.not-installed { color: #c6c9cc; }
 .gd-hero h1 { margin: 10px 0 8px; font-size: clamp(30px,3vw,44px); line-height: 1.1; overflow-wrap: anywhere; letter-spacing: -.6px; }
 .gd-hero p { color: #c4c9ce; font-size: 12px; margin: 0 0 17px; }
 .gd-tags { display: flex; gap: 7px; flex-wrap: wrap; }

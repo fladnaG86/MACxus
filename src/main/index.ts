@@ -1575,24 +1575,35 @@ function registerIpc(): void {
     }
   });
   ipcMain.handle('game-launch-options', (_event, id: string) => gameLaunchOptions(id));
-  ipcMain.handle('game-details', async (_event, id: string) => {
+  // Detail pages take an installed game ID or, for a library game that is not
+  // installed yet, its Store product ID (12 uppercase characters, never a game ID).
+  const storeProductId = (id: unknown): id is string => typeof id === 'string' && /^[A-Z0-9]{12}$/.test(id);
+  const assertDetailTarget = (id: unknown) => {
+    if (!store.games.some(game => game.id === id) && !storeProductId(id)) throw Error('Game not found.');
+  };
+  async function detailTitleId(id: string): Promise<string | undefined> {
     const game = store.games.find(game => game.id === id);
-    if (!game) throw Error('Game not found.');
-    if (!game.storeId || !/^[A-Z0-9]{12}$/.test(game.storeId)) return undefined;
+    if (game) return installedTitleId(game.path).catch(() => undefined);
+    return (await catalog.gameDetails(id, currentMarket()).catch(() => undefined))?.titleId;
+  }
+  ipcMain.handle('game-details', async (_event, id: string) => {
+    assertDetailTarget(id);
+    const game = store.games.find(game => game.id === id);
+    const storeId = game ? game.storeId : id;
+    if (!storeId || !/^[A-Z0-9]{12}$/.test(storeId)) return undefined;
     const market = currentMarket();
-    const details = await catalog.gameDetails(game.storeId, market);
+    const details = await catalog.gameDetails(storeId, market);
     if (market !== currentMarket()) throw Error('Store market changed. Try again.');
     return details;
   });
   ipcMain.handle('game-activity', async (_event, id: string, refresh = false) => {
     if (typeof id !== 'string' || typeof refresh !== 'boolean') throw Error('Invalid activity request.');
-    const game = store.games.find(game => game.id === id);
-    if (!game) throw Error('Game not found.');
+    assertDetailTarget(id);
     if (authState.running || authState.stored !== true || !authState.username) return { status: 'signed-out' };
     if (!backend.current.capabilities.gameActivity || !backend.current.binaryPath) return { status: 'unsupported' };
     const account = authState.username, binary = backend.current.binaryPath;
     gameActivities.select(account, binary);
-    const title = await installedTitleId(game.path).catch(() => undefined);
+    const title = await detailTitleId(id);
     if (!title) return { status: 'unavailable' };
     if (authState.running || authState.stored !== true || account !== authState.username || binary !== backend.current.binaryPath) return { status: 'error' };
     const activity = await gameActivities.get(title, refresh);
@@ -1601,13 +1612,12 @@ function registerIpc(): void {
   });
   ipcMain.handle('game-achievements', async (_event, id: string, refresh = false) => {
     if (typeof id !== 'string' || typeof refresh !== 'boolean') throw Error('Invalid achievements request.');
-    const game = store.games.find(game => game.id === id);
-    if (!game) throw Error('Game not found.');
+    assertDetailTarget(id);
     if (authState.running || authState.stored !== true || !authState.username) return { status: 'signed-out' };
     if (!backend.current.capabilities.achievements || !backend.current.binaryPath) return { status: 'unsupported' };
     const account = authState.username, binary = backend.current.binaryPath;
     gameAchievements.select(account, binary);
-    const title = await installedTitleId(game.path).catch(() => undefined);
+    const title = await detailTitleId(id);
     if (!title) return { status: 'unavailable' };
     if (authState.running || authState.stored !== true || account !== authState.username || binary !== backend.current.binaryPath) return { status: 'error' };
     const value = await gameAchievements.get(title, refresh);

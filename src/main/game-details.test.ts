@@ -10,6 +10,13 @@ it('reads catalog metadata without pretending package support or ownership, filt
   details!.screenshots.push('changed'); expect((await catalog.gameDetails(ID,'US'))!.screenshots).toHaveLength(1); expect(fetcher).toHaveBeenCalledTimes(1);
   await catalog.gameDetails(ID,'CZ'); expect(fetcher).toHaveBeenCalledTimes(2);
 });
+it('reads the decimal Xbox title ID from AlternateIds and drops malformed values',async()=>{
+  const withIds=(Value: unknown)=>{ const body=response(); (body.Products[0] as Record<string, unknown>).AlternateIds=[{IdType:'LegacyWindowsStoreProductId',Value:'x'},{IdType:'XboxTitleId',Value}]; return body; };
+  const fetcher=vi.fn(async(url: URL)=>new Response(JSON.stringify(withIds(String(url).includes('market=US') ? '1743309413' : '0x67E5'))));
+  const catalog=new CatalogService(fetcher as unknown as typeof fetch);
+  expect((await catalog.gameDetails(ID,'US'))?.titleId).toBe('1743309413');
+  expect((await catalog.gameDetails(ID,'CZ'))?.titleId).toBeUndefined();
+});
 it('fails honestly when metadata is missing and rejects malformed IDs before a request',async()=>{
   const fetcher=vi.fn(async()=>new Response('{}')); const catalog=new CatalogService(fetcher as typeof fetch);
   await expect(catalog.gameDetails('../bad','US')).rejects.toThrow(); expect(fetcher).not.toHaveBeenCalled();

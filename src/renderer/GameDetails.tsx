@@ -63,7 +63,10 @@ interface PageProps {
   game: Game;
   back: () => void;
   play: ReactNode;
-  manage: ReactNode;
+  /** Omitted for a game that is not installed: there is nothing to manage yet. */
+  manage?: ReactNode;
+  /** Replaces the installation badge above the title. */
+  status?: ReactNode;
   notices?: ReactNode;
   technical?: ReactNode;
   achievements?: ReactNode;
@@ -78,7 +81,7 @@ interface ContentProps extends PageProps {
 }
 
 /** Descriptive data never gates Play or changes package/licensing decisions. */
-export function GameDetailsContent({ game, back, play, manage, notices, technical, achievements, details, activity, metadataLoading, activityLoading, metadataError, refresh }: ContentProps) {
+export function GameDetailsContent({ game, back, play, manage, status, notices, technical, achievements, details, activity, metadataLoading, activityLoading, metadataError, refresh }: ContentProps) {
   const { t, language } = useI18n();
   const [gallery, setGallery] = useState<number>();
   const [expanded, setExpanded] = useState(false);
@@ -128,14 +131,14 @@ export function GameDetailsContent({ game, back, play, manage, notices, technica
     <section className="gd-hero">
       <Artwork className="gd-hero-art" src={details?.heroUrl ?? game.heroUrl ?? game.coverUrl} alt="" />
       <div className="gd-hero-shade" />
-      <div className="gd-hero-copy"><span className={`gd-ready ${game.installState}`}><Check />{game.installState === 'ready' ? t("Installed") : game.installState === 'incomplete' ? t("Incomplete") : t("Imported")}</span><h1>{game.title}</h1><p>{details?.publisher ?? game.publisher ?? t("Publisher not provided")}</p><div className="gd-tags">{details?.categories.map(category => <span key={category}>{category}</span>)}</div></div>
+      <div className="gd-hero-copy">{status ?? <span className={`gd-ready ${game.installState}`}><Check />{game.installState === 'ready' ? t("Installed") : game.installState === 'incomplete' ? t("Incomplete") : t("Imported")}</span>}<h1>{game.title}</h1><p>{details?.publisher ?? game.publisher ?? t("Publisher not provided")}</p><div className="gd-tags">{details?.categories.map(category => <span key={category}>{category}</span>)}</div></div>
     </section>
     <div className="gd-page-content">
       <section className="gd-play-row" data-gamepad-action-row aria-label={t("Game actions and activity")}>
         <div className="button-row gd-play-controls">{play}</div>
         <div className="gd-stat"><Clock3 /><div><span>{t("Xbox time played")}{' '}<button className="gd-refresh" aria-label={t("Refresh Xbox activity")} disabled={activityLoading} onClick={refresh}>{activityLoading ? <LoaderCircle className="spin" /> : <RefreshCw />}</button></span><strong>{activityLoading && !activity ? t("Loading…") : formatMinutes(activity?.minutesPlayed, t)}</strong><small>{activityLoading ? t("Reading Xbox activity…") : activityNote(activity, t)}</small></div></div>
         <div className="gd-stat gd-last-played"><div><span>{t("Last played")}</span><strong>{activityLoading && !activity ? t("Loading…") : lastPlayed}</strong></div></div>
-        <details ref={manageRef} className="gd-actions" data-game-menu={manageOpen ? '' : undefined} onToggle={event => setManageOpen(event.currentTarget.open)}><summary aria-label={t("More game actions")}><MoreHorizontal /><span>{t("Manage")}</span></summary><div role="menu" aria-label={t("Manage game")} onClick={event => { if ((event.target as HTMLElement).closest('button:not(:disabled)')) closeManage(); }}>{manage}</div></details>
+        {manage === undefined ? null : <details ref={manageRef} className="gd-actions" data-game-menu={manageOpen ? '' : undefined} onToggle={event => setManageOpen(event.currentTarget.open)}><summary aria-label={t("More game actions")}><MoreHorizontal /><span>{t("Manage")}</span></summary><div role="menu" aria-label={t("Manage game")} onClick={event => { if ((event.target as HTMLElement).closest('button:not(:disabled)')) closeManage(); }}>{manage}</div></details>}
       </section>
       {notices}
       {achievements}

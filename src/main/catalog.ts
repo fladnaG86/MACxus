@@ -297,9 +297,11 @@ export class CatalogService {
     const properties = object(product.Properties);
     const categories = (Array.isArray(properties?.Categories) ? properties.Categories : []).flatMap(value => string(value)?.slice(0, 80) ?? []).slice(0, 12);
     const marketProperties = Array.isArray(product.MarketProperties) ? object(product.MarketProperties[0]) : undefined;
+    const alternateIds = Array.isArray(product.AlternateIds) ? product.AlternateIds.map(object) : [];
+    const titleId = string(alternateIds.find(id => id?.IdType === 'XboxTitleId')?.Value);
     const value: GameStoreDetails = { productId, title, description: (string(localized?.ProductDescription) ?? '').slice(0, 64_000),
       publisher: string(localized?.PublisherName)?.slice(0, 512), heroUrl: displayImage(images.filter(image => object(image)), HERO_PURPOSES), categories, screenshots,
-      releaseDate: string(marketProperties?.OriginalReleaseDate) };
+      releaseDate: string(marketProperties?.OriginalReleaseDate), titleId: titleId && /^[1-9]\d{0,9}$/.test(titleId) ? titleId : undefined };
     if (this.gameCache.size >= 100) this.gameCache.delete(this.gameCache.keys().next().value!);
     this.gameCache.set(key, { until: Date.now() + CACHE_TTL_MS, value });
     return structuredClone(value);

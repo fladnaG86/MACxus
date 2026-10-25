@@ -336,6 +336,8 @@ export interface GameStoreDetails {
   categories: string[];
   screenshots: string[];
   releaseDate?: string;
+  /** Decimal Xbox title ID from the catalog; lets activity and achievements load before installation. */
+  titleId?: string;
 }
 
 export interface GameActivity {

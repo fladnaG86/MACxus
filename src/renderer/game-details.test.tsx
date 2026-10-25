@@ -18,6 +18,11 @@ it('renders real metadata as escaped text and gallery thumbnails, never executab
 it.each(['unavailable','unsupported','signed-out','error'] as const)('never displays a fabricated zero for %s',status=>{
   const html=render({status},undefined); expect(html).toContain('Unavailable'); expect(html).not.toContain('>0 min<'); expect(html).not.toContain('Sample data');
 });
+it('shows a not-installed game with its own status and action, without a Manage menu',()=>{
+  const html=renderToStaticMarkup(<GameDetailsContent game={game} details={details} activity={{status:'unavailable'}} status={<span className="gd-ready not-installed">Not installed</span>} play={<button>Install</button>} back={()=>{}} refresh={()=>{}} />);
+  expect(html).toContain('gd-ready not-installed'); expect(html).not.toContain('>Installed<');
+  expect(html).toContain('>Install</button>'); expect(html).not.toContain('More game actions'); expect(html).toContain('About the game');
+});
 it('does not present missing screenshots or failed metadata as an installation blocker',()=>{
   const html=render({status:'unavailable'},{...details,screenshots:[],description:''});
   expect(html).toContain('No screenshots available'); expect(html).toContain('>Play</button>'); expect(html).not.toContain('Open screenshot');

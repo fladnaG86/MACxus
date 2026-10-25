@@ -122,6 +122,16 @@ it('offers saved per-game overlay options and Steam-style environment and argume
   expect(html).toContain('checked');
 });
 
+it.each(['supported', 'unsupported'] as const)('opens the detail page from a %s library product card, keeping the install button separate', installability => {
+  const product: AccountLibraryPage['products'][number] = { productId: '9AAAAAAAAAAA', title: 'Detail game', access: 'gamepass',
+    description: '', categories: [], installability, supportNote: 'Package note' };
+  const html = renderToStaticMarkup(<LibraryProductCard product={product} present={false} downloading={false} canInstall install={() => {}} open={() => {}} />);
+  expect(html).toMatch(/<button class="library-card catalog-card-main" data-gamepad-detail-target="9AAAAAAAAAAA">/);
+  expect(html).toContain('class="catalog-card-install"');
+  // The card button is always focusable, so the article never adds its own tab stop.
+  expect(html).toContain('tabindex="-1"'); expect(html).not.toContain('Action unavailable');
+});
+
 it('offers offline play without anti-cheat only for EAC games, off by default', () => {
   const render = (antiCheat: boolean, enabled = false) => renderToStaticMarkup(<GameLaunchToolFields value={{ ...defaultLaunchTools, offlineWithoutAntiCheat: enabled }} change={() => {}} antiCheat={antiCheat} />);
   expect(render(false)).not.toContain('Play offline without anti-cheat');
