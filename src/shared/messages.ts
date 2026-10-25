@@ -356,6 +356,7 @@ export const italianMessages = {
   "Installing the Xodus backend…": "Installazione del backend Xodus…",
   "Sign-in unlocks once the Xodus backend is installed.": "L’accesso sarà disponibile dopo l’installazione del backend Xodus.",
   "Passkey sign-in requires Google Chrome installed on this computer. Other browsers are not supported. If Microsoft sign-in gets stuck, choose Continue in browser in the sign-in window.": "L’accesso con passkey richiede Google Chrome installato su questo computer. Gli altri browser non sono supportati. Se l’accesso Microsoft si blocca, scegli Continua nel browser nella finestra di accesso.",
+  "Sign in with your password, a code or the Authenticator app. No browser is needed. Passkey sign-in is not available on macOS yet: if Microsoft asks for a passkey, choose Other ways to sign in.": "Accedi con la password, un codice o l’app Authenticator. Non serve nessun browser. L’accesso con passkey non è ancora disponibile su macOS: se Microsoft chiede una passkey, scegli «Altri modi per accedere».",
   "Welcome to Xodus Nexus. Install a game from the Store to get started.": "Benvenuto in Xodus Nexus. Installa un gioco dal negozio per iniziare.",
   "Set up Xodus Nexus": "Configura Xodus Nexus",
   "WELCOME": "BENVENUTO",

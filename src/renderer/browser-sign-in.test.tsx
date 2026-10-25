@@ -13,6 +13,14 @@ describe('alternative browser sign-in', () => {
     expect(html).toContain('choose Continue in browser in the sign-in window.');
     expect(html).toContain(location === 'settings' ? 'Sign in with Xodus' : '>Sign in</button>');
   });
+  it.each(['settings', 'wizard'])('on macOS does not ask for Chrome in %s and points to other sign-in methods', location => {
+    const data = demoSnapshot(); data.auth.stored = false; data.platform = 'darwin';
+    const html = renderToStaticMarkup(location === 'settings' ? <SettingsPage data={data} toast={() => {}} /> : <FirstRunWizard data={data} toast={() => {}} />);
+    expect(html).not.toContain('Google Chrome');
+    expect(html).not.toContain('Continue in browser');
+    expect(html).toContain('No browser is needed. Passkey sign-in is not available on macOS yet');
+    expect(html).toContain('Other ways to sign in');
+  });
   it.each(['settings', 'wizard'])('disables sign-in during authentication or with an incompatible backend in %s', location => {
     for (const running of [true, false]) {
       const data = demoSnapshot(); data.auth.running = running; data.backend.capabilities.login = running;

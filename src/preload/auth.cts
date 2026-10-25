@@ -6,7 +6,7 @@ const hosts = ['login.live.com', 'account.live.com', 'login.microsoftonline.com'
 // Runs in the page's main world. It can only cancel this page's own active
 // WebAuthn requests or explicitly request the browser fallback. Never authenticate,
 // choose a credential, alter verification results or expose Node.
-function installPasskeyCancellation(): void {
+function installPasskeyCancellation(browserFallback = true): void {
   const credentials = navigator.credentials;
   if (!credentials || typeof credentials.get !== 'function') return;
   const original = credentials.get;
@@ -32,13 +32,15 @@ function installPasskeyCancellation(): void {
       @media(max-width:460px){.panel{align-items:stretch;flex-direction:column;gap:12px}button{width:100%}}
     </style><section class="panel" role="region" aria-label="Xodus Nexus passkey help">
       <div class="copy"><div class="brand">XODUS NEXUS</div><h2>Passkey taking too long?</h2>
-      <p>If your account uses a passkey or security key, continue in Google Chrome. Or cancel this request to choose another method.</p><p class="error" role="status" hidden></p></div>
-      <div class="actions"><button type="button" class="browser" data-browser>Continue in browser</button><button type="button" data-cancel>Cancel passkey request</button></div></section>`;
+      <p>${browserFallback
+        ? 'If your account uses a passkey or security key, continue in Google Chrome. Or cancel this request to choose another method.'
+        : 'Passkey sign-in is not available on macOS yet. Cancel this request, then choose Other ways to sign in and use your password, a code or the Authenticator app.'}</p><p class="error" role="status" hidden></p></div>
+      <div class="actions">${browserFallback ? '<button type="button" class="browser" data-browser>Continue in browser</button>' : ''}<button type="button" data-cancel>Cancel passkey request</button></div></section>`;
     shadow.querySelector('[data-cancel]')!.addEventListener('click', () => {
       for (const controller of active) controller.abort();
       hide();
     });
-    shadow.querySelector('[data-browser]')!.addEventListener('click', async () => {
+    if (browserFallback) shadow.querySelector('[data-browser]')!.addEventListener('click', async () => {
       const button = shadow.querySelector<HTMLButtonElement>('[data-browser]')!;
       const error = shadow.querySelector<HTMLElement>('.error')!;
       button.disabled = true; error.hidden = true;
@@ -75,6 +77,10 @@ function installPasskeyCancellation(): void {
   window.addEventListener('pagehide', hide, { once: true });
 }
 
+// Browser sign-in (Google Chrome over CDP) exists only on Linux; the main
+// process does not offer it on macOS, so neither does the passkey panel.
+const browserFallback = typeof process === 'undefined' || process.platform !== 'darwin';
+
 if (window === window.top && location.protocol === 'https:' && !location.port && hosts.includes(location.hostname)) {
   contextBridge.exposeInMainWorld('__nexusAuth', {
     continueInBrowser: () => ipcRenderer.invoke('nexus-auth:browser'),
@@ -88,5 +94,5 @@ if (window === window.top && location.protocol === 'https:' && !location.port &&
     value: payload => globalThis.__nexusAuth.notify(payload),
     configurable: false,
     writable: false
-  }); (${installPasskeyCancellation.toString()})();`);
+  }); (${installPasskeyCancellation.toString()})(${JSON.stringify(browserFallback)});`);
 }

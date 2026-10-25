@@ -7,11 +7,11 @@ const preload = ts.transpileModule(readFileSync('src/preload/auth.cts', 'utf8'),
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 
-function fixture(original: (this: unknown, options?: any) => unknown, hostname = 'login.live.com', invoke = vi.fn(async () => ({ ok: true }))) {
+function fixture(original: (this: unknown, options?: any) => unknown, hostname = 'login.live.com', invoke = vi.fn(async () => ({ ok: true })), platform?: string) {
   const scripts: string[] = [];
   let exposed: unknown;
   const window = { top: null as unknown, addEventListener: vi.fn() }; window.top = window;
-  vm.runInNewContext(preload, { exports: {}, window, location: { protocol: 'https:', port: '', hostname },
+  vm.runInNewContext(preload, { exports: {}, window, location: { protocol: 'https:', port: '', hostname }, ...(platform ? { process: { platform } } : {}),
     require: () => ({ contextBridge: { exposeInMainWorld: (_name: string, value: unknown) => { exposed = value; } },
       ipcRenderer: { send: vi.fn(), invoke }, webFrame: { executeJavaScript: (script: string) => { scripts.push(script); return Promise.resolve(); } } }),
   });
@@ -56,6 +56,19 @@ describe('dedicated auth preload passkey control', () => {
     expect(test.panels[0].shadow.innerHTML).toContain('passkey or security key');
     await test.panels[0].browser.click(); expect(test.invoke).toHaveBeenCalledWith('nexus-auth:browser');
     expect(caller.signal.aborted).toBe(false); caller.abort(); await rejection;
+  });
+  it('on macOS offers only cancellation and points to other sign-in methods, never the browser', async () => {
+    const caller = new AbortController(), test = fixture(pending, 'login.live.com', undefined, 'darwin');
+    const result = test.credentials.get({ publicKey: {}, signal: caller.signal });
+    const rejection = expect(result).rejects.toMatchObject({ name: 'AbortError' });
+    test.advance(4_000);
+    expect(test.panels[0].shadow.innerHTML).not.toContain('Continue in browser');
+    expect(test.panels[0].shadow.innerHTML).not.toContain('data-browser');
+    expect(test.panels[0].shadow.innerHTML).toContain('not available on macOS yet');
+    expect(test.panels[0].shadow.innerHTML).toContain('Other ways to sign in');
+    expect(test.invoke).not.toHaveBeenCalled();
+    test.panels[0].button.click(); await rejection;
+    expect(test.panels[0].connected).toBe(false);
   });
   it('keeps the pending request available if Chrome is missing', async () => {
     const invoke = vi.fn(async () => ({ ok: false })), caller = new AbortController();

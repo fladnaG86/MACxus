@@ -514,7 +514,8 @@ async function runAuth(command: 'login' | 'logout'): Promise<void> {
       throw Error('Update the Nexus backend in Settings before signing in with this launcher.');
     }
     if (command === 'login') await prepareSystemWallet();
-    const view = fallbackAuthViewFactory(request => authViewFactory(mainWindow ?? undefined, undefined, request), () => browserAuthViewFactory());
+    // Browser (Chrome) sign-in is Linux-only, so macOS keeps the built-in window without that fallback.
+    const view = fallbackAuthViewFactory(request => authViewFactory(mainWindow ?? undefined, undefined, process.platform === 'darwin' ? undefined : request), () => browserAuthViewFactory());
     if (shutdownStarted) throw Error('The launcher is closing.');
     await accountProfile.select(undefined);
     if (shutdownStarted) throw Error('The launcher is closing.');

@@ -933,7 +933,7 @@ export function SettingsPage({ data, toast }: { data: AppSnapshot; toast: (value
       <div className="account-note"><CircleAlert /><span>{localize(data.auth.note)}</span></div>
       <KeyringSetup compact disabled={data.auth.running} />
       <div className="button-row"><button className="primary" disabled={!caps.login || data.auth.running} onClick={() => invoke('login', () => window.launcher.login(), t("Xodus sign-in completed."))}>{data.auth.running ? <LoaderCircle className="spin" /> : <LogIn />}{data.auth.stored ? t("Sign in again") : t("Sign in with Xodus")}</button><button className="secondary" disabled={!caps.logout || data.auth.running || data.auth.stored === false} title={t("Remove saved sign-in credentials and local device registration. Games and saves are kept.")} onClick={() => invoke('logout', () => window.launcher.logout(), t("Saved sign-in credentials and local device registration were removed."))}>{t("Sign out")}</button><button className="secondary" disabled={!caps.account || data.auth.running} onClick={() => invoke('account', () => window.launcher.refreshAccount())}><RefreshCw />{t("Refresh status")}</button></div>
-      <PasskeySignInNotice />
+      <PasskeySignInNotice mac={isMac} />
     </section>
 
     <section className="settings-card">
@@ -991,8 +991,10 @@ function backendSetupHint(backend: AppSnapshot['backend'], t: Translator): strin
   return t("Sign-in unlocks once the Xodus backend is installed.");
 }
 
-function PasskeySignInNotice() {
+function PasskeySignInNotice({ mac }: { mac: boolean }) {
   const { t } = useI18n();
+  // Browser (Chrome) sign-in is Linux-only; macOS signs in through the built-in window.
+  if (mac) return <p className="passkey-sign-in-notice">{t("Sign in with your password, a code or the Authenticator app. No browser is needed. Passkey sign-in is not available on macOS yet: if Microsoft asks for a passkey, choose Other ways to sign in.")}</p>;
   return <p className="passkey-sign-in-notice">{t("Passkey sign-in requires Google Chrome installed on this computer. Other browsers are not supported. If Microsoft sign-in gets stuck, choose Continue in browser in the sign-in window.")}</p>;
 }
 
@@ -1045,7 +1047,7 @@ export function FirstRunWizard({ data, toast }: { data: AppSnapshot; toast: (val
         <button className="secondary" disabled={!data.backend.capabilities.login || signingIn || data.auth.running} onClick={() => void signIn()}>{signingIn ? <LoaderCircle className="spin" /> : <LogIn />}{data.auth.stored ? t("Sign in again") : t("Sign in")}</button>
       </div>
       <div className="wizard-actions">
-        <PasskeySignInNotice />
+        <PasskeySignInNotice mac={data.platform === 'darwin'} />
         <span>{t("Signing in can also be done later from Settings.")}</span>
         <button className="primary" disabled={saving} onClick={() => void finish()}>{saving ? <LoaderCircle className="spin" /> : <Check />}{t("Start using Xodus Nexus")}</button>
       </div>
