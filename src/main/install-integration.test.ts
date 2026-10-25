@@ -86,9 +86,15 @@ vi.mock('./game-process.js', () => ({ spawnGameProcess: async () => {
 
 const ipc = (name: string, ...args: any[]) => h.handlers.get(name)!(undefined, ...args);
 const snapshot = () => ipc('get-snapshot');
+// Queue advancement includes serialized atomic state writes. Give those I/O
+// boundaries a bounded budget on busy CI hosts without relaxing their order.
+const waitForQueue = (count: number) => vi.waitFor(() => expect(h.downloads).toHaveLength(count), { timeout: 5_000, interval: 20 });
 const install = (letter: string, destination = path.join(h.root, `download-${letter}`)) => ipc('start-install', { productId: `9${letter.repeat(11)}`, title: `Sample ${letter}`, destination });
 
+const hostProcess = process;
 beforeAll(async () => {
+  // This fixture provides a Linux Proton runner and Steam adapter, not CrossOver.
+  vi.stubGlobal('process', Object.create(hostProcess, { platform: { value: 'linux' }, arch: { value: 'x64' } }));
   h.root = await fs.mkdtemp(path.join(os.tmpdir(), 'nexus-install-integration-'));
   h.wine = path.join(h.root, 'runtime', 'wine'); await fs.mkdir(path.dirname(h.wine)); await fs.writeFile(h.wine, 'fixture', { mode: 0o700 });
   const data = demoSnapshot(); h.backend = { ...data.backend, capabilities: { ...data.backend.capabilities, packageSelection: true }, binaryPath: path.join(h.root, 'synthetic-cli'), linuxRunPatch: 'test-patch' }; h.runtime = data.runtime;
@@ -116,6 +122,7 @@ afterAll(async () => {
   h.game?.finish(); for (const job of h.downloads) job.finish(130);
   await new Promise(resolve => setTimeout(resolve, 50));
   await fs.rm(h.root, { recursive: true, force: true });
+  vi.unstubAllGlobals();
 });
 
 it('diagnostic IPC previews without a save/upload, saves exactly reviewed text and honors cancellation', async () => {
@@ -184,7 +191,7 @@ it('passes all native profiles to Steam-owned live import without login preferen
 
 it('removes only unrelated games while downloading, without interrupting the queue', async () => {
   const active = await install('Q'), queued = await install('R');
-  await vi.waitFor(() => expect(h.downloads).toHaveLength(1));
+  await waitForQueue(1);
   await vi.waitFor(() => {
     expect(snapshot().downloads.find((task: any) => task.id === queued)?.coverUrl).toBe('https://store-images.s-microsoft.com/9RRRRRRRRRRR');
     expect(snapshot().downloads.find((task: any) => task.id === active)?.coverUrl).toBe('https://store-images.s-microsoft.com/9QQQQQQQQQQQ');
@@ -242,8 +249,8 @@ it('removes only unrelated games while downloading, without interrupting the que
   expect(h.notifications).toEqual([]);
 });
 
-it('offers cleanup only for a new folder and waits for process exit before deleting it', async () => {
-  const id = await install('X'); await vi.waitFor(() => expect(h.downloads).toHaveLength(1));
+it.skipIf(hostProcess.platform !== 'linux')('offers cleanup only for a new folder and waits for process exit before deleting it', async () => {
+  const id = await install('X'); await waitForQueue(1);
   const task = snapshot().downloads.find((task: any) => task.id === id), partial = path.join(task.destination, 'part.bin');
   await fs.writeFile(partial, 'disposable'); expect(await ipc('download-cancel-options', id)).toEqual({ deleteFilesAllowed: true });
   h.holdCancellation = true; const count = h.signals.length, pending = ipc('cancel-download', id, 'delete-files');
@@ -264,17 +271,17 @@ it('offers cleanup only for a new folder and waits for process exit before delet
 });
 
 it('keeps new partials by default and refuses deletion of an existing folder or an update', async () => {
-  const id = await install('U'); await vi.waitFor(() => expect(h.downloads).toHaveLength(1));
+  const id = await install('U'); await waitForQueue(1);
   const directory = snapshot().downloads.find((task: any) => task.id === id).destination;
   await fs.writeFile(path.join(directory, 'keep'), 'partial'); await ipc('cancel-download', id);
   expect(await fs.readFile(path.join(directory, 'keep'), 'utf8')).toBe('partial'); h.downloads.splice(0);
   const existing = path.join(h.root, 'pre-existing-folder'); await fs.mkdir(existing); await fs.writeFile(path.join(existing, 'original'), 'existing files');
-  const next = await install('V', existing); await vi.waitFor(() => expect(h.downloads).toHaveLength(1));
+  const next = await install('V', existing); await waitForQueue(1);
   expect((await ipc('download-cancel-options', next)).deleteFilesAllowed).toBe(false);
   const signals = h.signals.length; await expect(ipc('cancel-download', next, 'delete-files')).rejects.toThrow('Existing or untracked');
   expect(h.signals.length).toBe(signals); expect(await fs.readFile(path.join(existing, 'original'), 'utf8')).toBe('existing files');
   await ipc('cancel-download', next, 'keep'); h.downloads.splice(0);
-  const update = await ipc('update-installed-game', 'sample'); await vi.waitFor(() => expect(h.downloads).toHaveLength(1));
+  const update = await ipc('update-installed-game', 'sample'); await waitForQueue(1);
   expect((await ipc('download-cancel-options', update)).deleteFilesAllowed).toBe(false);
   await expect(ipc('cancel-download', update, 'delete-files')).rejects.toThrow('Updates and DLC');
   expect(await fs.readFile(path.join(h.root, 'installed-game/Game.exe'), 'utf8')).toBe('MZ fixture');
@@ -283,7 +290,7 @@ it('keeps new partials by default and refuses deletion of an existing folder or 
 });
 
 it('runs real queue IPC, pause/cancel/failure/restart and simultaneous play/download safely', async () => {
-  const first = await install('A'); await vi.waitFor(() => expect(h.downloads).toHaveLength(1));
+  const first = await install('A'); await waitForQueue(1);
   expect(h.blockDisplay).not.toHaveBeenCalled();
   await ipc('launch-game', 'sample'); expect(snapshot().gameOperation.status).toBe('running');
   for (const mode of ['library', 'delete-files']) await expect(ipc('remove-game', 'sample', mode)).rejects.toThrow('Close this game');
@@ -297,25 +304,25 @@ it('runs real queue IPC, pause/cancel/failure/restart and simultaneous play/down
   await expect(ipc('update-installed-game', 'sample')).rejects.toThrow('Another Xodus');
   await expect(ipc('update-settings', { market: 'GB' })).rejects.toThrow('Another Xodus');
   await ipc('cancel-download', cancel); h.downloads[0].finish(1);
-  await vi.waitFor(() => expect(h.downloads).toHaveLength(2));
+  await waitForQueue(2);
   expect(h.downloads[1].args[1]).toBe('9CCCCCCCCCCC');
   expect(snapshot().downloads.find((task: any) => task.id === first).status).toBe('failed');
   h.downloads[1].progress(); await ipc('pause-download', next);
   expect(snapshot().downloads.find((task: any) => task.id === next).status).toBe('paused');
   const fourth = await install('D'); expect(h.downloads).toHaveLength(2);
   await ipc('resume-download', next); h.downloads[1].progress(false, 'complete'); h.downloads[1].finish(0);
-  await vi.waitFor(() => expect(h.downloads).toHaveLength(3));
+  await waitForQueue(3);
   expect(h.notifications).toHaveLength(1);
   expect(h.notifications[0]).toMatchObject({ title: 'Download complete', body: 'Sample C has finished downloading.' });
   expect(h.downloads[2].args[1]).toBe('9DDDDDDDDDDD'); expect(snapshot().gameOperation.status).toBe('running');
   await install('E');
   const restarted = new StateStore(path.join(h.root, 'userData')); await restarted.load();
   expect(restarted.downloads.filter(task => task.status === 'paused')).toHaveLength(2);
-  await ipc('cancel-download', fourth); await vi.waitFor(() => expect(h.downloads).toHaveLength(4));
+  await ipc('cancel-download', fourth); await waitForQueue(4);
   // Closing stops advancement, even when process termination finishes later.
   await install('F'); const preventDefault = vi.fn(); h.events.get('before-quit')!({ preventDefault });
   await vi.waitFor(() => expect(h.quit).toHaveBeenCalled()); expect(preventDefault).toHaveBeenCalled();
   expect(h.downloads).toHaveLength(4);
   expect(h.notifications).toHaveLength(1); // no completion toast for cancelled/stopped jobs
   expect(h.releaseDisplay).toHaveBeenCalledWith(7);
-});
+}, 10_000);

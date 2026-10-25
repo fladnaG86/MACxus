@@ -12,7 +12,7 @@ async function ready(check: () => boolean) {
   throw new Error('Fixture did not become ready');
 }
 
-describe('game process', () => {
+describe('game process (Linux process-group contracts run on Linux CI)', () => {
   it('launches directly and monitors output and exit status', async () => {
     const lines: string[] = [];
     const game = await spawnGameProcess('printf', ['game output\n'], { onLine: (line) => lines.push(line) });
@@ -23,7 +23,7 @@ describe('game process', () => {
     await game.cleanup();
   });
 
-  it('stops the game process group without signalling unrelated processes', async () => {
+  it.skipIf(process.platform !== 'linux')('stops the game process group without signalling unrelated processes', async () => {
     const other = spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { stdio: 'ignore' });
     const lines: string[] = [];
     const game = await spawnGameProcess(process.execPath, ['-e', `
@@ -43,7 +43,7 @@ describe('game process', () => {
     } finally { await game.forceStop(); await game.cleanup(); other.kill('SIGTERM'); await once(other, 'close'); }
   });
 
-  it('finishes after actual backend exit despite an inherited pipe and cleans its helper', async () => {
+  it.skipIf(process.platform !== 'linux')('finishes after actual backend exit despite an inherited pipe and cleans its helper', async () => {
     const game = await spawnGameProcess(process.execPath, ['-e', `
       require('child_process').spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:['ignore','inherit','inherit']});
       console.log('BACKEND_DONE');process.exit(7);
@@ -56,7 +56,7 @@ describe('game process', () => {
     } finally { await game.forceStop(); }
   });
 
-  it('force-stops through the exact prefix control and kills a signal-resistant group', async () => {
+  it.skipIf(process.platform !== 'linux')('force-stops through the exact prefix control and kills a signal-resistant group', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'nexus-game-stop-'));
     const marker = path.join(directory, 'prefix-control');
     const lines: string[] = [];
@@ -85,4 +85,14 @@ describe('waitForGameExit', () => {
     expect(await waitForGameExit([new Promise(() => {})], 50)).toBe(false);
     expect(Date.now() - started).toBeLessThan(1_000);
   });
+});
+
+it.runIf(process.platform !== 'linux')('stops the launched process directly on hosts without Linux process groups', async () => {
+  const lines: string[] = [];
+  const game = await spawnGameProcess(process.execPath, ['-e', "process.on('SIGINT',()=>process.exit(0));console.log('DIRECT_READY');setInterval(()=>{},1000)"], { onLine: line => lines.push(line) });
+  try {
+    await ready(() => lines.includes('DIRECT_READY'));
+    await game.stop();
+    expect((await game.result).code).toBe(0);
+  } finally { await game.forceStop(); await game.cleanup(); }
 });

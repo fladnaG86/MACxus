@@ -1,4 +1,4 @@
-import { test, before, after } from 'node:test';
+import { test as nodeTest, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -6,9 +6,11 @@ import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { buildCompatibility } from './build.mjs';
 import { fileURLToPath } from 'node:url';
+const test = (name, fn) => nodeTest(name, { skip: process.platform !== 'linux' && 'Linux /proc and ELF runtime shim; exercised by Linux CI' }, fn);
 let root, components, loader, sdk;
 const source = path.dirname(fileURLToPath(import.meta.url));
 before(async () => {
+  if (process.platform !== 'linux') return;
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'nexus-pgs-test-'));
   components = path.join(root, 'components');
   await buildCompatibility(components);

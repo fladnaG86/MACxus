@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -28,7 +28,10 @@ const tag = `backend-v${backendLock.version}`;
 const url = (name: string) => `https://github.com/domsvoboda/xodus-nexus/releases/download/${tag}/${name}`;
 const elf = () => { const bytes = Buffer.alloc(64); bytes.set([0x7f, 0x45, 0x4c, 0x46, 2, 1]); bytes.writeUInt16LE(62, 18); return bytes; };
 
+const hostProcess = process;
 describe('prebuilt backend', () => {
+  beforeEach(() => vi.stubGlobal('process', Object.create(hostProcess, { platform: { value: 'linux' }, arch: { value: 'x64' } })));
+  afterEach(() => vi.unstubAllGlobals());
   it('never validates a cwd-relative binary when externalRoot is empty', async () => {
     const manager = new BackendManager('/unused', '', () => {}, () => false);
     const validate = vi.spyOn(manager as unknown as { validate: (p: string) => Promise<unknown> }, 'validate');

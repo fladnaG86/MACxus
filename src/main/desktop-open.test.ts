@@ -1,10 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const execute = vi.hoisted(() => vi.fn());
 vi.mock('node:child_process', async original => ({ ...await original<typeof import('node:child_process')>(), execFile: execute }));
 import { openDesktopTarget } from './desktop-open.js';
 
 const session = { XDG_CURRENT_DESKTOP: 'gamescope', GTK_IM_MODULE: 'simple', XODUS_NEXUS_STEAM_IME: '1' };
-beforeEach(() => { execute.mockReset(); });
+const hostProcess = process;
+beforeEach(() => { vi.stubGlobal('process', Object.create(hostProcess, { platform: { value: 'linux' } })); execute.mockReset(); });
+afterEach(() => vi.unstubAllGlobals());
 describe('external desktop input environment', () => {
   it('keeps Electron shell behavior outside the fallback, including error results', async () => {
     const fallback = vi.fn(async () => 'existing shell error');

@@ -1,0 +1,38 @@
+name: Source checks
+on:
+  pull_request:
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    name: Source checks (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install macOS test archive tool
+        if: runner.os == 'macOS'
+        run: brew install gnu-tar
+      - name: Install Linux native fixture compilers
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-x86-64 binutils dbus-daemon python3
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:runtime-tools
+      - run: npm run test:ci-tools

@@ -49,7 +49,9 @@ async function fakeFrameworks(base: string, complete = true): Promise<Buffer> {
   await writeFile(path.join(frameworks, 'libglib-2.0.0.dylib'), 'glib');
   if (complete) await writeFile(path.join(frameworks, 'GStreamer.framework/Versions/1.0/lib/libgstreamer-1.0.0.dylib'), 'gst');
   const file = path.join(base, 'frameworks.tar.xz');
-  execFileSync('tar', ['-cJf', file, '-C', tree, '.']);
+  // The pinned framework archive names its app directory directly. GNU tar
+  // distinguishes that from a leading './' when extracting a named subtree.
+  execFileSync('tar', ['-cJf', file, '-C', tree, HIGHBALL_FRAMEWORKS.subpath.split('/')[0]]);
   return readFile(file);
 }
 

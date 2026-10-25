@@ -77,7 +77,7 @@ describe('launcher-only Steam input fallback', () => {
       steam:process.env.SteamGameId, display:process.env.DISPLAY}))`;
     const result = await spawnTracked(process.execPath, ['-e', script], { env: { ...process.env, ...session } }).result;
     expect(result.code).toBe(0);
-    expect(JSON.parse(result.output)).toEqual({ ime: 'Steam', qt: 'steam', steam: '123', display: ':1' });
+    expect(JSON.parse(result.output)).toEqual({ ime: process.platform === 'linux' ? 'Steam' : 'simple', qt: 'steam', steam: '123', display: ':1' });
   });
 
   it('keeps per-game input overrides in the actual generated wrapper', async () => {

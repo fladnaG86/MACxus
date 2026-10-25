@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -30,7 +30,11 @@ it('prefers an exact name and refuses ambiguous fallbacks, traversal, directorie
     await fs.writeFile(path.join(root, 'Game.exe'), 'A');
     await fs.writeFile(path.join(root, 'GAME.EXE'), 'B');
     expect(await resolvePackageFile(root, 'Game.exe')).toBe('Game.exe');
-    expect(await resolvePackageFile(root, 'game.exe')).toBeUndefined();
+    // Model the ambiguous Windows directory listing even on a case-insensitive
+    // APFS host; all traversal and symlink assertions below still use real files.
+    const listing = vi.spyOn(fs, 'readdir').mockResolvedValueOnce(['Game.exe', 'GAME.EXE'] as never);
+    try { expect(await resolvePackageFile(root, 'game.exe')).toBeUndefined(); }
+    finally { listing.mockRestore(); }
     for (const invalid of ['../Game.exe', 'C:\\Game.exe', '.', 'missing.exe']) expect(await resolvePackageFile(root, invalid)).toBeUndefined();
     await fs.mkdir(path.join(root, 'directory.exe'));
     expect(await resolvePackageFile(root, 'directory.exe')).toBeUndefined();

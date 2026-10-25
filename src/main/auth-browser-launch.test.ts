@@ -5,8 +5,10 @@ import { AuthBrowserNotFoundError, browserLaunch, findAuthBrowser } from './auth
 const { probe } = vi.hoisted(() => ({ probe: vi.fn() }));
 vi.mock('node:child_process', async original => ({ ...await original<typeof import('node:child_process')>(), execFile: probe }));
 const flatpak = { kind: 'flatpak' as const, binary: '/usr/bin/flatpak', installation: '--user' as const, ref: 'app/com.google.Chrome/x86_64/stable' };
+const hostProcess = process;
 const available = new Set<string>();
 beforeEach(() => {
+  vi.stubGlobal('process', Object.create(hostProcess, { platform: { value: 'linux' } }));
   available.clear(); probe.mockReset();
   vi.spyOn(fs, 'stat').mockImplementation(async file => {
     if (!available.has(String(file))) throw Error('not installed');
@@ -15,7 +17,7 @@ beforeEach(() => {
   vi.spyOn(fs, 'access').mockResolvedValue(undefined);
   probe.mockImplementation((_binary, _args, _options, callback) => { callback(Error('not installed'), ''); });
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('Chrome discovery', () => {
   it('prefers native Chrome without starting Flatpak', async () => {

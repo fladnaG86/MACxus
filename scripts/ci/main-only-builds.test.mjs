@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 const yaml=createRequire(import.meta.url)('js-yaml');
-const read=async name=>yaml.load(await fs.readFile(`.github/workflows/${name}.yml`,'utf8'));
+const read=async name=>yaml.load(await fs.readFile(`.github/workflows-upstream/${name}.yml`,'utf8'));
 test('full backend/runtime workflows only build main, including manual dispatch',async()=>{
   for(const [name,job] of [['backend','build'],['runtime','changes']]){
     const workflow=await read(name);
@@ -36,4 +36,22 @@ test('runtime CI exposes the installed Ubuntu Wine tools before compilation',asy
   assert.match(steps[install].run,/wine64-tools/);
   assert.match(steps[install].run,/test -x \/usr\/lib\/wine\/widl/);
   assert.match(steps[install].run,/echo \/usr\/lib\/wine >> "\$GITHUB_PATH"/);
+});
+
+test('active MACxus checks run macOS and Linux source suites without publishing artifacts', async () => {
+  const workflow = yaml.load(await fs.readFile('.github/workflows/checks.yml', 'utf8'));
+  assert.ok(Object.hasOwn(workflow.on, 'pull_request'));
+  assert.equal(workflow.on.pull_request_target, undefined);
+  assert.deepEqual(workflow.permissions, { contents: 'read' });
+  assert.deepEqual(workflow.jobs.checks.strategy.matrix.os, ['macos-latest', 'ubuntu-22.04']);
+  assert.ok(workflow.jobs.checks['timeout-minutes'] <= 30);
+  const steps = workflow.jobs.checks.steps;
+  for (const command of ['npm ci', 'npm run typecheck', 'npm test', 'npm run test:runtime-tools', 'npm run test:ci-tools']) {
+    const step = steps.find(step => step.run === command);
+    assert.ok(step, command);
+    assert.equal(step['continue-on-error'], undefined, command);
+    assert.equal(step.if, undefined, command);
+  }
+  const source = JSON.stringify(workflow);
+  assert.doesNotMatch(source, /electron-builder|npm run dist|upload-artifact|gh release|promote-candidate/);
 });

@@ -6,6 +6,8 @@ import { randomUUID } from 'node:crypto';
 import type { DownloadTask } from '../shared/types';
 import { DownloadCleanup } from './download-cleanup';
 
+// Successful anchored deletion uses Linux /proc/self/fd and mountinfo. All
+// denial/ownership checks still run on macOS; Linux CI runs the deletion paths.
 let root: string, state: string, task: DownloadTask, cleanup: DownloadCleanup;
 beforeEach(async () => {
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'nexus-cancel-fixture-')); state = path.join(root, 'profile');
@@ -16,7 +18,7 @@ afterEach(async () => { await fs.rm(root, { recursive: true, force: true }); });
 const available = () => cleanup.options(task, [], [state]);
 async function partial() { await cleanup.prepare(task); await fs.writeFile(path.join(task.destination, 'partial.bin'), 'disposable download'); }
 
-it('deletes only its proven new folder, preserving existing games and saves alongside it', async () => {
+it.skipIf(process.platform !== 'linux')('deletes only its proven new folder, preserving existing games and saves alongside it', async () => {
   const game = path.join(root, 'existing-game'); await fs.mkdir(game); await fs.writeFile(path.join(game, 'save'), 'keep');
   await partial(); expect((await available()).deleteFilesAllowed).toBe(true);
   await cleanup.remove(task, [game], [state]);
@@ -78,7 +80,7 @@ it('preserves a new folder containing an unsafe link, including the linked save 
   await expect(cleanup.remove(task, [], [])).rejects.toThrow('Files were not deleted');
   expect(await fs.readFile(outside, 'utf8')).toBe('keep'); expect(await fs.readFile(path.join(task.destination, 'partial.bin'), 'utf8')).toBe('disposable download');
 });
-it('rejects same-device bind mounts before deleting any files', async () => {
+it.skipIf(process.platform !== 'linux')('rejects same-device bind mounts before deleting any files', async () => {
   await partial(); const remove = vi.fn(async () => {});
   cleanup = new DownloadCleanup(state, remove, async () => {
     const temporary = (await fs.readdir(root)).find(name => name.startsWith('.nexus-cancel-'))!;
@@ -87,13 +89,13 @@ it('rejects same-device bind mounts before deleting any files', async () => {
   await expect(cleanup.remove(task, [], [])).rejects.toThrow('mounted filesystem'); expect(remove).not.toHaveBeenCalled();
   expect(await fs.readFile(path.join(task.destination, 'partial.bin'), 'utf8')).toBe('disposable download');
 });
-it('reports partial cleanup and restores remaining files without deleting another folder', async () => {
+it.skipIf(process.platform !== 'linux')('reports partial cleanup and restores remaining files without deleting another folder', async () => {
   await partial(); await fs.writeFile(path.join(task.destination, 'remaining'), 'keep');
   cleanup = new DownloadCleanup(state, async directory => { await fs.unlink(path.join(directory, 'partial.bin')); throw Error('Synthetic disk failure'); });
   await expect(cleanup.remove(task, [], [])).rejects.toThrow('some downloaded files may already have been deleted');
   expect(await fs.readFile(path.join(task.destination, 'remaining'), 'utf8')).toBe('keep');
 });
-it('revalidates the atomically moved directory before deletion if the source was replaced during cancellation', async () => {
+it.skipIf(process.platform !== 'linux')('revalidates the atomically moved directory before deletion if the source was replaced during cancellation', async () => {
   await partial(); const rename = fs.rename.bind(fs), original = path.join(root, 'original-owned'), remove = vi.fn(async () => {}); let replaced = false;
   const spy = vi.spyOn(fs, 'rename').mockImplementation(async (from, to) => {
     if (!replaced && String(from).endsWith('/new-install') && String(to).endsWith('/files')) {
@@ -107,7 +109,7 @@ it('revalidates the atomically moved directory before deletion if the source was
     expect(await fs.readFile(path.join(original, 'partial.bin'), 'utf8')).toBe('disposable download');
   } finally { spy.mockRestore(); }
 });
-it('never overwrites a replacement at the original path when cleanup fails', async () => {
+it.skipIf(process.platform !== 'linux')('never overwrites a replacement at the original path when cleanup fails', async () => {
   await partial(); cleanup = new DownloadCleanup(state, async () => {
     await fs.mkdir(task.destination); await fs.writeFile(path.join(task.destination, 'existing-game'), 'keep'); throw Error('Synthetic failure');
   });
@@ -115,4 +117,11 @@ it('never overwrites a replacement at the original path when cleanup fails', asy
   expect(await fs.readFile(path.join(task.destination, 'existing-game'), 'utf8')).toBe('keep');
   const quarantine = (await fs.readdir(root)).find(name => name.startsWith('.nexus-cancel-'))!;
   expect(await fs.readFile(path.join(root, quarantine, 'files', 'partial.bin'), 'utf8')).toBe('disposable download');
+});
+
+it.runIf(process.platform !== 'linux')('fails closed when Linux anchored deletion is unavailable and preserves the complete partial download', async () => {
+  await partial();
+  expect((await available()).deleteFilesAllowed).toBe(true);
+  await expect(cleanup.remove(task, [], [state])).rejects.toThrow('Files were not deleted');
+  expect(await fs.readFile(path.join(task.destination, 'partial.bin'), 'utf8')).toBe('disposable download');
 });

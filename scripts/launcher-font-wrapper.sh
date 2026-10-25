@@ -3,7 +3,7 @@
 # the font bootstrap). Filter only that library, retaining other preloads and
 # Steam's launch/tracking environment. Never evaluate or glob loader tokens.
 if [ -n "${LD_PRELOAD-}" ]; then
-  nexus_filtered_preload=$(
+  nexus_filter_preload() {
     set -f
     IFS=' :'
     nexus_preload_result=
@@ -26,7 +26,9 @@ if [ -n "${LD_PRELOAD-}" ]; then
     else
       printf '%s.' "$LD_PRELOAD"
     fi
-  )
+  }
+  nexus_filtered_preload=$(nexus_filter_preload)
+  unset -f nexus_filter_preload
   nexus_filtered_preload=${nexus_filtered_preload%.}
   if [ "$nexus_filtered_preload" != "$LD_PRELOAD" ]; then
     if [ -n "$nexus_filtered_preload" ]; then

@@ -59,8 +59,8 @@ test('unrecognized configurations and symlink sources fail before modifying file
 });
 
 test('source and both runtime CI jobs select official mirrors with bounded dependency installation', async () => {
-  const ci = yaml.load(await fs.readFile('.github/workflows/ci.yml', 'utf8'));
-  const runtime = yaml.load(await fs.readFile('.github/workflows/runtime.yml', 'utf8'));
+  const ci = yaml.load(await fs.readFile('.github/workflows-upstream/ci.yml', 'utf8'));
+  const runtime = yaml.load(await fs.readFile('.github/workflows-upstream/runtime.yml', 'utf8'));
   for (const [steps, label] of [[ci.jobs.checks.steps, 'fixture'], [runtime.jobs.media.steps, 'media'], [runtime.jobs.build.steps, 'runtime']]) {
     const step = steps.find(item => item.run?.includes('ubuntu-mirror.mjs'));
     assert.ok(step, label);

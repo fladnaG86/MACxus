@@ -37,7 +37,7 @@ await fs.access(path.join(options.base, 'files/share/default_pfx'));
 try { await fs.lstat(options.output); throw new Error('Output already exists; refusing overwrite'); }
 catch (e) { if (e.code !== 'ENOENT') throw e; }
 // Copies symlink entries as symlinks, not their external referents.
-execFileSync('cp', ['-a', '--reflink=auto', options.base, options.output], { stdio: 'inherit' });
+execFileSync('cp', ['-a', ...(process.platform === 'linux' ? ['--reflink=auto'] : []), options.base, options.output], { stdio: 'inherit' });
 async function safeParent(relative) {
   let directory = options.output;
   for (const segment of path.dirname(relative).split('/')) {

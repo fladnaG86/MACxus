@@ -1,7 +1,8 @@
 import { mkdtemp, mkdir, readFile, writeFile, rm, chmod } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as processes from './process.js';
 import { MAC_RUNTIME_DLLS, bundledRuntimeDllDirectory, crossOverWrapperScript, findCrossOver, installRuntimeDlls, prepareCrossOverRunner, runtimeOverrideDirectory, stripBuiltinMarker, type CrossOverInstall } from './crossover.js';
 
 const temporary: string[] = [];
@@ -62,13 +63,23 @@ describe('findCrossOver', () => {
   it('returns undefined when nothing is installed', async () => {
     expect(await findCrossOver([await tmp()])).toBeUndefined();
   });
-  it('finds a root with executables and reads the version', async () => {
+  it('finds executables and reads the version through the native plist utility', async () => {
     const base = await tmp();
     const cx = await fakeInstall(base, path.join(base, 'log'));
     await writeFile(path.join(base, 'CrossOver.app/Contents/Info.plist'), '<?xml version="1.0"?><plist version="1.0"><dict><key>CFBundleShortVersionString</key><string>26.3</string></dict></plist>');
-    const found = await findCrossOver([path.join(base, 'missing'), cx.root]);
-    expect(found).toEqual(cx);
+    const reader = vi.spyOn(processes, 'run').mockResolvedValue({ code: 0, output: '26.3\n' });
+    try {
+      expect(await findCrossOver([path.join(base, 'missing'), cx.root])).toEqual(cx);
+      expect(reader).toHaveBeenCalledWith('plutil', ['-extract', 'CFBundleShortVersionString', 'raw', '-o', '-', path.join(cx.root, '..', '..', 'Info.plist')]);
+    } finally { reader.mockRestore(); }
   });
+});
+
+it.runIf(process.platform === 'darwin')('reads an actual macOS plist with the native plutil executable', async () => {
+  const base = await tmp();
+  const cx = await fakeInstall(base, path.join(base, 'log'));
+  await writeFile(path.join(base, 'CrossOver.app/Contents/Info.plist'), '<?xml version="1.0"?><plist version="1.0"><dict><key>CFBundleShortVersionString</key><string>26.3</string></dict></plist>');
+  expect(await findCrossOver([cx.root])).toEqual(cx);
 });
 
 describe('prepareCrossOverRunner', () => {

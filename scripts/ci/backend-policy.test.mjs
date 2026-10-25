@@ -211,7 +211,7 @@ test('wallet unlock is explicit, account-free and private-bus tested', async () 
   assert.doesNotMatch(patch, /^\+.*(?:GetSecret|SearchItems|CreateCollection|SetSecret|ensure_device_credentials\(|https:\/\/)/m);
   const build = await fs.readFile('scripts/build-backend.mjs', 'utf8');
   assert.ok(build.includes("'keyring_unlock_', '--', '--test-threads=1'"));
-  assert.ok((await fs.readFile('.github/workflows/backend.yml','utf8')).includes('dbus-daemon'));
+  assert.ok((await fs.readFile('.github/workflows-upstream/backend.yml','utf8')).includes('dbus-daemon'));
 });
 
 test('session keyring shutdown is limited to its verified Nexus-owned provider and has no credential API', async () => {
@@ -247,7 +247,7 @@ test('optional KWallet persistence uses own watched session without locking or s
 test('backend workflow shell parses and resolves the locked toolchain', async () => {
   const require = createRequire(import.meta.url);
   const yaml = require('js-yaml');
-  const workflow = yaml.load(await fs.readFile('.github/workflows/backend.yml', 'utf8'));
+  const workflow = yaml.load(await fs.readFile('.github/workflows-upstream/backend.yml', 'utf8'));
   const steps = workflow.jobs.build.steps;
   for (const step of steps) if (step.run) execFileSync('bash', ['-n', '-c', step.run], { stdio: 'pipe' });
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'backend-workflow-test-'));
