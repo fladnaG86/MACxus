@@ -10,7 +10,7 @@ permissions:
   contents: read
 jobs:
   native:
-    runs-on: macos-15-arm64
+    runs-on: macos-15
     timeout-minutes: 45
     env:
       ELECTRON_SKIP_BINARY_DOWNLOAD: '1'

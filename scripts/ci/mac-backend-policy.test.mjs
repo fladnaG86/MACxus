@@ -10,7 +10,7 @@ test('native Mac checks cannot package or upload a distribution on a pull reques
   assert.equal(workflow.on.pull_request_target, undefined);
   assert.deepEqual(workflow.permissions, { contents: 'read' });
   const steps = workflow.jobs.native.steps;
-  assert.equal(workflow.jobs.native['runs-on'], 'macos-15-arm64');
+  assert.equal(workflow.jobs.native['runs-on'], 'macos-15');
   const check = steps.find(step => step.run === 'npm run build:mac-backend -- --check');
   assert.ok(check);
   assert.equal(check.if, "github.event_name != 'workflow_dispatch'");
