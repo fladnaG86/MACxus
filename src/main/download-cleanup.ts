@@ -15,7 +15,8 @@ export class DownloadCleanup {
   private readonly root: string;
   constructor(userData: string,
     private readonly removeTree: (directory: string) => Promise<void> = directory => fs.rm(directory, { recursive: true, force: false, maxRetries: 0 }),
-    private readonly mountInfo: () => Promise<string> = () => fs.readFile('/proc/self/mountinfo', 'utf8')) { this.root = path.join(userData, 'download-ownership'); }
+    private readonly mountInfo: () => Promise<string> = () => fs.readFile('/proc/self/mountinfo', 'utf8'),
+    private readonly platform: NodeJS.Platform = process.platform) { this.root = path.join(userData, 'download-ownership'); }
   private async safeRoot(): Promise<void> {
     const stat = await fs.lstat(this.root);
     if (!stat.isDirectory() || stat.isSymbolicLink() || stat.mode & 0o077 || stat.uid !== process.getuid?.()) throw Error('Unsafe ownership directory.');
@@ -63,6 +64,7 @@ export class DownloadCleanup {
   async options(task: DownloadTask, locked: string[], roots: string[]): Promise<DownloadCancelOptions> {
     if (task.kind !== 'install' || task.gameId) return denied('Updates and DLC keep their files to protect the installed game.');
     if (task.status === 'complete') return denied('Completed installations cannot be deleted by cancelling a download.');
+    if (this.platform !== 'linux') return denied('Deleting downloaded files during cancellation is unavailable on this platform. Cancel and keep the files instead.');
     try {
       const proof = await this.proof(task), directory = await fs.realpath(task.destination);
       if (directory !== task.destination) return denied('The installation folder changed or contains a symbolic link.');

@@ -1,18 +1,21 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { promises as fs } from 'node:fs';
+import { promises as fs, readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import type { DownloadTask } from '../shared/types';
-import { DownloadCleanup } from './download-cleanup';
+import { createContext, runInContext } from 'node:vm';
+import { ScriptTarget, transpileModule } from 'typescript';
+import type { DownloadTask } from '../shared/types.js';
+import { DownloadCleanup } from './download-cleanup.js';
 
 // Successful anchored deletion uses Linux /proc/self/fd and mountinfo. All
-// denial/ownership checks still run on macOS; Linux CI runs the deletion paths.
+// ownership checks use an injected Linux eligibility platform on every host;
+// Linux CI runs the real anchored deletion paths. Unsupported-host IPC is below.
 let root: string, state: string, task: DownloadTask, cleanup: DownloadCleanup;
 beforeEach(async () => {
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'nexus-cancel-fixture-')); state = path.join(root, 'profile');
   task = { id: randomUUID(), kind: 'install', productId: 'SAMPLE', title: 'Fixture', destination: path.join(root, 'new-install'), status: 'running', phase: '', log: [], progress: null, startedAt: '' };
-  cleanup = new DownloadCleanup(state);
+  cleanup = new DownloadCleanup(state, undefined, undefined, 'linux');
 });
 afterEach(async () => { await fs.rm(root, { recursive: true, force: true }); });
 const available = () => cleanup.options(task, [], [state]);
@@ -42,7 +45,7 @@ it('rejects parent game IDs, completed tasks and identity or product mismatches'
   }
 });
 it('retains proof across launcher restarts but never trusts task flags', async () => {
-  await partial(); cleanup = new DownloadCleanup(state); expect((await available()).deleteFilesAllowed).toBe(true);
+  await partial(); cleanup = new DownloadCleanup(state, undefined, undefined, 'linux'); expect((await available()).deleteFilesAllowed).toBe(true);
   await cleanup.complete(task); expect((await available()).deleteFilesAllowed).toBe(false);
   expect(await fs.readdir(task.destination)).toEqual(['partial.bin']);
 });
@@ -77,7 +80,9 @@ it('refuses symlinked private proof and ownership directories', async () => {
 });
 it('preserves a new folder containing an unsafe link, including the linked save target', async () => {
   await partial(); const outside = path.join(root, 'outside-save'); await fs.writeFile(outside, 'keep'); await fs.symlink(outside, path.join(task.destination, 'link'));
-  await expect(cleanup.remove(task, [], [])).rejects.toThrow('Files were not deleted');
+  cleanup = new DownloadCleanup(state);
+  if (process.platform !== 'linux') expect((await available()).deleteFilesAllowed).toBe(false);
+  await expect(cleanup.remove(task, [], [])).rejects.toThrow(process.platform === 'linux' ? 'Files were not deleted' : 'unavailable on this platform');
   expect(await fs.readFile(outside, 'utf8')).toBe('keep'); expect(await fs.readFile(path.join(task.destination, 'partial.bin'), 'utf8')).toBe('disposable download');
 });
 it.skipIf(process.platform !== 'linux')('rejects same-device bind mounts before deleting any files', async () => {
@@ -119,9 +124,44 @@ it.skipIf(process.platform !== 'linux')('never overwrites a replacement at the o
   expect(await fs.readFile(path.join(root, quarantine, 'files', 'partial.bin'), 'utf8')).toBe('disposable download');
 });
 
-it.runIf(process.platform !== 'linux')('fails closed when Linux anchored deletion is unavailable and preserves the complete partial download', async () => {
+// Evaluate the actual cancellation action with disposable state and a synthetic
+// child. Importing Electron's entrypoint would start unrelated app lifecycle code.
+const source = readFileSync(new URL('./index.ts', import.meta.url), 'utf8');
+const cancellation = transpileModule(source.slice(source.indexOf('function cancellableDownload('), source.indexOf('\nasync function importGame(')),
+  { compilerOptions: { target: ScriptTarget.ES2022 } }).outputText;
+
+it.each(['darwin', 'win32', 'freebsd'] as const)('rejects %s cleanup before stopping a live download, while ordinary cancellation keeps files', async platform => {
   await partial();
-  expect((await available()).deleteFilesAllowed).toBe(true);
-  await expect(cleanup.remove(task, [], [state])).rejects.toThrow('Files were not deleted');
+  expect((await available()).deleteFilesAllowed).toBe(true); // Ownership itself is valid.
+  const remove = vi.fn(async () => {}), mounts = vi.fn(async () => '');
+  cleanup = new DownloadCleanup(state, remove, mounts, platform);
+  expect(await available()).toMatchObject({ deleteFilesAllowed: false, reason: expect.stringContaining('unavailable on this platform') });
+  const operations = new Map(), release = vi.fn();
+  const stop = vi.fn(() => { task.status = 'cancelled'; operations.delete(task.id); return true; });
+  operations.set(task.id, { kill: stop });
+  const queue = { hold: () => release, cancel: vi.fn(), settled: vi.fn(async () => {}), has: () => false };
+  const context = createContext({
+    store: { downloads: [task], updateDownload: vi.fn(async (_id: string, update: Partial<DownloadTask>) => { Object.assign(task, update); }) },
+    downloadCleanup: cleanup, downloadCleanupProtection: () => ({ locked: [], roots: [state] }),
+    downloadCancellations: new Map(), cancelledDownloads: new Set(), installQueue: queue, operations,
+    shutdownStarted: false, preparingInstall: false, preparingContent: false, gameRemovalInProgress: false,
+    backend: { externalDownloadRunning: vi.fn(async () => false) }, emitSnapshot: vi.fn(),
+  });
+  runInContext(cancellation, context);
+  await expect(runInContext(`cancelDownload('${task.id}', 'delete-files')`, context)).rejects.toThrow('unavailable on this platform');
+  expect(stop).not.toHaveBeenCalled(); expect(queue.cancel).not.toHaveBeenCalled();
+  expect(queue.settled).not.toHaveBeenCalled(); expect(task.status).toBe('running');
+  expect(operations.has(task.id)).toBe(true); expect(release).toHaveBeenCalledOnce();
+  await expect(cleanup.remove(task, [], [state])).rejects.toThrow('unavailable on this platform');
+  await runInContext(`cancelDownload('${task.id}')`, context);
+  expect(stop).toHaveBeenCalledOnce(); expect(stop).toHaveBeenCalledWith('SIGINT'); expect(task.status).toBe('cancelled');
+  expect(task.phase).toBe('Cancelled; downloaded files and checkpoints were kept.');
+  expect(remove).not.toHaveBeenCalled(); expect(mounts).not.toHaveBeenCalled();
   expect(await fs.readFile(path.join(task.destination, 'partial.bin'), 'utf8')).toBe('disposable download');
+});
+
+it('uses the host platform for eligibility by default', async () => {
+  await partial();
+  cleanup = new DownloadCleanup(state);
+  expect((await available()).deleteFilesAllowed).toBe(process.platform === 'linux');
 });
