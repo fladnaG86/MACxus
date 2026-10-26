@@ -2,13 +2,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateCatalog } from './model.mjs';
-import { renderIndex, renderGame, renderLayer, reportedLayers } from './documents.mjs';
+import { renderIndex, renderGame } from './documents.mjs';
 
 export function generateDocuments(catalog) {
   validateCatalog(catalog);
   const outputs = new Map([['docs/COMPATIBILITY.md', renderIndex(catalog)]]);
   for (const game of catalog.games) outputs.set(`docs/compatibility/games/${game.id}.md`, renderGame(game));
-  for (const key of reportedLayers(catalog)) outputs.set(`docs/compatibility/layers/${key}.md`, renderLayer(catalog, key));
   return outputs;
 }
 
@@ -24,7 +23,8 @@ export async function writeDocuments(project, outputs, { check = false } = {}) {
       await fs.writeFile(target, contents);
     }
   }
-  // These two directories contain generated pages only. Keep hand-authored guides elsewhere.
+  // Keep game pages current and remove obsolete layer pages from the earlier layout.
+  // Both directories are owned generated Markdown; keep hand-authored guides elsewhere.
   for (const directory of ['games', 'layers']) {
     const root = path.join(project, 'docs/compatibility', directory);
     let entries;

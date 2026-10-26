@@ -1,7 +1,7 @@
 # Maintaining compatibility reports / Gestire i resoconti
 
-`reports.json` is the source of truth. `docs/COMPATIBILITY.md`, `games/*.md` and
-`layers/*.md` are generated views. Edit a record, then run:
+`reports.json` is the source of truth. `docs/COMPATIBILITY.md` and `games/*.md`
+are generated views. Edit a record, then run:
 
 ```sh
 npm run compatibility:generate
@@ -9,7 +9,7 @@ npm run compatibility:check
 ```
 
 The check also runs in source CI. GitHub renders all views as Markdown: an A–Z
-index, tables by compatibility layer and a detail page per game. Use the file
+matrix with a column per compatibility layer and a detail page per game. Use the file
 outline, letter links and browser Find to navigate. The compact index has one
 row per game; test details grow on game pages rather than in the index.
 
@@ -60,8 +60,18 @@ retain unknown details and `not-reported` scope when coverage was not recorded.
 Do not infer gameplay coverage from a green icon alone. Contradictory reports
 should coexist with their own configuration, date and source; do not replace an old failure with an unrelated
 new success. Use separate records to compare Highball against Preview or M1
-against M5. Layer and per-game comparison tables keep each configuration on its
-own row; never combine one report’s chip with another report’s layer.
+against M5. The main matrix keeps every layer’s results on the same game row,
+so a failure cannot hide a working alternative. It shows all reported outcomes
+within a layer, including conflicting results. Counts in parentheses group
+reports with the same outcome; links open either that report or the game’s
+configuration comparison. A dash means no report for that layer, never failure.
+Reports with an unknown layer stay in a separate column and are never assigned
+to one of the known layers.
+
+The per-game comparison keeps each configuration on its own row; never combine
+one report’s chip with another report’s layer. macOS and chip belong to these
+individual configurations, so the main matrix does not present them as a
+universal environment for the entire game.
 
 ## Adding or retesting a game
 
@@ -73,7 +83,7 @@ own row; never combine one report’s chip with another report’s layer.
    summaries/requirements aligned. New layers/results require a model/form update.
 4. Link the supporting issue/PR and distinguish maintainer, community and migrated
    historical evidence. Retain partial/unknown fields exactly as the evidence permits.
-5. Generate and review the game page, compact index and layer tables together. Run
+5. Generate and review the game page and layer comparison matrix together. Run
    `npm run test:compatibility` and `npm run compatibility:check`; review the diff for accidental
    upgrades of limited tests to general support.
 
@@ -84,8 +94,8 @@ provided CrossOver 26.3 but no macOS version; that version remains unknown.
 
 ## Italiano
 
-`reports.json` è la fonte unica; indice Markdown, schede `games/*.md` e tabelle
-`layers/*.md` sono generati. Un resoconto riguarda una sola configurazione di motore,
+`reports.json` è la fonte unica; matrice Markdown e schede `games/*.md`
+sono generate. Un resoconto riguarda una sola configurazione di motore,
 architettura, chip, macOS e build del gioco. Conserva ID e fonti delle prove;
 non sostituire una vecchia prova negativa con un risultato positivo su un altro
 ambiente. I controller hanno osservazioni separate per modello/connessione.
@@ -96,7 +106,11 @@ la connessione del controller, la versione macOS o il supporto di un chip da
 altri resoconti. Le prove limitate (`partial`) di filmati/menu/input non verificano
 il gioco completo. La data di un’issue non è automaticamente la data della prova.
 
-Aggiorna entrambe le lingue, esegui i comandi sopra e controlla indice, schede e
-tabelle per motore. Non modificare a mano le viste generate. Non pubblicare log grezzi,
+La matrice affianca tutti i motori nella stessa riga del gioco. Mostra tutti gli
+esiti, anche discordanti; i numeri tra parentesi contano resoconti con lo stesso
+esito. Il trattino indica assenza di resoconti, non incompatibilità. I motori non
+riportati restano in una colonna separata. macOS e chip sono nelle singole prove.
+
+Aggiorna entrambe le lingue, esegui i comandi sopra e controlla matrice e schede. Non modificare a mano le viste generate. Non pubblicare log grezzi,
 identificativi account o file dei giochi. GitHub visualizza tutte le pagine Markdown;
 usa lettere, struttura del file e Trova nel browser per navigare.

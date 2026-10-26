@@ -1,4 +1,4 @@
-import { layers, architectures, graphics, scopes, checks, connections, resultLabel, textValue } from './model.mjs';
+import { layers, architectures, graphics, scopes, checks, connections, results, resultLabel, textValue } from './model.mjs';
 
 // Treat report text as prose, including Markdown metacharacters and HTML.
 const cell = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
@@ -17,10 +17,22 @@ const evidenceKinds = {
   maintainer: { en: 'Maintainer report', it: 'Resoconto manutentore' },
   community: { en: 'Community report', it: 'Resoconto community' },
 };
-export const reportedLayers = catalog => Object.keys(layers).filter(key => catalog.games.some(game => game.reports.some(report => report.layer === key)));
-
-function navigation(catalog, language) {
-  return reportedLayers(catalog).map(key => `[${label(layers, key, language)}](compatibility/layers/${key}.md#${anchor(language)})`).join(' · ');
+// Keep all supported layers visible even when none of the games has a report yet.
+const matrixLayers = catalog => Object.keys(layers).filter(key => key !== 'unknown' || catalog.games.some(game => game.reports.some(report => report.layer === key)));
+const matrixHeading = (key, language) => ({ highball: 'Highball', crossover: 'CrossOver',
+  'crossover-preview': 'Preview Rosetta', 'crossover-preview-arm': 'Preview ARM64/FEX',
+  unknown: t('Layer not reported', 'Motore non riportato', language),
+})[key];
+function matrixCell(game, key, language) {
+  const reports = game.reports.filter(report => report.layer === key);
+  if (!reports.length) return '—';
+  return Object.keys(results).flatMap(result => {
+    const matching = reports.filter(report => report.result === result);
+    if (!matching.length) return [];
+    const destination = matching.length === 1 ? `${language}-${matching[0].id}` : anchor(language);
+    const count = matching.length === 1 ? '' : ` (${matching.length})`;
+    return [`[${resultLabel(result, language)}${count}](compatibility/games/${game.id}.md#${destination})`];
+  }).join('<br>');
 }
 function alphabetGroups(games) {
   const groups = new Map();
@@ -42,53 +54,33 @@ export function renderIndex(catalog) {
   const out = [generated, '# Game compatibility / Compatibilità dei giochi', '', languageLinks, '',
     '[Report a test / Segnala una prova](https://github.com/fladnaG86/MACxus/issues/new?template=02-game-report.yml)', ''];
   const groups = alphabetGroups(sortedGames(catalog));
+  const columns = matrixLayers(catalog);
   for (const language of ['en', 'it']) {
     out.push(`## ${anchor(language) === 'english' ? 'English' : 'Italiano'}`, '',
-      t('Find a game below, or browse **by compatibility layer**. Layer tables show one tested configuration per row, with macOS and chip in separate columns. Game pages contain feature checks, controllers, required settings and evidence.',
-        'Trova un gioco qui sotto, oppure consulta le tabelle **per motore di compatibilità**. Ogni riga delle tabelle motore è una configurazione provata, con macOS e chip in colonne separate. Le schede gioco contengono verifiche, controller, impostazioni e fonti.', language), '',
-      navigation(catalog, language), '',
+      t('Compare compatibility layers side by side: **one row per game**, with Highball, CrossOver, Preview Rosetta and Preview ARM64/FEX in separate columns. A failure in one column does not mean the game fails in another. Select a result for the tested macOS, chip, layer version, feature checks, controllers and required settings.',
+        'Confronta i motori affiancati: **una riga per gioco**, con colonne separate per Highball, CrossOver, Preview Rosetta e Preview ARM64/FEX. Un errore in una colonna non indica un errore con un altro motore. Seleziona un risultato per macOS, chip, versione motore, verifiche, controller e impostazioni richieste.', language), '',
       t('Use GitHub’s file outline or the letter links to jump, and browser Find to locate a title. Every game has a stable page; additional reports are added there rather than expanding the index into test notes.',
         'Usa la struttura del file di GitHub o le lettere per spostarti, e Trova nel browser per cercare un titolo. Ogni gioco ha una pagina stabile; le nuove prove vanno lì, senza riempire l’indice di note.', language), '',
-      t('✅ Works (reported) · ⚠️ Works with limits · ◐ Limited test · ❌ Fails · ⛔ Blocked',
-        '✅ Funziona (segnalato) · ⚠️ Funziona con limiti · ◐ Prova limitata · ❌ Non funziona · ⛔ Bloccato', language), '',
+      t('✅ Works (reported) · ⚠️ Works with limits · ◐ Limited test · ❌ Fails · ⛔ Blocked · — No report for this layer',
+        '✅ Funziona (segnalato) · ⚠️ Funziona con limiti · ◐ Prova limitata · ❌ Non funziona · ⛔ Bloccato · — Nessun resoconto per questo motore', language), '',
+      t('Cells show every reported outcome for that layer; conflicting reports stay visible. A number in parentheses counts reports with the same outcome. A dash means no report, never failure. Reports with an unspecified layer appear in their own column.',
+        'Le celle mostrano tutti gli esiti riportati per quel motore; i risultati discordanti restano visibili. Un numero tra parentesi conta i resoconti con lo stesso esito. Un trattino indica assenza di resoconti, mai un errore. I resoconti con motore sconosciuto hanno una colonna dedicata.', language), '',
       [...groups.keys()].map(key => `[${key === '#' ? 'Other / Altro' : key}](#${language}-${letterId(key)})`).join(' · '), '');
     for (const [letter, games] of groups) {
       out.push(`<a id="${language}-${letterId(letter)}"></a>`, `### ${letter === '#' ? t('Other titles', 'Altri titoli', language) : letter}`, '',
-        t('| Game | Reported results | Layers reported | Reports |', '| Gioco | Risultati riportati | Motori riportati | Prove |', language), '| --- | --- | --- | --- |');
+        `| ${t('Game', 'Gioco', language)} | ${columns.map(key => matrixHeading(key, language)).join(' | ')} |`,
+        `| --- | ${columns.map(() => '---').join(' | ')} |`);
       for (const game of games) {
-        const unique = values => [...new Set(values)].join(', ');
-        out.push(`| [${cell(game.title)}](compatibility/games/${game.id}.md#${anchor(language)}) | ${unique(game.reports.map(report => resultLabel(report.result, language)))} | ${unique(game.reports.map(report => label(layers, report.layer, language)))} | ${game.reports.length} |`);
+        out.push(`| [${cell(game.title)}](compatibility/games/${game.id}.md#${anchor(language)}) | ${columns.map(key => matrixCell(game, key, language)).join(' | ')} |`);
       }
       out.push('');
     }
     out.push(t('### Reading the results', '### Interpretare i risultati', language), '',
-      t('A result belongs to one reported configuration, not every Mac or engine. The index summarizes available reports: open a game or layer table to see the actual combinations. Missing fields mean **not reported**. Historical green reports retain unknown test scope where it was not recorded.',
-        'Un risultato riguarda una configurazione riportata, non tutti i Mac o motori. L’indice riassume i resoconti: apri una scheda o tabella motore per vedere le combinazioni effettive. I dati mancanti sono **non riportati**. Le vecchie prove positive mantengono l’ambito sconosciuto se non era documentato.', language), '',
+      t('A result belongs to one reported configuration, not every Mac or engine. The index summarizes available reports: open a game to see the actual combinations. Missing fields mean **not reported**. Historical green reports retain unknown test scope where it was not recorded.',
+        'Un risultato riguarda una configurazione riportata, non tutti i Mac o motori. L’indice riassume i resoconti: apri una scheda gioco per vedere le combinazioni effettive. I dati mancanti sono **non riportati**. Le vecchie prove positive mantengono l’ambito sconosciuto se non era documentato.', language), '',
       t('A menu, controller or startup-movie test does not establish full gameplay. An offline result does not establish online support. Anti-cheat and hardware requirements remain specific limits; requiring a newer chip does not mean it was tested. Conflicting results remain separate with their environments and sources.',
         'Una prova di menu, controller o filmati iniziali non verifica il gioco completo. Un risultato offline non verifica il supporto online. Anti-cheat e requisiti hardware restano limiti specifici; un chip richiesto non è per questo provato. I risultati discordanti restano separati con ambienti e fonti.', language), '',
       '[Maintainer guide / Guida manutentori](compatibility/MAINTAINING.md)', '');
-  }
-  return out.join('\n');
-}
-
-export function renderLayer(catalog, key) {
-  const out = [generated, `# ${label(layers, key, 'en')} / ${key === 'unknown' ? 'Motore non riportato' : 'Compatibility reports'}`, '',
-    '[Compatibility index / Indice compatibilità](../../COMPATIBILITY.md)', '', languageLinks, ''];
-  const groups = alphabetGroups(sortedGames(catalog).filter(game => game.reports.some(report => report.layer === key)));
-  for (const language of ['en', 'it']) {
-    out.push(`## ${language === 'en' ? 'English' : 'Italiano'}`, '',
-      t('One row is one reported configuration. Follow a game link for settings, test scope, feature results and sources. Unknown fields are not a support claim. Use the letters or browser Find for a title, chip or macOS version.',
-        'Ogni riga è una configurazione riportata. Apri il gioco per impostazioni, ambito, risultati e fonti. I dati non riportati non indicano supporto verificato. Usa le lettere o Trova nel browser per titolo, chip o versione macOS.', language), '',
-      [...groups.keys()].map(letter => `[${letter === '#' ? 'Other / Altro' : letter}](#${language}-${letterId(letter)})`).join(' · '), '');
-    for (const [letter, games] of groups) {
-      out.push(`<a id="${language}-${letterId(letter)}"></a>`, `### ${letter === '#' ? t('Other titles', 'Altri titoli', language) : letter}`, '',
-        t('| Game / details | Result | Layer version | macOS | Chip | Graphics | Tested scope |', '| Gioco / dettagli | Risultato | Versione motore | macOS | Chip | Grafica | Ambito provato |', language),
-        '| --- | --- | --- | --- | --- | --- | --- |');
-      for (const game of games) for (const report of game.reports.filter(report => report.layer === key)) {
-        out.push(`| [${cell(game.title)}](../games/${game.id}.md#${language}-${report.id}) | ${resultLabel(report.result, language)} | ${value(report.layerVersion, language)} | ${value(report.macOS, language)} | ${value(report.chip, language)} | ${label(graphics, report.graphics.backend, language)} | ${scope(report, language)} |`);
-      }
-      out.push('');
-    }
   }
   return out.join('\n');
 }

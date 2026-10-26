@@ -113,11 +113,8 @@ test('all generated relative links point to real pages and bilingual anchors', (
       if (fragment) assert.ok(anchors(documents.get(target)).has(fragment), `${filename} -> ${target}#${fragment}`);
     }
   }
-  const preview = documents.get('docs/compatibility/layers/crossover-preview.md');
-  assert.doesNotMatch(preview, /halo-highball-m1max/);
-  const highball = documents.get('docs/compatibility/layers/highball.md');
-  assert.doesNotMatch(highball, /halo-preview-m5max/);
-  assert.match(preview, /\| macOS \| Chip \|/);
+  const halo = documents.get('docs/compatibility/games/halo-campaign-evolved.md');
+  assert.match(halo, /\| macOS \| Chip \|/);
   assert.ok([...documents.keys()].every(filename => filename.endsWith('.md')));
 });
 
@@ -141,7 +138,7 @@ test('generation checks missing/stale/obsolete views and removes only obsolete g
   await writeDocuments(root, documents, { check: true });
 });
 
-test('500 games with separate configurations produce a compact alphabetical index and complete layer tables', () => {
+test('500 games with separate configurations produce one complete alphabetical layer matrix', () => {
   const large = { schemaVersion: 1, games: Array.from({ length: 500 }, (_, index) => {
     const item = structuredClone(catalog.games[0]);
     item.id = `game-${index}`; item.title = `Game ${String(index).padStart(3, '0')}`;
@@ -149,13 +146,52 @@ test('500 games with separate configurations produce a compact alphabetical inde
     return item;
   }) };
   const documents = generateDocuments(large);
-  assert.equal(documents.size, 503);
+  assert.equal(documents.size, 501);
   const index = documents.get('docs/COMPATIBILITY.md');
   assert.equal((index.match(/\]\(compatibility\/games\/[^)]+#english\)/g) ?? []).length, 500);
-  for (const layer of ['crossover-preview', 'crossover-preview-arm']) {
-    const table = documents.get(`docs/compatibility/layers/${layer}.md`);
-    assert.equal((table.match(/\.md#en-report-/g) ?? []).length, 500);
+  for (const suffix of ['0', '1']) {
+    assert.equal((index.match(new RegExp(`\\.md#en-report-[0-9]+-${suffix}\\)`, 'g')) ?? []).length, 500);
   }
   const reversed = { ...large, games: [...large.games].reverse() };
   assert.equal(generateDocuments(reversed).get('docs/COMPATIBILITY.md'), index);
+});
+
+
+test('matrix shows a failure beside a working alternative and never treats absent or unknown layers as failure', () => {
+  const candidate = copy();
+  const item = candidate.games[0];
+  const failure = structuredClone(item.reports[1]);
+  failure.id = 'highball-launch-failure'; failure.layer = 'highball'; failure.architecture = 'unknown';
+  item.reports.push(failure);
+  const unknown = structuredClone(failure);
+  unknown.id = 'unreported-layer-failure'; unknown.layer = 'unknown';
+  item.reports.push(unknown);
+  const index = generateDocuments(candidate).get('docs/COMPATIBILITY.md');
+  const row = index.split('\n').find(line => line.startsWith('| [007 First Light]'));
+  const columns = row.split(' | ');
+  assert.match(index, /\| Game \| Highball \| CrossOver \| Preview Rosetta \| Preview ARM64\/FEX \| Layer not reported \|/);
+  assert.match(columns[1], /❌ Fails.*#en-highball-launch-failure/);
+  assert.equal(columns[2], '—', 'no CrossOver report is not a failure');
+  assert.match(columns[3], /⚠️ Works with limits.*#en-bond-preview-rosetta-m5max/);
+  assert.match(columns[4], /❌ Fails.*#en-bond-preview-arm-launch/);
+  assert.match(columns[5], /#en-unreported-layer-failure/);
+  assert.doesNotMatch(columns.slice(1, 5).join(' '), /unreported-layer-failure/);
+});
+
+test('matrix preserves conflicting outcomes on the same layer and links duplicate outcomes to all configurations', () => {
+  const candidate = copy();
+  const item = candidate.games[0];
+  const working = structuredClone(item.reports[0]);
+  working.id = 'preview-working-again'; item.reports.push(working);
+  const failure = structuredClone(item.reports[1]);
+  failure.id = 'preview-failure'; failure.layer = 'crossover-preview'; failure.architecture = 'x86_64-rosetta';
+  item.reports.push(failure);
+  const documents = generateDocuments(candidate);
+  const row = documents.get('docs/COMPATIBILITY.md').split('\n').find(line => line.startsWith('| [007 First Light]'));
+  const preview = row.split(' | ')[3];
+  assert.match(preview, /⚠️ Works with limits \(2\).*\.md#english/);
+  assert.match(preview, /❌ Fails.*#en-preview-failure/);
+  const details = documents.get('docs/compatibility/games/007-first-light.md');
+  assert.match(details, /id="en-bond-preview-rosetta-m5max"/);
+  assert.match(details, /id="en-preview-working-again"/);
 });
