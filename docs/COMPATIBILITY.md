@@ -9,98 +9,27 @@
 
 Compare compatibility layers side by side: **one row per game**, with Highball, CrossOver, Preview Rosetta and Preview ARM64/FEX in separate columns. A failure in one column does not mean the game fails in another. Select a result for the tested macOS, chip, layer version, feature checks, controllers and required settings.
 
-Use GitHub’s file outline or the letter links to jump, and browser Find to locate a title. Every game has a stable page; additional reports are added there rather than expanding the index into test notes.
+Games are listed alphabetically in one continuous table. Use browser Find to locate a title. Every game has a stable page; additional reports are added there rather than expanding the index into test notes.
 
 ✅ Works (reported) · ⚠️ Works with limits · ◐ Limited test · ❌ Fails · ⛔ Blocked · — No report for this layer
 
 Cells show every reported outcome for that layer; conflicting reports stay visible. A number in parentheses counts reports with the same outcome. A dash means no report, never failure. Reports with an unspecified layer appear in their own column.
 
-[0–9](#en-numbers) · [C](#en-c) · [D](#en-d) · [F](#en-f) · [G](#en-g) · [H](#en-h) · [M](#en-m) · [N](#en-n) · [S](#en-s) · [T](#en-t) · [V](#en-v) · [W](#en-w)
-
-<a id="en-numbers"></a>
-### 0–9
-
 | Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
 | --- | --- | --- | --- | --- | --- |
 | [007 First Light](compatibility/games/007-first-light.md#english) | — | — | [⚠️ Works with limits](compatibility/games/007-first-light.md#en-bond-preview-rosetta-m5max) | [❌ Fails](compatibility/games/007-first-light.md#en-bond-preview-arm-launch) | — |
-
-<a id="en-c"></a>
-### C
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [Call of Duty (title/build not specified)](compatibility/games/call-of-duty.md#english) | — | — | — | — | [⛔ Blocked](compatibility/games/call-of-duty.md#en-call-of-duty-ricochet-limitation) |
-
-<a id="en-d"></a>
-### D
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [Deep Rock Galactic](compatibility/games/deep-rock-galactic.md#english) | [✅ Works (reported)](compatibility/games/deep-rock-galactic.md#en-deep-rock-galactic-highball-m1max) | [✅ Works (reported)](compatibility/games/deep-rock-galactic.md#en-deep-rock-galactic-crossover-m1max) | — | — | — |
-
-<a id="en-f"></a>
-### F
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [Forza Horizon 6](compatibility/games/forza-horizon-6.md#english) | [❌ Fails](compatibility/games/forza-horizon-6.md#en-forza-horizon-6-highball-m1max) | — | — | — | — |
-
-<a id="en-g"></a>
-### G
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [Gears of War: E-Day](compatibility/games/gears-e-day.md#english) | [⛔ Blocked](compatibility/games/gears-e-day.md#en-gears-e-day-highball-m1max) | — | — | — | — |
-
-<a id="en-h"></a>
-### H
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [Halo: Campaign Evolved](compatibility/games/halo-campaign-evolved.md#english) | [⚠️ Works with limits](compatibility/games/halo-campaign-evolved.md#en-halo-highball-m1max) | — | [◐ Limited test](compatibility/games/halo-campaign-evolved.md#en-halo-preview-m5max-media-input) | — | — |
-
-<a id="en-m"></a>
-### M
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [Mad King Redemption](compatibility/games/mad-king-redemption.md#english) | [✅ Works (reported)](compatibility/games/mad-king-redemption.md#en-mad-king-redemption-highball-m1max) | — | — | — | — |
 | [MARVEL Cosmic Invasion](compatibility/games/marvel-cosmic-invasion.md#english) | [✅ Works (reported)](compatibility/games/marvel-cosmic-invasion.md#en-marvel-cosmic-invasion-highball-m1max) | — | — | — | — |
 | [Minecraft Dungeons II](compatibility/games/minecraft-dungeons-ii.md#english) | [✅ Works (reported)](compatibility/games/minecraft-dungeons-ii.md#en-minecraft-dungeons-ii-highball-m1max) | — | — | — | — |
-
-<a id="en-n"></a>
-### N
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [Nine Sols](compatibility/games/nine-sols.md#english) | — | [✅ Works (reported)](compatibility/games/nine-sols.md#en-nine-sols-crossover-m4pro) | — | — | — |
-
-<a id="en-s"></a>
-### S
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [Super Meat Boy 3D](compatibility/games/super-meat-boy-3d.md#english) | [✅ Works (reported)](compatibility/games/super-meat-boy-3d.md#en-super-meat-boy-3d-highball-m1max) | — | — | — | — |
-
-<a id="en-t"></a>
-### T
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [TUNIC](compatibility/games/tunic.md#english) | — | [✅ Works (reported)](compatibility/games/tunic.md#en-tunic-crossover-m1max) | — | — | — |
-
-<a id="en-v"></a>
-### V
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [Vampire Survivors](compatibility/games/vampire-survivors.md#english) | [✅ Works (reported)](compatibility/games/vampire-survivors.md#en-vampire-survivors-highball-m1max) | — | — | — | — |
-
-<a id="en-w"></a>
-### W
-
-| Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
-| --- | --- | --- | --- | --- | --- |
 | [Warhammer 40,000: Space Marine 2](compatibility/games/space-marine-2.md#english) | [⚠️ Works with limits](compatibility/games/space-marine-2.md#en-space-marine-2-highball-m1max) | — | — | — | — |
 
 ### Reading the results
@@ -115,98 +44,27 @@ A menu, controller or startup-movie test does not establish full gameplay. An of
 
 Confronta i motori affiancati: **una riga per gioco**, con colonne separate per Highball, CrossOver, Preview Rosetta e Preview ARM64/FEX. Un errore in una colonna non indica un errore con un altro motore. Seleziona un risultato per macOS, chip, versione motore, verifiche, controller e impostazioni richieste.
 
-Usa la struttura del file di GitHub o le lettere per spostarti, e Trova nel browser per cercare un titolo. Ogni gioco ha una pagina stabile; le nuove prove vanno lì, senza riempire l’indice di note.
+I giochi sono in ordine alfabetico in un’unica tabella continua. Usa Trova nel browser per cercare un titolo. Ogni gioco ha una pagina stabile; le nuove prove vanno lì, senza riempire l’indice di note.
 
 ✅ Funziona (segnalato) · ⚠️ Funziona con limiti · ◐ Prova limitata · ❌ Non funziona · ⛔ Bloccato · — Nessun resoconto per questo motore
 
 Le celle mostrano tutti gli esiti riportati per quel motore; i risultati discordanti restano visibili. Un numero tra parentesi conta i resoconti con lo stesso esito. Un trattino indica assenza di resoconti, mai un errore. I resoconti con motore sconosciuto hanno una colonna dedicata.
 
-[0–9](#it-numbers) · [C](#it-c) · [D](#it-d) · [F](#it-f) · [G](#it-g) · [H](#it-h) · [M](#it-m) · [N](#it-n) · [S](#it-s) · [T](#it-t) · [V](#it-v) · [W](#it-w)
-
-<a id="it-numbers"></a>
-### 0–9
-
 | Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
 | --- | --- | --- | --- | --- | --- |
 | [007 First Light](compatibility/games/007-first-light.md#italiano) | — | — | [⚠️ Funziona con limiti](compatibility/games/007-first-light.md#it-bond-preview-rosetta-m5max) | [❌ Non funziona](compatibility/games/007-first-light.md#it-bond-preview-arm-launch) | — |
-
-<a id="it-c"></a>
-### C
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [Call of Duty (title/build not specified)](compatibility/games/call-of-duty.md#italiano) | — | — | — | — | [⛔ Bloccato](compatibility/games/call-of-duty.md#it-call-of-duty-ricochet-limitation) |
-
-<a id="it-d"></a>
-### D
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [Deep Rock Galactic](compatibility/games/deep-rock-galactic.md#italiano) | [✅ Funziona (segnalato)](compatibility/games/deep-rock-galactic.md#it-deep-rock-galactic-highball-m1max) | [✅ Funziona (segnalato)](compatibility/games/deep-rock-galactic.md#it-deep-rock-galactic-crossover-m1max) | — | — | — |
-
-<a id="it-f"></a>
-### F
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [Forza Horizon 6](compatibility/games/forza-horizon-6.md#italiano) | [❌ Non funziona](compatibility/games/forza-horizon-6.md#it-forza-horizon-6-highball-m1max) | — | — | — | — |
-
-<a id="it-g"></a>
-### G
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [Gears of War: E-Day](compatibility/games/gears-e-day.md#italiano) | [⛔ Bloccato](compatibility/games/gears-e-day.md#it-gears-e-day-highball-m1max) | — | — | — | — |
-
-<a id="it-h"></a>
-### H
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [Halo: Campaign Evolved](compatibility/games/halo-campaign-evolved.md#italiano) | [⚠️ Funziona con limiti](compatibility/games/halo-campaign-evolved.md#it-halo-highball-m1max) | — | [◐ Prova limitata](compatibility/games/halo-campaign-evolved.md#it-halo-preview-m5max-media-input) | — | — |
-
-<a id="it-m"></a>
-### M
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [Mad King Redemption](compatibility/games/mad-king-redemption.md#italiano) | [✅ Funziona (segnalato)](compatibility/games/mad-king-redemption.md#it-mad-king-redemption-highball-m1max) | — | — | — | — |
 | [MARVEL Cosmic Invasion](compatibility/games/marvel-cosmic-invasion.md#italiano) | [✅ Funziona (segnalato)](compatibility/games/marvel-cosmic-invasion.md#it-marvel-cosmic-invasion-highball-m1max) | — | — | — | — |
 | [Minecraft Dungeons II](compatibility/games/minecraft-dungeons-ii.md#italiano) | [✅ Funziona (segnalato)](compatibility/games/minecraft-dungeons-ii.md#it-minecraft-dungeons-ii-highball-m1max) | — | — | — | — |
-
-<a id="it-n"></a>
-### N
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [Nine Sols](compatibility/games/nine-sols.md#italiano) | — | [✅ Funziona (segnalato)](compatibility/games/nine-sols.md#it-nine-sols-crossover-m4pro) | — | — | — |
-
-<a id="it-s"></a>
-### S
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [Super Meat Boy 3D](compatibility/games/super-meat-boy-3d.md#italiano) | [✅ Funziona (segnalato)](compatibility/games/super-meat-boy-3d.md#it-super-meat-boy-3d-highball-m1max) | — | — | — | — |
-
-<a id="it-t"></a>
-### T
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [TUNIC](compatibility/games/tunic.md#italiano) | — | [✅ Funziona (segnalato)](compatibility/games/tunic.md#it-tunic-crossover-m1max) | — | — | — |
-
-<a id="it-v"></a>
-### V
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [Vampire Survivors](compatibility/games/vampire-survivors.md#italiano) | [✅ Funziona (segnalato)](compatibility/games/vampire-survivors.md#it-vampire-survivors-highball-m1max) | — | — | — | — |
-
-<a id="it-w"></a>
-### W
-
-| Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
-| --- | --- | --- | --- | --- | --- |
 | [Warhammer 40,000: Space Marine 2](compatibility/games/space-marine-2.md#italiano) | [⚠️ Funziona con limiti](compatibility/games/space-marine-2.md#it-space-marine-2-highball-m1max) | — | — | — | — |
 
 ### Interpretare i risultati

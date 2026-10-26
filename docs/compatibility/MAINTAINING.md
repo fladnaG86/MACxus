@@ -9,9 +9,10 @@ npm run compatibility:check
 ```
 
 The check also runs in source CI. GitHub renders all views as Markdown: an A–Z
-matrix with a column per compatibility layer and a detail page per game. Use the file
-outline, letter links and browser Find to navigate. The compact index has one
-row per game; test details grow on game pages rather than in the index.
+matrix with a column per compatibility layer and a detail page per game. Each
+language uses one continuous table in alphabetical order; use browser Find to
+locate a title. The compact index has one row per game; test details grow on
+game pages rather than in the index.
 
 ## One record is one configuration
 
@@ -113,4 +114,5 @@ riportati restano in una colonna separata. macOS e chip sono nelle singole prove
 
 Aggiorna entrambe le lingue, esegui i comandi sopra e controlla matrice e schede. Non modificare a mano le viste generate. Non pubblicare log grezzi,
 identificativi account o file dei giochi. GitHub visualizza tutte le pagine Markdown;
-usa lettere, struttura del file e Trova nel browser per navigare.
+ogni lingua usa un’unica tabella in ordine alfabetico. Usa Trova nel browser
+per cercare un titolo.

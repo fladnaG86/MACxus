@@ -138,16 +138,23 @@ test('generation checks missing/stale/obsolete views and removes only obsolete g
   await writeDocuments(root, documents, { check: true });
 });
 
-test('500 games with separate configurations produce one complete alphabetical layer matrix', () => {
+test('500 games across different initials produce one continuous alphabetical table per language', () => {
   const large = { schemaVersion: 1, games: Array.from({ length: 500 }, (_, index) => {
     const item = structuredClone(catalog.games[0]);
-    item.id = `game-${index}`; item.title = `Game ${String(index).padStart(3, '0')}`;
+    item.id = `game-${index}`; item.title = `${['007', 'Alpha', 'Bravo', 'Étoile', 'Zeta'][index % 5]} ${String(index).padStart(3, '0')}`;
     item.reports.forEach((report, reportIndex) => report.id = `report-${index}-${reportIndex}`);
     return item;
   }) };
   const documents = generateDocuments(large);
   assert.equal(documents.size, 501);
   const index = documents.get('docs/COMPATIBILITY.md');
+  for (const title of ['Game', 'Gioco']) {
+    const lines = index.split('\n');
+    const header = `| ${title} | Highball |`;
+    assert.equal(lines.filter(line => line.startsWith(header)).length, 1, 'one table header per language');
+    const start = lines.findIndex(line => line.startsWith(header));
+    assert.ok(lines.slice(start + 2, start + 502).every(line => line.startsWith('| [')), 'all 500 games remain in the same uninterrupted table');
+  }
   assert.equal((index.match(/\]\(compatibility\/games\/[^)]+#english\)/g) ?? []).length, 500);
   for (const suffix of ['0', '1']) {
     assert.equal((index.match(new RegExp(`\\.md#en-report-[0-9]+-${suffix}\\)`, 'g')) ?? []).length, 500);
