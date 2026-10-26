@@ -28,6 +28,12 @@ npm run test:runtime-tools
 npm run test:ci-tools
 ```
 
+Compatibility reports use structured, per-configuration evidence; see
+[the compatibility maintenance guide](docs/compatibility/MAINTAINING.md). Edit
+`docs/compatibility/reports.json`, then run `npm run compatibility:generate` and
+`npm run compatibility:check`. Do not hand-edit generated game pages or aggregate
+a limited controller/movie test into a general gameplay claim.
+
 Keep one shared runtime. Use disposable test directories, never a user's active
 game installation, saves or Xodus checkout. Keep credentials, raw diagnostics,
 prefixes and agent handoffs outside Git. Include redacted reproduction steps,

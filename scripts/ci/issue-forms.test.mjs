@@ -45,14 +45,17 @@ for (const [name, label] of [['01-macos-problem', 'bug'], ['02-game-report', 'co
 
 test('game report requires game, result, engine, Mac and versions, links the compatibility list and keeps logs optional', async () => {
   const form = await read('02-game-report'), items = fields(form);
-  for (const [id, type] of [['game', 'input'], ['result', 'dropdown'], ['engine', 'dropdown'], ['mac', 'input'], ['versions', 'input']]) {
+  for (const [id, type] of [['game', 'input'], ['result', 'dropdown'], ['scope', 'dropdown'], ['tested_at', 'input'], ['engine', 'dropdown'], ['engine_version', 'input'], ['macos', 'input'], ['chip', 'input'], ['macxus_version', 'input'], ['graphics', 'dropdown'], ['feature_results', 'textarea'], ['controller_result', 'dropdown'], ['settings', 'textarea']]) {
     assert.equal(items.get(id).type, type);
     assert.equal(items.get(id).validations.required, true);
   }
   assert.deepEqual(items.get('engine').attributes.options.slice(0, 2), ['Highball', 'CrossOver']);
   assert.notEqual(items.get('log').validations?.required, true);
   const text = JSON.stringify(form);
-  for (const guidance of ['docs/COMPATIBILITY.md', 'Keychain', 'tokens', 'game files', 'Review it before posting']) assert.ok(text.includes(guidance), guidance);
+  assert.ok(items.get('engine').attributes.options.includes('CrossOver Preview (Rosetta)'));
+  assert.ok(items.get('engine').attributes.options.includes('CrossOver Preview (ARM64/FEX)'));
+  assert.equal(items.get('scope').attributes.multiple, true);
+  for (const guidance of ['docs/COMPATIBILITY.md', 'Keychain', 'tokens', 'game files', 'Review the log', 'one configuration', 'Bluetooth', 'not tested']) assert.ok(text.includes(guidance), guidance);
 });
 
 test('macOS report requires engine, Mac/system details and reproduction, with optional logs and privacy guidance', async () => {

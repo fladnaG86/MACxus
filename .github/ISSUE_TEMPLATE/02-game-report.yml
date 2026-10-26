@@ -1,68 +1,195 @@
-name: Game report / Resoconto di un gioco
-description: Tell us how a game runs on your Mac, for the compatibility list. / Racconta come gira un gioco sul tuo Mac, per l'elenco di compatibilità.
+name: Game compatibility report / Compatibilità di un gioco
+description: One tested game + layer + Mac configuration. / Una configurazione provata di gioco + motore + Mac.
 labels: [compatibility]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks! Reports are added to [docs/COMPATIBILITY.md](https://github.com/fladnaG86/MACxus/blob/main/docs/COMPATIBILITY.md). Never attach account tokens, Keychain contents or game files.
-        Grazie! I resoconti vengono aggiunti a [docs/COMPATIBILITY.md](https://github.com/fladnaG86/MACxus/blob/main/docs/COMPATIBILITY.md). Non allegare mai token dell'account, contenuti del Portachiavi o file dei giochi.
+        Report **one configuration** at a time. A second layer, chip, macOS version or game build needs a separate report. Check [existing results](https://github.com/fladnaG86/MACxus/blob/main/docs/COMPATIBILITY.md) first; link an older report if this is a retest. Only mark features you actually tried. Never attach account tokens, Keychain contents, game files or unreviewed logs.
+        Segnala **una configurazione** alla volta. Un altro motore, chip, macOS o build del gioco richiede un resoconto separato. Controlla i [risultati esistenti](https://github.com/fladnaG86/MACxus/blob/main/docs/COMPATIBILITY.md); collega la prova precedente se ripeti il test. Indica solo funzioni realmente provate. Non allegare token, contenuti del Portachiavi, file dei giochi o log non revisionati.
+  - type: markdown
+    attributes:
+      value: '## Game and result / Gioco e risultato'
   - type: input
     id: game
     attributes:
-      label: Game (and Store ID if known) / Gioco (e Store ID se noto)
-      placeholder: Deep Rock Galactic (9NHFVWX1V7QJ)
+      label: Exact game title / Titolo esatto
+      placeholder: Halo Campaign Evolved
     validations:
       required: true
+  - type: dropdown
+    id: store
+    attributes:
+      label: Game source / Provenienza
+      options: [Microsoft Store PC / Xbox app, PC Game Pass, Other / Altro, Not sure / Non so]
+    validations:
+      required: true
+  - type: input
+    id: store_id
+    attributes:
+      label: Store product ID / ID prodotto Store
+      description: Optional; do not use an account or device ID. / Facoltativo; non usare ID account o dispositivo.
+      placeholder: 9N683TDT5M7R
+  - type: input
+    id: game_version
+    attributes:
+      label: Installed game version / Versione installata del gioco
+      placeholder: Exact version, or not reported / Versione esatta, oppure non riportata
   - type: dropdown
     id: result
     attributes:
-      label: Result / Risultato
+      label: Overall result for this configuration / Risultato della configurazione
       options:
-        - Works / Funziona
-        - Works with issues / Funziona con problemi
-        - Starts but crashes or hangs / Parte ma si chiude o si blocca
-        - Does not start / Non parte
+        - Works in tested gameplay / Funziona nel gioco provato
+        - Works with limits / Funziona con limiti
+        - Limited test only (menu, movies or input) / Solo prova limitata (menu, filmati o input)
+        - Fails or hangs / Non funziona o si blocca
+        - Blocked by a requirement / Bloccato da un requisito
     validations:
       required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: What did you actually test? / Cosa hai provato?
+      multiple: true
+      options:
+        - Launch / Avvio
+        - Menu only / Solo menu
+        - Gameplay (describe duration below) / Gioco (indica la durata sotto)
+        - Startup movies / Filmati iniziali
+        - Later cinematics / Filmati successivi
+        - Controller input / Input controller
+        - Online features / Funzioni online
+    validations:
+      required: true
+  - type: input
+    id: tested_at
+    attributes:
+      label: Test date / Data della prova
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: '## Compatibility layer and Mac / Motore e Mac'
   - type: dropdown
     id: engine
     attributes:
-      label: Wine engine / Motore Wine
-      options: [Highball, CrossOver, Not sure / Non so]
+      label: Compatibility layer / Motore di compatibilità
+      options:
+        - Highball
+        - CrossOver
+        - CrossOver Preview (Rosetta)
+        - CrossOver Preview (ARM64/FEX)
+        - Not sure / Non so
     validations:
       required: true
   - type: input
-    id: mac
+    id: engine_version
     attributes:
-      label: Mac model, chip and macOS version / Modello Mac, chip e versione macOS
-      placeholder: MacBook Pro M1 Max, macOS 27.2
+      label: Exact layer version/build / Versione e build del motore
+      description: Report the selected edition, not just another CrossOver installation. / Indica l’edizione selezionata, non un’altra installazione di CrossOver.
+      placeholder: Preview 20261015, build cxpreview-20261015-rc1
     validations:
       required: true
   - type: input
-    id: versions
+    id: macos
     attributes:
-      label: MACxus and CrossOver versions / Versioni di MACxus e CrossOver
-      placeholder: MACxus 0.3.11-mac.4, CrossOver 26.3
+      label: macOS version and build / Versione e build macOS
+      placeholder: macOS 27.2, build 26B118
+    validations:
+      required: true
+  - type: input
+    id: chip
+    attributes:
+      label: Exact Apple chip / Chip Apple esatto
+      placeholder: M1 Max / M4 Pro / M5 Max
+    validations:
+      required: true
+  - type: input
+    id: mac_model
+    attributes:
+      label: Mac model and memory / Modello Mac e memoria
+      placeholder: MacBook Pro, 32 GB
+  - type: input
+    id: macxus_version
+    attributes:
+      label: MACxus version/build / Versione e build MACxus
+      placeholder: 0.3.11-mac.6, or exact review commit / oppure commit esatto
+    validations:
+      required: true
+  - type: input
+    id: runtime_version
+    attributes:
+      label: Xodus runtime version / Versione runtime Xodus
+      description: Especially useful for patched or experimental builds. / Utile soprattutto per build modificate o sperimentali.
+  - type: dropdown
+    id: graphics
+    attributes:
+      label: Selected graphics backend / Backend grafico selezionato
+      options: [D3DMetal, DXMT, DXVK, WineD3D, Not sure / Non so]
+    validations:
+      required: true
+  - type: input
+    id: graphics_version
+    attributes:
+      label: Graphics backend version (if known) / Versione backend grafico (se nota)
+      placeholder: D3DMetal 4.0b3
+  - type: markdown
+    attributes:
+      value: '## Features and settings / Funzioni e impostazioni'
+  - type: textarea
+    id: feature_results
+    attributes:
+      label: Feature results / Risultati per funzione
+      description: Replace each unknown with passed, issues, failed, blocked or not tested. Do not infer untested results. / Sostituisci ogni sconosciuto con verificato, problemi, non funziona, bloccato o non provato. Non dedurre esiti non provati.
+      placeholder: |
+        Launch / Avvio: unknown
+        Gameplay / Gioco: unknown
+        Video / Filmati: unknown
+        Audio: unknown
+        Online: unknown
+        Gameplay duration and point reached / Durata e punto raggiunto:
     validations:
       required: true
   - type: dropdown
-    id: input
+    id: controller_result
     attributes:
-      label: Controls tested / Controlli provati
+      label: Controller result / Risultato controller
       options:
-        - Keyboard and mouse / Tastiera e mouse
-        - Xbox controller / Controller Xbox
-        - DualSense / DualShock
-        - Not tested / Non provati
+        - Not tested / Non provato
+        - Direct gamepad controls work / Controlli gamepad diretti funzionanti
+        - Mouse/keyboard emulation only / Solo emulazione mouse/tastiera
+        - Partly works / Funziona in parte
+        - Does not work / Non funziona
+    validations:
+      required: true
+  - type: textarea
+    id: controller_details
+    attributes:
+      label: Controller model, connection and tested features / Modello, connessione e funzioni provate
+      description: Include each model and Bluetooth, USB or puck. Separate buttons/sticks/triggers from rumble, paddles, gyro and trackpads. / Indica ciascun modello e Bluetooth, USB o ricevitore. Distingui pulsanti/stick/grilletti da vibrazione, palette, giroscopio e trackpad.
+      placeholder: Xbox Elite Series 2, Bluetooth; menu navigation and A confirmation work; rumble and paddles not tested.
+  - type: textarea
+    id: settings
+    attributes:
+      label: Required settings and compatibility changes / Impostazioni e modifiche necessarie
+      description: State engine/profile changes, compatibility packs, launch options and anti-cheat/offline settings. Explicitly say none if no changes were needed. / Indica profili, pacchetti, opzioni e impostazioni anti-cheat/offline. Scrivi nessuna se non servono modifiche.
+    validations:
+      required: true
   - type: textarea
     id: notes
     attributes:
-      label: Notes / Note
-      description: Settings that helped, glitches, performance, what does not work. / Impostazioni utili, glitch, prestazioni, cosa non funziona.
+      label: Limits, performance and reproduction / Limiti, prestazioni e riproduzione
+      description: Describe what fails and how to repeat the test. Include resolution/preset for FPS claims. / Descrivi cosa non funziona e come ripetere la prova. Indica risoluzione/preset per i dati FPS.
+  - type: input
+    id: previous_report
+    attributes:
+      label: Earlier report or evidence link / Prova precedente o fonte
+      description: Optional; link the old result rather than erasing its environment. / Facoltativo; collega il risultato precedente senza cancellarne l’ambiente.
   - type: textarea
     id: log
     attributes:
-      label: Launch log (optional) / Log di avvio (facoltativo)
-      description: Only if something fails. ~/Library/Application Support/MACxus/logs/<id>-latest.log with Verbose logs enabled in Settings. Review it before posting. / Solo se qualcosa non va. Attiva i log dettagliati in Impostazioni e rileggilo prima di pubblicarlo.
+      label: Redacted launch log (optional) / Log ripulito (facoltativo)
+      description: Only for a failure. Review the log for secrets and personal paths before posting. / Solo per un errore. Controlla segreti e percorsi personali prima di pubblicare.
       render: text

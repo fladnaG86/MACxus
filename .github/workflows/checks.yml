@@ -32,6 +32,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-x86-64 binutils dbus-daemon python3
       - run: npm ci
+      - run: npm run compatibility:check
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:runtime-tools

@@ -20,7 +20,10 @@
     "build": "npm run clean && npm run typecheck && npm run test && vite build && tsc -p tsconfig.electron.json",
     "dist": "npm run build && electron-builder --linux AppImage --publish never",
     "pack": "npm run build && electron-builder --linux dir --publish never",
-    "prepare:mac-media-pack": "node scripts/prepare-compatibility-packs.mjs"
+    "compatibility:generate": "node scripts/compatibility/generate.mjs",
+    "compatibility:check": "node scripts/compatibility/generate.mjs --check",
+    "prepare:mac-media-pack": "node scripts/prepare-compatibility-packs.mjs",
+    "test:compatibility": "node --test scripts/ci/compatibility.test.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

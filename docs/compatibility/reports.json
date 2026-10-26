@@ -1,0 +1,912 @@
+{
+  "schemaVersion": 1,
+  "games": [
+    {
+      "id": "007-first-light",
+      "title": "007 First Light",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "bond-preview-rosetta-m5max",
+          "result": "issues",
+          "layer": "crossover-preview",
+          "layerVersion": "20261015",
+          "architecture": "x86_64-rosetta",
+          "macOS": "27.2",
+          "chip": "M5 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-review.async-lifetime.1",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "d3dmetal",
+            "version": "4.0b3"
+          },
+          "testedAt": null,
+          "scope": [
+            "gameplay"
+          ],
+          "checks": {
+            "launch": "passed",
+            "gameplay": "passed",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "issues"
+          },
+          "controllers": [],
+          "requirements": [
+            {
+              "en": "CrossOver Preview Rosetta and a runtime rebuilt with the XAsync completion-lifetime fix. Original report used an unpublished review build.",
+              "it": "CrossOver Preview Rosetta e runtime ricompilato con la correzione XAsync. La prova originale usava una build di revisione non pubblicata."
+            }
+          ],
+          "summary": {
+            "en": "Gameplay confirmed; the in-game menu reports offline and the cause is unresolved.",
+            "it": "Gioco confermato; il menu indica offline e la causa non è nota."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/pull/8"
+            }
+          ]
+        },
+        {
+          "id": "bond-preview-arm-launch",
+          "result": "fails",
+          "layer": "crossover-preview-arm",
+          "layerVersion": null,
+          "architecture": "arm64-fex",
+          "macOS": null,
+          "chip": null,
+          "macModel": null,
+          "macxusVersion": null,
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "launch"
+          ],
+          "checks": {
+            "launch": "failed",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [],
+          "summary": {
+            "en": "Preview ARM/FEX fails to launch. Other environment details were not separately reported.",
+            "it": "Preview ARM/FEX non avvia il gioco. Gli altri dettagli dell’ambiente non sono stati riportati separatamente."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/pull/8"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "call-of-duty",
+      "title": "Call of Duty (title/build not specified)",
+      "store": "not-reported",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "call-of-duty-ricochet-limitation",
+          "result": "blocked",
+          "layer": "unknown",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": null,
+          "macModel": null,
+          "macxusVersion": null,
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "limitation-note"
+          ],
+          "checks": {
+            "launch": "blocked",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [],
+          "summary": {
+            "en": "Historical limitation note: Ricochet kernel anti-cheat cannot run on macOS. Exact title/build, test environment and test date were not reported.",
+            "it": "Nota storica: anti-cheat kernel Ricochet non eseguibile su macOS. Titolo/build esatti, ambiente e data della prova non riportati."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deep-rock-galactic",
+      "title": "Deep Rock Galactic",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "deep-rock-galactic-crossover-m1max",
+          "result": "works",
+          "layer": "crossover",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.1",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "d3dmetal",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "not-reported"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [],
+          "summary": {
+            "en": "DirectX 12 through D3DMetal.",
+            "it": "DirectX 12 tramite D3DMetal."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        },
+        {
+          "id": "deep-rock-galactic-highball-m1max",
+          "result": "works",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.1",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "d3dmetal",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "not-reported"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [],
+          "summary": {
+            "en": "DirectX 12 through D3DMetal.",
+            "it": "DirectX 12 tramite D3DMetal."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "forza-horizon-6",
+      "title": "Forza Horizon 6",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "forza-horizon-6-highball-m1max",
+          "result": "fails",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.1",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "menu",
+            "gameplay"
+          ],
+          "checks": {
+            "launch": "passed",
+            "gameplay": "failed",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [],
+          "summary": {
+            "en": "Reaches the menu, then hangs after Start game. Original report also observed the problem on Linux.",
+            "it": "Raggiunge il menu, poi si blocca dopo Start game. La prova originale osservava il problema anche su Linux."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gears-e-day",
+      "title": "Gears of War: E-Day",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "gears-e-day-highball-m1max",
+          "result": "blocked",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.2",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "launch"
+          ],
+          "checks": {
+            "launch": "blocked",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "blocked"
+          },
+          "controllers": [],
+          "requirements": [
+            {
+              "en": "Hardware ray tracing (M3 or newer, untested). Easy Anti-Cheat: offline campaign only using the offline option.",
+              "it": "Ray tracing hardware (M3 o successivi, non provati). Easy Anti-Cheat: solo campagna offline con la relativa opzione."
+            }
+          ],
+          "summary": {
+            "en": "Blocked on M1: requires hardware ray tracing. M3 or newer is a requirement, not a tested success.",
+            "it": "Bloccato su M1: richiede ray tracing hardware. M3 o successivi sono un requisito, non un esito positivo verificato."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "halo-campaign-evolved",
+      "title": "Halo: Campaign Evolved",
+      "store": "microsoft-store",
+      "storeId": "9N683TDT5M7R",
+      "reports": [
+        {
+          "id": "halo-highball-m1max",
+          "result": "issues",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.1",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "gameplay"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "issues",
+            "video": "failed",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [
+            {
+              "model": "Not reported",
+              "connection": "unknown",
+              "result": "failed",
+              "scope": {
+                "en": "Controller input unavailable in original report.",
+                "it": "Input da controller non disponibile nel resoconto originale."
+              },
+              "notes": {
+                "en": "Controller model and connection were not reported.",
+                "it": "Modello e connessione non riportati."
+              }
+            }
+          ],
+          "requirements": [
+            {
+              "en": "Original M1 recommendation: native upscaler and motion blur off.",
+              "it": "Consiglio originale per M1: upscaler nativo e motion blur disattivato."
+            }
+          ],
+          "summary": {
+            "en": "Playable with graphics glitches on M1 (64-bit atomics limitation). Cutscenes and controllers were reported unavailable in this original test. M2 or newer not tested in that report.",
+            "it": "Giocabile con glitch grafici su M1 (limite atomiche a 64 bit). Filmati e controller segnalati come non disponibili nella prova originale. M2 o successivi non provati in quel resoconto."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        },
+        {
+          "id": "halo-preview-m5max-media-input",
+          "result": "partial",
+          "layer": "crossover-preview",
+          "layerVersion": "20261015",
+          "architecture": "x86_64-rosetta",
+          "macOS": "27.2",
+          "chip": "M5 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-review.halo.1",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "d3dmetal",
+            "version": null
+          },
+          "testedAt": "2026-10-26",
+          "scope": [
+            "menu",
+            "startup-movies",
+            "controller-input"
+          ],
+          "checks": {
+            "launch": "passed",
+            "gameplay": "untested",
+            "video": "passed",
+            "audio": "passed",
+            "online": "unknown"
+          },
+          "controllers": [
+            {
+              "model": "Steam Controller 2",
+              "connection": "unknown",
+              "result": "passed",
+              "scope": {
+                "en": "Direct gamepad input and prompts; game identifies Steam Controller. Connection was not separately recorded.",
+                "it": "Input gamepad diretto e indicazioni pulsanti; il gioco riconosce Steam Controller. Connessione non registrata separatamente."
+              },
+              "notes": {
+                "en": "Rumble, paddles, gyro, trackpads and other advanced features unverified.",
+                "it": "Vibrazione, palette, giroscopio, trackpad e altre funzioni avanzate non verificate."
+              }
+            },
+            {
+              "model": "Xbox Elite Series 2",
+              "connection": "bluetooth",
+              "result": "passed",
+              "scope": {
+                "en": "Menu navigation/confirmation and gamepad prompts confirmed over Bluetooth.",
+                "it": "Navigazione/conferma menu e indicazioni gamepad confermate via Bluetooth."
+              },
+              "notes": {
+                "en": "Rumble, paddles, gyro, trackpads and other advanced features unverified.",
+                "it": "Vibrazione, palette, giroscopio, trackpad e altre funzioni avanzate non verificate."
+              }
+            }
+          ],
+          "requirements": [
+            {
+              "en": "Halo movie compatibility pack (private Preview engine/bottle). No GameInput replacement or DualSense compatibility mode for controller tests. Isolated source runner with the 0.3.11-review.halo.1 backend; this is not a published-release test.",
+              "it": "Pacchetto filmati Halo (motore/bottle Preview privati). Nessuna sostituzione GameInput né modalità compatibilità DualSense nelle prove controller. Runner sorgente isolato con backend 0.3.11-review.halo.1; non è una prova di release pubblicata."
+            }
+          ],
+          "summary": {
+            "en": "Startup movies and controller/menu input confirmed. This record does not establish a completed campaign, all cinematics or advanced controller features.",
+            "it": "Filmati iniziali e input controller/menu confermati. Il resoconto non verifica la campagna completa, tutti i filmati o le funzioni avanzate dei controller."
+          },
+          "sources": [
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/zachspartofaday/MACxus/pull/19"
+            },
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/fladnaG86/MACxus/pull/13"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mad-king-redemption",
+      "title": "Mad King Redemption",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "mad-king-redemption-highball-m1max",
+          "result": "works",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.2",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "not-reported"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [],
+          "summary": {
+            "en": "Reported working; details not reported.",
+            "it": "Funzionante secondo il resoconto; dettagli non riportati."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "marvel-cosmic-invasion",
+      "title": "MARVEL Cosmic Invasion",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "marvel-cosmic-invasion-highball-m1max",
+          "result": "works",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.2",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "not-reported"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [],
+          "summary": {
+            "en": "Reported working; details not reported.",
+            "it": "Funzionante secondo il resoconto; dettagli non riportati."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "minecraft-dungeons-ii",
+      "title": "Minecraft Dungeons II",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "minecraft-dungeons-ii-highball-m1max",
+          "result": "works",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.1",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "not-reported"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [],
+          "summary": {
+            "en": "The report says Highball is required; other layers were not documented.",
+            "it": "Il resoconto richiede Highball; gli altri motori non sono documentati."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nine-sols",
+      "title": "Nine Sols",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "nine-sols-crossover-m4pro",
+          "result": "works",
+          "layer": "crossover",
+          "layerVersion": "26.3",
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M4 Pro",
+          "macModel": "MacBook Pro",
+          "macxusVersion": "0.3.11-mac.5",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "not-reported"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [
+            {
+              "model": "Xbox controller (model not reported)",
+              "connection": "unknown",
+              "result": "passed",
+              "scope": {
+                "en": "Controller input reported.",
+                "it": "Input da controller riportato."
+              },
+              "notes": {
+                "en": "Advanced features not reported.",
+                "it": "Funzioni avanzate non riportate."
+              }
+            }
+          ],
+          "requirements": [],
+          "summary": {
+            "en": "Community working report; Xbox controller model and connection were not reported.",
+            "it": "Resoconto positivo della community; modello e connessione del controller Xbox non riportati."
+          },
+          "sources": [
+            {
+              "kind": "community",
+              "url": "https://github.com/fladnaG86/MACxus/issues/9"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "super-meat-boy-3d",
+      "title": "Super Meat Boy 3D",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "super-meat-boy-3d-highball-m1max",
+          "result": "works",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.3",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "not-reported"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [],
+          "summary": {
+            "en": "Reported working; details not reported.",
+            "it": "Funzionante secondo il resoconto; dettagli non riportati."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tunic",
+      "title": "TUNIC",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "tunic-crossover-m1max",
+          "result": "works",
+          "layer": "crossover",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.1",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "not-reported"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [
+            {
+              "model": "Keyboard",
+              "connection": "not-applicable",
+              "result": "passed",
+              "scope": {
+                "en": "Keyboard input reported.",
+                "it": "Input da tastiera riportato."
+              },
+              "notes": {
+                "en": "Mouse/controller coverage not reported.",
+                "it": "Copertura mouse/controller non riportata."
+              }
+            }
+          ],
+          "requirements": [],
+          "summary": {
+            "en": "Tested with keyboard.",
+            "it": "Provato con tastiera."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vampire-survivors",
+      "title": "Vampire Survivors",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "vampire-survivors-highball-m1max",
+          "result": "works",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.4",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "not-reported"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [],
+          "summary": {
+            "en": "Reported working; details not reported.",
+            "it": "Funzionante secondo il resoconto; dettagli non riportati."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "space-marine-2",
+      "title": "Warhammer 40,000: Space Marine 2",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "id": "space-marine-2-highball-m1max",
+          "result": "issues",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": null,
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.5",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "unknown",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "gameplay"
+          ],
+          "checks": {
+            "launch": "unknown",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "blocked"
+          },
+          "controllers": [
+            {
+              "model": "DualSense",
+              "connection": "unknown",
+              "result": "passed",
+              "scope": {
+                "en": "Controller input reported.",
+                "it": "Input da controller riportato."
+              },
+              "notes": {
+                "en": "DualSense compatibility mode enabled; advanced features unverified.",
+                "it": "Modalità compatibilità DualSense attiva; funzioni avanzate non verificate."
+              }
+            }
+          ],
+          "requirements": [
+            {
+              "en": "Enable Play offline without anti-cheat in game settings.",
+              "it": "Attivare Gioca offline senza anti-cheat nelle impostazioni del gioco."
+            }
+          ],
+          "summary": {
+            "en": "Works offline. Easy Anti-Cheat prevents protected online play.",
+            "it": "Funziona offline. Easy Anti-Cheat impedisce il gioco online protetto."
+          },
+          "sources": [
+            {
+              "kind": "historical",
+              "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
