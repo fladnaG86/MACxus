@@ -13,10 +13,10 @@ Compare individual test configurations. No report overrides another or applies t
 
 | Result / details | Layer / version | macOS | Chip | Graphics | Tested scope |
 | --- | --- | --- | --- | --- | --- |
-| [⚠️ Works with limits](#en-space-marine-2-highball-m1max) | Highball | Not reported | M1 Max | Not reported | Gameplay |
+| [✅ Works (offline)](#en-space-marine-2-highball-m1max) | Highball | Not reported | M1 Max | Not reported | Gameplay |
 
 <a id="en-space-marine-2-highball-m1max"></a>
-### ⚠️ Works with limits · Highball
+### ✅ Works (offline) · Highball
 
 Works offline. Easy Anti-Cheat prevents protected online play.
 
@@ -64,10 +64,10 @@ Confronta le singole configurazioni provate. Nessun resoconto annulla gli altri 
 
 | Risultato / dettagli | Motore / versione | macOS | Chip | Grafica | Ambito provato |
 | --- | --- | --- | --- | --- | --- |
-| [⚠️ Funziona con limiti](#it-space-marine-2-highball-m1max) | Highball | Non riportato | M1 Max | Non riportato | Gioco |
+| [✅ Funziona (offline)](#it-space-marine-2-highball-m1max) | Highball | Non riportato | M1 Max | Non riportato | Gioco |
 
 <a id="it-space-marine-2-highball-m1max"></a>
-### ⚠️ Funziona con limiti · Highball
+### ✅ Funziona (offline) · Highball
 
 Funziona offline. Easy Anti-Cheat impedisce il gioco online protetto.
 

@@ -16,6 +16,7 @@ test('migration retains different environments, limited scope, unknowns and cont
   assert.ok(catalog.games.length >= 14);
   assert.ok(allReports(catalog).length >= 17);
   const bond = game(catalog, '007-first-light').reports;
+  assert.equal(bond[0].result, 'works-offline');
   assert.equal(bond[0].checks.gameplay, 'passed');
   assert.equal(bond[0].checks.online, 'issues');
   assert.equal(bond[0].graphics.version, '4.0b3');
@@ -61,6 +62,9 @@ test('validation rejects ambiguous identities, missing metadata, invalid dates a
 test('validation preserves missing architecture while rejecting contradictory result and coverage claims', () => {
   for (const [mutate, expected] of [
     [report => { report.result = 'works'; report.scope = ['controller-input']; }, /limited tests/],
+    [report => { report.result = 'works-offline'; report.scope = ['menu']; }, /limited tests/],
+    [report => { report.result = 'works-offline'; report.checks.gameplay = 'failed'; }, /contradicts gameplay/],
+    [report => { report.result = 'works-offline'; report.checks.online = 'passed'; }, /online limitation/],
     [report => { report.result = 'works'; report.checks.gameplay = 'failed'; }, /contradicts gameplay/],
     [report => { report.result = 'works'; report.checks.launch = 'blocked'; }, /contradicts launch/],
     [report => report.scope = ['not-reported', 'gameplay'], /unknown scope/],
@@ -179,7 +183,7 @@ test('matrix shows a failure beside a working alternative and never treats absen
   assert.match(index, /\| Game \| Highball \| CrossOver \| Preview Rosetta \| Preview ARM64\/FEX \| Layer not reported \|/);
   assert.match(columns[1], /❌ Fails.*#en-highball-launch-failure/);
   assert.equal(columns[2], '—', 'no CrossOver report is not a failure');
-  assert.match(columns[3], /⚠️ Works with limits.*#en-bond-preview-rosetta-m5max/);
+  assert.match(columns[3], /✅ Works \(offline\).*#en-bond-preview-rosetta-m5max/);
   assert.match(columns[4], /❌ Fails.*#en-bond-preview-arm-launch/);
   assert.match(columns[5], /#en-unreported-layer-failure/);
   assert.doesNotMatch(columns.slice(1, 5).join(' '), /unreported-layer-failure/);
@@ -196,7 +200,7 @@ test('matrix preserves conflicting outcomes on the same layer and links duplicat
   const documents = generateDocuments(candidate);
   const row = documents.get('docs/COMPATIBILITY.md').split('\n').find(line => line.startsWith('| [007 First Light]'));
   const preview = row.split(' | ')[3];
-  assert.match(preview, /⚠️ Works with limits \(2\).*\.md#english/);
+  assert.match(preview, /✅ Works \(offline\) \(2\).*\.md#english/);
   assert.match(preview, /❌ Fails.*#en-preview-failure/);
   const details = documents.get('docs/compatibility/games/007-first-light.md');
   assert.match(details, /id="en-bond-preview-rosetta-m5max"/);

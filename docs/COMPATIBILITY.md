@@ -11,13 +11,13 @@ Compare compatibility layers side by side: **one row per game**, with Highball, 
 
 Games are listed alphabetically in one continuous table. Use browser Find to locate a title. Every game has a stable page; additional reports are added there rather than expanding the index into test notes.
 
-✅ Works (reported) · ⚠️ Works with limits · ◐ Limited test · ❌ Fails · ⛔ Blocked · — No report for this layer
+✅ Works (reported) · ✅ Works (offline) · ⚠️ Works with limits · ◐ Limited test · ❌ Fails · ⛔ Blocked · — No report for this layer
 
 Cells show every reported outcome for that layer; conflicting reports stay visible. A number in parentheses counts reports with the same outcome. A dash means no report, never failure. Reports with an unspecified layer appear in their own column.
 
 | Game | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Layer not reported |
 | --- | --- | --- | --- | --- | --- |
-| [007 First Light](compatibility/games/007-first-light.md#english) | — | — | [⚠️ Works with limits](compatibility/games/007-first-light.md#en-bond-preview-rosetta-m5max) | [❌ Fails](compatibility/games/007-first-light.md#en-bond-preview-arm-launch) | — |
+| [007 First Light](compatibility/games/007-first-light.md#english) | — | — | [✅ Works (offline)](compatibility/games/007-first-light.md#en-bond-preview-rosetta-m5max) | [❌ Fails](compatibility/games/007-first-light.md#en-bond-preview-arm-launch) | — |
 | [Call of Duty (title/build not specified)](compatibility/games/call-of-duty.md#english) | — | — | — | — | [⛔ Blocked](compatibility/games/call-of-duty.md#en-call-of-duty-ricochet-limitation) |
 | [Deep Rock Galactic](compatibility/games/deep-rock-galactic.md#english) | [✅ Works (reported)](compatibility/games/deep-rock-galactic.md#en-deep-rock-galactic-highball-m1max) | [✅ Works (reported)](compatibility/games/deep-rock-galactic.md#en-deep-rock-galactic-crossover-m1max) | — | — | — |
 | [Forza Horizon 6](compatibility/games/forza-horizon-6.md#english) | [❌ Fails](compatibility/games/forza-horizon-6.md#en-forza-horizon-6-highball-m1max) | — | — | — | — |
@@ -30,7 +30,7 @@ Cells show every reported outcome for that layer; conflicting reports stay visib
 | [Super Meat Boy 3D](compatibility/games/super-meat-boy-3d.md#english) | [✅ Works (reported)](compatibility/games/super-meat-boy-3d.md#en-super-meat-boy-3d-highball-m1max) | — | — | — | — |
 | [TUNIC](compatibility/games/tunic.md#english) | — | [✅ Works (reported)](compatibility/games/tunic.md#en-tunic-crossover-m1max) | — | — | — |
 | [Vampire Survivors](compatibility/games/vampire-survivors.md#english) | [✅ Works (reported)](compatibility/games/vampire-survivors.md#en-vampire-survivors-highball-m1max) | — | — | — | — |
-| [Warhammer 40,000: Space Marine 2](compatibility/games/space-marine-2.md#english) | [⚠️ Works with limits](compatibility/games/space-marine-2.md#en-space-marine-2-highball-m1max) | — | — | — | — |
+| [Warhammer 40,000: Space Marine 2](compatibility/games/space-marine-2.md#english) | [✅ Works (offline)](compatibility/games/space-marine-2.md#en-space-marine-2-highball-m1max) | — | — | — | — |
 
 ### Reading the results
 
@@ -46,13 +46,13 @@ Confronta i motori affiancati: **una riga per gioco**, con colonne separate per 
 
 I giochi sono in ordine alfabetico in un’unica tabella continua. Usa Trova nel browser per cercare un titolo. Ogni gioco ha una pagina stabile; le nuove prove vanno lì, senza riempire l’indice di note.
 
-✅ Funziona (segnalato) · ⚠️ Funziona con limiti · ◐ Prova limitata · ❌ Non funziona · ⛔ Bloccato · — Nessun resoconto per questo motore
+✅ Funziona (segnalato) · ✅ Funziona (offline) · ⚠️ Funziona con limiti · ◐ Prova limitata · ❌ Non funziona · ⛔ Bloccato · — Nessun resoconto per questo motore
 
 Le celle mostrano tutti gli esiti riportati per quel motore; i risultati discordanti restano visibili. Un numero tra parentesi conta i resoconti con lo stesso esito. Un trattino indica assenza di resoconti, mai un errore. I resoconti con motore sconosciuto hanno una colonna dedicata.
 
 | Gioco | Highball | CrossOver | Preview Rosetta | Preview ARM64/FEX | Motore non riportato |
 | --- | --- | --- | --- | --- | --- |
-| [007 First Light](compatibility/games/007-first-light.md#italiano) | — | — | [⚠️ Funziona con limiti](compatibility/games/007-first-light.md#it-bond-preview-rosetta-m5max) | [❌ Non funziona](compatibility/games/007-first-light.md#it-bond-preview-arm-launch) | — |
+| [007 First Light](compatibility/games/007-first-light.md#italiano) | — | — | [✅ Funziona (offline)](compatibility/games/007-first-light.md#it-bond-preview-rosetta-m5max) | [❌ Non funziona](compatibility/games/007-first-light.md#it-bond-preview-arm-launch) | — |
 | [Call of Duty (title/build not specified)](compatibility/games/call-of-duty.md#italiano) | — | — | — | — | [⛔ Bloccato](compatibility/games/call-of-duty.md#it-call-of-duty-ricochet-limitation) |
 | [Deep Rock Galactic](compatibility/games/deep-rock-galactic.md#italiano) | [✅ Funziona (segnalato)](compatibility/games/deep-rock-galactic.md#it-deep-rock-galactic-highball-m1max) | [✅ Funziona (segnalato)](compatibility/games/deep-rock-galactic.md#it-deep-rock-galactic-crossover-m1max) | — | — | — |
 | [Forza Horizon 6](compatibility/games/forza-horizon-6.md#italiano) | [❌ Non funziona](compatibility/games/forza-horizon-6.md#it-forza-horizon-6-highball-m1max) | — | — | — | — |
@@ -65,7 +65,7 @@ Le celle mostrano tutti gli esiti riportati per quel motore; i risultati discord
 | [Super Meat Boy 3D](compatibility/games/super-meat-boy-3d.md#italiano) | [✅ Funziona (segnalato)](compatibility/games/super-meat-boy-3d.md#it-super-meat-boy-3d-highball-m1max) | — | — | — | — |
 | [TUNIC](compatibility/games/tunic.md#italiano) | — | [✅ Funziona (segnalato)](compatibility/games/tunic.md#it-tunic-crossover-m1max) | — | — | — |
 | [Vampire Survivors](compatibility/games/vampire-survivors.md#italiano) | [✅ Funziona (segnalato)](compatibility/games/vampire-survivors.md#it-vampire-survivors-highball-m1max) | — | — | — | — |
-| [Warhammer 40,000: Space Marine 2](compatibility/games/space-marine-2.md#italiano) | [⚠️ Funziona con limiti](compatibility/games/space-marine-2.md#it-space-marine-2-highball-m1max) | — | — | — | — |
+| [Warhammer 40,000: Space Marine 2](compatibility/games/space-marine-2.md#italiano) | [✅ Funziona (offline)](compatibility/games/space-marine-2.md#it-space-marine-2-highball-m1max) | — | — | — | — |
 
 ### Interpretare i risultati
 

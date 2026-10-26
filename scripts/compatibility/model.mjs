@@ -2,6 +2,7 @@
 export const layers = { highball: 'Highball', crossover: 'CrossOver', 'crossover-preview': 'CrossOver Preview (Rosetta)', 'crossover-preview-arm': 'CrossOver Preview (ARM64/FEX)', unknown: 'Not reported' };
 export const results = {
   works: { symbol: '✅', en: 'Works (reported)', it: 'Funziona (segnalato)' },
+  'works-offline': { symbol: '✅', en: 'Works (offline)', it: 'Funziona (offline)' },
   issues: { symbol: '⚠️', en: 'Works with limits', it: 'Funziona con limiti' },
   partial: { symbol: '◐', en: 'Limited test', it: 'Prova limitata' },
   fails: { symbol: '❌', en: 'Fails', it: 'Non funziona' },
@@ -50,10 +51,12 @@ export function validateCatalog(catalog) {
       if (!object(report.graphics) || !member(report.graphics.backend, graphics) || !optional(report.graphics.version)) fail(`${report.id}: graphics`);
       if (!Array.isArray(report.scope) || !report.scope.length || new Set(report.scope).size !== report.scope.length || report.scope.some(scope => !member(scope, scopes))) fail(`${report.id}: test scope`);
       if (report.scope.includes('not-reported') && report.scope.length !== 1) fail(`${report.id}: unknown scope must stand alone`);
-      if (report.result === 'works' && !report.scope.some(scope => ['gameplay', 'not-reported'].includes(scope))) fail(`${report.id}: limited tests cannot claim overall working gameplay`);
+      const working = ['works', 'works-offline'].includes(report.result);
+      if (working && !report.scope.some(scope => ['gameplay', 'not-reported'].includes(scope))) fail(`${report.id}: limited tests cannot claim overall working gameplay`);
       if (!object(report.checks) || ['launch','gameplay','video','audio','online'].some(key => !member(report.checks[key], checks))) fail(`${report.id}: feature checks`);
-      if (report.result === 'works' && ['failed', 'blocked', 'issues'].includes(report.checks.gameplay)) fail(`${report.id}: working result contradicts gameplay check`);
-      if (report.result === 'works' && ['failed', 'blocked'].includes(report.checks.launch)) fail(`${report.id}: working result contradicts launch check`);
+      if (working && ['failed', 'blocked', 'issues'].includes(report.checks.gameplay)) fail(`${report.id}: working result contradicts gameplay check`);
+      if (working && ['failed', 'blocked'].includes(report.checks.launch)) fail(`${report.id}: working result contradicts launch check`);
+      if (report.result === 'works-offline' && !['issues', 'failed', 'blocked'].includes(report.checks.online)) fail(`${report.id}: offline result requires a reported online limitation`);
       if (!translated(report.summary) || !Array.isArray(report.requirements) || report.requirements.some(note => !translated(note))) fail(`${report.id}: bilingual summary/requirements`);
       if (!Array.isArray(report.controllers)) fail(`${report.id}: controllers`);
       for (const controller of report.controllers) if (!object(controller) || !text(controller.model) || !member(controller.connection, connections) || !member(controller.result, checks) || !translated(controller.scope) || !translated(controller.notes)) fail(`${report.id}: controller evidence`);

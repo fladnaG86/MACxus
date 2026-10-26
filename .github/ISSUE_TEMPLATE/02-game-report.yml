@@ -41,6 +41,7 @@ body:
       label: Overall result for this configuration / Risultato della configurazione
       options:
         - Works in tested gameplay / Funziona nel gioco provato
+        - Works offline (online unavailable) / Funziona offline (online non disponibile)
         - Works with limits / Funziona con limiti
         - Limited test only (menu, movies or input) / Solo prova limitata (menu, filmati o input)
         - Fails or hangs / Non funziona o si blocca

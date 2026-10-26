@@ -49,7 +49,10 @@ date. Keep evidence links; do not commit raw logs, account IDs or game files.
 
 - `works`: reported working. New reports should describe actual gameplay; older
   green reports may have unknown scope. Does not imply every feature was tested.
-- `issues`: runs with reported limitations, such as offline-only play.
+- `works-offline`: working offline play, shown with a green check. Keep the
+  online limitation in `checks.online` and explain it in the summary; do not
+  infer its cause. Offline-only play alone does not make the game a warning.
+- `issues`: runs with other reported problems, such as graphics or audio issues.
 - `partial`: a limited experiment, such as startup movies or menu/controller
   input, which does not establish general gameplay compatibility.
 - `fails`: the attempted scope fails, crashes or hangs.
@@ -106,6 +109,10 @@ riportati e `untested` solo per funzioni esplicitamente non provate. Non dedurre
 la connessione del controller, la versione macOS o il supporto di un chip da
 altri resoconti. Le prove limitate (`partial`) di filmati/menu/input non verificano
 il gioco completo. La data di un’issue non è automaticamente la data della prova.
+
+`works-offline` indica gioco offline funzionante con spunta verde; conserva il
+limite online nei dettagli senza dedurne la causa. Il solo limite offline non
+richiede un avviso giallo.
 
 La matrice affianca tutti i motori nella stessa riga del gioco. Mostra tutti gli
 esiti, anche discordanti; i numeri tra parentesi contano resoconti con lo stesso

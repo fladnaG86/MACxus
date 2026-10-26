@@ -13,11 +13,11 @@ Compare individual test configurations. No report overrides another or applies t
 
 | Result / details | Layer / version | macOS | Chip | Graphics | Tested scope |
 | --- | --- | --- | --- | --- | --- |
-| [⚠️ Works with limits](#en-bond-preview-rosetta-m5max) | CrossOver Preview (Rosetta) 20261015 | 27.2 | M5 Max | D3DMetal | Gameplay |
+| [✅ Works (offline)](#en-bond-preview-rosetta-m5max) | CrossOver Preview (Rosetta) 20261015 | 27.2 | M5 Max | D3DMetal | Gameplay |
 | [❌ Fails](#en-bond-preview-arm-launch) | CrossOver Preview (ARM64/FEX) | Not reported | Not reported | Not reported | Launch |
 
 <a id="en-bond-preview-rosetta-m5max"></a>
-### ⚠️ Works with limits · CrossOver Preview (Rosetta) 20261015
+### ✅ Works (offline) · CrossOver Preview (Rosetta) 20261015
 
 Gameplay confirmed; the in-game menu reports offline and the cause is unresolved.
 
@@ -96,11 +96,11 @@ Confronta le singole configurazioni provate. Nessun resoconto annulla gli altri 
 
 | Risultato / dettagli | Motore / versione | macOS | Chip | Grafica | Ambito provato |
 | --- | --- | --- | --- | --- | --- |
-| [⚠️ Funziona con limiti](#it-bond-preview-rosetta-m5max) | CrossOver Preview (Rosetta) 20261015 | 27.2 | M5 Max | D3DMetal | Gioco |
+| [✅ Funziona (offline)](#it-bond-preview-rosetta-m5max) | CrossOver Preview (Rosetta) 20261015 | 27.2 | M5 Max | D3DMetal | Gioco |
 | [❌ Non funziona](#it-bond-preview-arm-launch) | CrossOver Preview (ARM64/FEX) | Non riportato | Non riportato | Non riportato | Avvio |
 
 <a id="it-bond-preview-rosetta-m5max"></a>
-### ⚠️ Funziona con limiti · CrossOver Preview (Rosetta) 20261015
+### ✅ Funziona (offline) · CrossOver Preview (Rosetta) 20261015
 
 Gioco confermato; il menu indica offline e la causa non è nota.
 

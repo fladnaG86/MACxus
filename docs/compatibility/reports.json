@@ -9,7 +9,7 @@
       "reports": [
         {
           "id": "bond-preview-rosetta-m5max",
-          "result": "issues",
+          "result": "works-offline",
           "layer": "crossover-preview",
           "layerVersion": "20261015",
           "architecture": "x86_64-rosetta",
@@ -849,7 +849,7 @@
       "reports": [
         {
           "id": "space-marine-2-highball-m1max",
-          "result": "issues",
+          "result": "works-offline",
           "layer": "highball",
           "layerVersion": null,
           "architecture": "unknown",
