@@ -285,30 +285,40 @@ export class RuntimeManager {
   // xgameruntime compatibility patches, published as a release asset. It is
   // a plain HTTPS download; no GitHub CLI authentication is needed. Launcher
   // AppImage releases share the same repository, so the newest release
-  // carrying a runtime archive wins, not the overall latest release.
+  // carrying a runtime archive wins on Linux. macOS requires the exact release
+  // matched by the bundled patched DLLs, independently of list pagination.
   async checkNexus(): Promise<RuntimeStatus> {
     this.status.nexusChecking = true;
     this.status.nexusError = undefined;
     try {
-      const response = await this.fetcher(`https://api.github.com/repos/${NEXUS_REPOSITORY}/releases?per_page=30`, {
+      const isMac = this.platform === 'darwin';
+      const endpoint = isMac ? `releases/tags/${encodeURIComponent(MAC_NEXUS_RUNTIME)}` : 'releases?per_page=30';
+      const response = await this.fetcher(`https://api.github.com/repos/${NEXUS_REPOSITORY}/${endpoint}`, {
         headers: { Accept: 'application/vnd.github+json' },
         signal: AbortSignal.timeout(20_000),
       });
-      if (!response.ok) throw new Error('The Xodus Nexus release list could not be read.');
-      const releases = await response.json() as Array<{ tag_name?: unknown; published_at?: unknown; draft?: boolean; prerelease?: boolean; assets?: Array<{ name?: unknown; browser_download_url?: unknown }> }>;
+      if (!response.ok) throw new Error(`GitHub returned HTTP ${response.status}.`);
+      const metadata: unknown = await response.json();
+      if (!isMac && !Array.isArray(metadata)) throw new Error('Invalid Nexus release list.');
+      const releases: unknown[] = isMac ? [metadata] : metadata as unknown[];
       let found: { version: string; archive: { name: string; url: string }; checksum: { name: string; url: string } } | undefined;
       let newestPublication = -Infinity;
-      for (const release of releases) {
-        if (release.draft || release.prerelease) continue;
+      for (const value of releases) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+        const release = value as Record<string, unknown>;
+        if (release.draft || release.prerelease || !Array.isArray(release.assets)) continue;
         const version = typeof release.tag_name === 'string' && release.tag_name.trim() ? release.tag_name.trim() : '';
-        const assets = (release.assets ?? []).map((asset) => ({
+        if (!version || (isMac && version !== MAC_NEXUS_RUNTIME)) continue;
+        const assets = release.assets.filter((asset): asset is Record<string, unknown> =>
+          asset !== null && typeof asset === 'object' && !Array.isArray(asset)).map((asset) => ({
           name: typeof asset.name === 'string' ? asset.name : '',
           url: typeof asset.browser_download_url === 'string' ? asset.browser_download_url : '',
         }));
         const archive = assets.find((asset) => /^xodus-nexus-runtime-[A-Za-z0-9._-]+-x86_64\.tar\.xz$/.test(asset.name) &&
+          (!isMac || asset.name === `xodus-nexus-${MAC_NEXUS_RUNTIME}-x86_64.tar.xz`) &&
           /^https:\/\//.test(asset.url) && assets.some((sum) => sum.name === asset.name.replace(/\.tar\.xz$/, '.sha512sum') && /^https:\/\//.test(sum.url)));
-        const checksum = archive && assets.find((asset) => asset.name === archive.name.replace(/\.tar\.xz$/, '.sha512sum'));
-        if (archive && checksum && this.platform === 'darwin' && version === MAC_NEXUS_RUNTIME) {
+        const checksum = archive && assets.find((asset) => asset.name === archive.name.replace(/\.tar\.xz$/, '.sha512sum') && /^https:\/\//.test(asset.url));
+        if (archive && checksum && isMac) {
           found = { version, archive, checksum };
           break;
         }
@@ -324,7 +334,7 @@ export class RuntimeManager {
           }
         }
       }
-      if (!found) throw new Error('No Nexus runtime release has been published yet.');
+      if (!found) throw new Error(isMac ? 'The required tag or its runtime archive/checksum metadata is missing or invalid.' : 'No Nexus runtime release has been published yet.');
       this.nexusArtifact = {
         version: found.version,
         name: found.archive.name,
@@ -335,7 +345,11 @@ export class RuntimeManager {
       Object.assign(this.status, { nexusAvailable: true, nexusName: found.archive.name, nexusVersion: found.version, nexusError: undefined });
     } catch (error) {
       this.nexusArtifact = undefined;
-      Object.assign(this.status, { nexusAvailable: false, nexusName: undefined, nexusVersion: undefined, nexusError: (error as Error).message });
+      const detail = error instanceof Error ? error.message : String(error);
+      const nexusError = this.platform === 'darwin'
+        ? `The required macOS runtime ${MAC_NEXUS_RUNTIME} is unavailable. ${detail} The current runtime has been kept. Retry the check or update MACxus for a supported runtime; newer unpatched releases cannot be substituted.`
+        : detail;
+      Object.assign(this.status, { nexusAvailable: false, nexusName: undefined, nexusVersion: undefined, nexusError });
     } finally {
       this.status.nexusChecking = false;
     }

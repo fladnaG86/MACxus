@@ -1,11 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { MAC_RUNTIME_DLLS } from './crossover.js';
 import { canonicalSnapshotName, MAC_NEXUS_RUNTIME, nexusReleaseName, previewBaseRelease, RuntimeManager } from './runtime.js';
-import { run } from './process.js';
+import { run, type RunOptions } from './process.js';
+
+// Prerequisite probes must never consult a developer's GitHub credentials.
+vi.mock('./process.js', async importOriginal => {
+  const actual = await importOriginal<typeof import('./process.js')>();
+  return { ...actual, run: (command: string, args: string[], options?: RunOptions) => command === 'gh'
+    ? Promise.resolve({ code: 1, output: '' }) : actual.run(command, args, options) };
+});
 
 describe('previewBaseRelease', () => {
   it('derives release names from versions, commits and asset names', () => {
@@ -29,7 +36,7 @@ describe('previewBaseRelease', () => {
         ],
       },
     ]), { status: 200, headers: { 'Content-Type': 'application/json' } })) as typeof fetch;
-    const manager = new RuntimeManager('/tmp/unused', () => undefined, () => false, fetcher);
+    const manager = new RuntimeManager('/tmp/unused', () => undefined, () => false, fetcher, 'linux');
     const status = await manager.checkNexus();
     expect(status.nexusAvailable).toBe(true);
     expect(status.nexusVersion).toBe('runtime-11.0-20261011-g3fd4ae10');
@@ -57,7 +64,7 @@ describe('previewBaseRelease', () => {
       runtime('undated', 'invalid'),
     ];
     const fetcher = (async () => new Response(JSON.stringify(releases))) as typeof fetch;
-    const manager = new RuntimeManager('/tmp/unused', () => undefined, () => false, fetcher);
+    const manager = new RuntimeManager('/tmp/unused', () => undefined, () => false, fetcher, 'linux');
     const status = await manager.checkNexus();
     expect(status.nexusVersion).toBe(newer.tag_name);
     expect(status.nexusName).toBe(newer.assets[0].name);
@@ -70,10 +77,79 @@ describe('previewBaseRelease', () => {
     };
     const pinned = runtime(MAC_NEXUS_RUNTIME, '2026-10-22T20:00:27Z');
     const newer = runtime('runtime-11.0-20261101-gdeadbee0', '2026-11-01T20:00:00Z');
-    const fetcher = (async () => new Response(JSON.stringify([newer, pinned]))) as typeof fetch;
+    const fetcher = (async (input: URL | RequestInfo) => new Response(JSON.stringify(String(input).includes('/releases/tags/') ? pinned : [newer, pinned]))) as typeof fetch;
     const status = await new RuntimeManager('/tmp/unused', () => undefined, () => false, fetcher, platform).checkNexus();
     expect(status.nexusVersion).toBe((expected === 'pinned' ? pinned : newer).tag_name);
   });
+
+  it('resolves the exact macOS tag even after it leaves the first release page', async () => {
+    const name = `xodus-nexus-${MAC_NEXUS_RUNTIME}-x86_64.tar.xz`;
+    const requests: string[] = [];
+    const fetcher = (async (input: URL | RequestInfo) => {
+      const url = String(input); requests.push(url);
+      return new Response(JSON.stringify(url.endsWith(`/releases/tags/${MAC_NEXUS_RUNTIME}`)
+        ? { tag_name: MAC_NEXUS_RUNTIME, assets: [name, name.replace('.tar.xz', '.sha512sum')].map(name => ({ name, browser_download_url: `https://example.com/${name}` })) }
+        : Array.from({ length: 30 }, (_, i) => ({ tag_name: `runtime-11.0-future-${i}`, assets: [] }))));
+    }) as typeof fetch;
+    const status = await new RuntimeManager('/tmp/unused', () => {}, () => false, fetcher, 'darwin').checkNexus();
+    expect(status.nexusAvailable).toBe(true);
+    expect(status.nexusVersion).toBe(MAC_NEXUS_RUNTIME);
+    expect(requests).toEqual([`https://api.github.com/repos/domsvoboda/xodus-nexus/releases/tags/${MAC_NEXUS_RUNTIME}`]);
+  });
+
+  it.each(['absent', 'network', 'invalid-json', 'null', 'array', 'assets-object', 'wrong-tag', 'wrong-archive', 'missing-checksum', 'insecure-checksum', 'draft', 'prerelease'])(
+    'rejects %s macOS metadata, clears a cached candidate and retains the installed runtime without downloads', async scenario => {
+      const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nexus-pin-test-'));
+      const name = `xodus-nexus-${MAC_NEXUS_RUNTIME}-x86_64.tar.xz`;
+      const valid = { tag_name: MAC_NEXUS_RUNTIME, assets: [name, name.replace('.tar.xz', '.sha512sum')].map(name => ({ name, browser_download_url: `https://example.com/${name}` })) };
+      let failing = false;
+      const requests: string[] = [];
+      const fetcher = (async (input: URL | RequestInfo) => {
+        const url = String(input); requests.push(url);
+        if (!url.endsWith(`/releases/tags/${MAC_NEXUS_RUNTIME}`)) throw Error('Unexpected download or release-list request');
+        if (!failing) return new Response(JSON.stringify(valid));
+        if (scenario === 'absent') return new Response('{}', { status: 404 });
+        if (scenario === 'network') throw Error('Synthetic network failure');
+        if (scenario === 'invalid-json') return new Response('{');
+        const metadata = scenario === 'null' ? null : scenario === 'array' ? [valid] : scenario === 'assets-object' ? { ...valid, assets: {} }
+          : scenario === 'wrong-tag' ? { ...valid, tag_name: 'runtime-11.0-future' }
+          : scenario === 'wrong-archive' ? { ...valid, assets: valid.assets.map(asset => ({ ...asset, name: asset.name.replace(MAC_NEXUS_RUNTIME, 'runtime-11.0-future') })) }
+          : scenario === 'missing-checksum' ? { ...valid, assets: valid.assets.slice(0, 1) }
+          : scenario === 'insecure-checksum' ? { ...valid, assets: [valid.assets[0], { ...valid.assets[1], browser_download_url: 'http://example.com/checksum' }] }
+          : { ...valid, [scenario]: true };
+        return new Response(JSON.stringify(metadata));
+      }) as typeof fetch;
+      try {
+        const release = path.join(root, 'releases', 'previous');
+        const winePath = path.join(release, 'files', 'bin', 'wine');
+        const dlls = path.join(release, 'files', 'lib', 'wine', 'x86_64-windows');
+        await fs.mkdir(dlls, { recursive: true });
+        for (const file of MAC_RUNTIME_DLLS) await fs.writeFile(path.join(dlls, file), 'previous DLL fixture');
+        await fs.writeFile(path.join(release, 'XODUS_NEXUS_PATCH.json'), '{}');
+        const pointer = JSON.stringify({ name: 'previous', winePath, commit: 'previous', installedAt: 'before' });
+        await fs.writeFile(path.join(root, 'current.json'), pointer);
+        const manager = new RuntimeManager(root, () => {}, () => false, fetcher, 'darwin');
+        // Keep prerequisite discovery account-free; no gh/auth or real network commands.
+        vi.spyOn(manager as unknown as { commandOk(command: string, args: string[]): Promise<boolean> }, 'commandOk').mockResolvedValue(true);
+        expect((await manager.refresh()).installed).toBe(true);
+        expect((await manager.checkNexus()).nexusAvailable).toBe(true);
+        failing = true;
+        const status = await manager.checkNexus();
+        expect(status).toMatchObject({ installed: true, name: 'previous', winePath, nexusAvailable: false, nexusChecking: false });
+        expect(status.nexusVersion).toBeUndefined();
+        expect(status.nexusName).toBeUndefined();
+        expect(status.nexusError).toContain(MAC_NEXUS_RUNTIME);
+        expect(status.nexusError).toContain('Retry the check or update MACxus');
+        await expect(manager.installNexus(() => {})).rejects.toThrow('The required macOS runtime');
+        expect(await fs.readFile(path.join(root, 'current.json'), 'utf8')).toBe(pointer);
+        expect(await fs.readFile(path.join(dlls, MAC_RUNTIME_DLLS[0]), 'utf8')).toBe('previous DLL fixture');
+        expect(manager.current.name).toBe('previous');
+        expect((await fs.readdir(root)).some(name => name.startsWith('.staging-'))).toBe(false);
+        expect(requests).toHaveLength(3);
+        expect(requests.every(url => url.includes('/releases/tags/'))).toBe(true);
+      } finally { await fs.rm(root, { recursive: true, force: true }); }
+    },
+  );
 
   it('pins the macOS runtime to the release the bundled MACxus DLLs were built against', async () => {
     const manifest = JSON.parse(await fs.readFile(new URL('../../assets/mac-runtime-dlls/manifest.json', import.meta.url), 'utf8'));
@@ -87,7 +163,7 @@ describe('previewBaseRelease', () => {
         assets: [{ name: 'Xodus-Nexus-0.5.24-x86_64.AppImage', browser_download_url: 'https://example.com/app.AppImage' }],
       },
     ]), { status: 200, headers: { 'Content-Type': 'application/json' } })) as typeof fetch;
-    const manager = new RuntimeManager('/tmp/unused', () => undefined, () => false, fetcher);
+    const manager = new RuntimeManager('/tmp/unused', () => undefined, () => false, fetcher, 'linux');
     const status = await manager.checkNexus();
     expect(status.nexusAvailable).toBe(false);
     expect(status.nexusError).toContain('No Nexus runtime release has been published yet');
@@ -104,7 +180,7 @@ describe('previewBaseRelease', () => {
       { tag_name: 'mismatched', assets: [asset(name), asset('xodus-nexus-runtime-different-x86_64.sha512sum')] },
       { tag_name: 'runtime-tested', assets: pair },
     ]))) as typeof fetch;
-    const manager = new RuntimeManager('/tmp/unused', () => undefined, () => false, fetcher);
+    const manager = new RuntimeManager('/tmp/unused', () => undefined, () => false, fetcher, 'linux');
     expect((await manager.checkNexus()).nexusVersion).toBe('runtime-tested');
   });
 
