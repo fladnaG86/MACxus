@@ -74,7 +74,7 @@ In a game's settings, **Launch tools → Enable DLSS (CrossOver)** exposes Cross
 ### Controllers
 
 - **DualSense / DualShock**: open the game's settings and enable **DualSense compatibility mode**. The pad is then presented as an Xbox (XInput) controller; haptics and adaptive triggers are not available in this mode.
-- **Steam Controller 2:** direct gamepad control and Steam Controller identification were confirmed in Halo: Campaign Evolved with **CrossOver Preview Rosetta 20261015**, without a GameInput replacement or DualSense compatibility mode.
+- **Halo: Campaign Evolved:** direct gamepad controls and button prompts confirmed with **Steam Controller 2** and **Xbox Elite Series 2 over Bluetooth** on **CrossOver Preview Rosetta 20261015**. No GameInput replacement or DualSense compatibility mode was needed; the game identified the Steam Controller as a Steam Controller. Rumble, Elite paddles and advanced features were not verified.
 - **GameInput:** the tested Wine implementation still returns a stub error, but a game may support another input path. Check the game/controller/engine combination before enabling a workaround.
 
 ### What is different from Xodus Nexus
@@ -133,7 +133,7 @@ Nelle impostazioni di un gioco, **Strumenti di avvio → Abilita DLSS (CrossOver
 ### Controller
 
 - **DualSense / DualShock**: apri le impostazioni del gioco e attiva **DualSense compatibility mode**. Il pad viene presentato come controller Xbox (XInput); in questa modalità non ci sono vibrazione avanzata e trigger adattivi.
-- **Steam Controller 2:** controlli gamepad diretti e riconoscimento come Steam Controller confermati in Halo: Campaign Evolved con **CrossOver Preview Rosetta 20261015**, senza sostituzione di GameInput né modalità compatibilità DualSense.
+- **Halo: Campaign Evolved:** controlli gamepad diretti e indicazioni dei pulsanti confermati con **Steam Controller 2** e **Xbox Elite Series 2 via Bluetooth** su **CrossOver Preview Rosetta 20261015**. Non sono necessarie sostituzioni di GameInput né modalità compatibilità DualSense; il gioco riconosce Steam Controller come Steam Controller. Vibrazione, palette Elite e funzioni avanzate non verificate.
 - **GameInput:** l’implementazione Wine provata restituisce ancora un errore stub, ma un gioco può supportare un altro percorso di input. Verifica la combinazione gioco/controller/motore prima di attivare una soluzione alternativa.
 
 ### Cosa cambia rispetto a Xodus Nexus
