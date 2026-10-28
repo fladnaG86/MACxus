@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Publish the complete CrossOver Wine source archive for the Halo movies pack as a release asset next to the DMG instead of inside the app, shrinking the DMG by about 145 MB.
 - Fix Xbox profile and download authentication for accounts receiving compact JWE sign-in tickets, while preserving older ticket formats.
 - Preserve Microsoft broker headers on both hosted sign-in steps. Thanks @Wyze3306 for the upstream fix adapted here.
 - Accept compact JWE tickets when requesting game content licenses without changing Xbox or Store sign-in token handling.

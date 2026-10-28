@@ -5,7 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { createHash } from 'node:crypto';
 import { createPackage } from '@electron/asar';
-import { verifyCompatibilityPacksDirectory, verifyPackagedCompatibilityPacks } from './compatibility-packs.mjs';
+import { stageCompatibilityPackSources, verifyCompatibilityPacksDirectory, verifyPackagedCompatibilityPacks } from './compatibility-packs.mjs';
 const sha = data => createHash('sha256').update(data).digest('hex');
 const reference = JSON.parse(await fs.readFile(new URL('../assets/compatibility-packs/halo-preview-media-v1/manifest.json', import.meta.url), 'utf8'));
 
@@ -35,20 +35,34 @@ async function fixture(temp) {
   return { app, assets };
 }
 
-test('verifies every registered pack inside the actual ASAR, including non-Halo DLLs and complete sources', async () => {
+test('verifies every registered pack inside the actual ASAR, with complete sources kept out of the app', async () => {
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'compatibility-package-'));
   try {
     const { app, assets } = await fixture(temp);
     await verifyCompatibilityPacksDirectory(assets);
+    const bundled = path.join(temp, 'bundled.asar'); await createPackage(app, bundled);
+    await assert.rejects(verifyPackagedCompatibilityPacks(bundled), /must be a release asset/);
+    const sources = path.join(temp, 'sources');
+    await fs.mkdir(sources);
+    for (const id of ['synthetic-alpha-v1', 'synthetic-beta-v1']) await fs.rename(path.join(assets, id, 'source', reference.source.archive), path.join(sources, id));
     const archive = path.join(temp, 'good.asar'); await createPackage(app, archive); await verifyPackagedCompatibilityPacks(archive);
-    const source = path.join(assets, 'synthetic-beta-v1/source', reference.source.archive);
-    await fs.unlink(source);
     await assert.rejects(verifyCompatibilityPacksDirectory(assets));
-    const missing = path.join(temp, 'missing.asar'); await createPackage(app, missing); await assert.rejects(verifyPackagedCompatibilityPacks(missing));
-    await fs.writeFile(source, 'test-complete-source');
     await fs.writeFile(path.join(assets, 'synthetic-beta-v1/payload/beta.dll'), 'corrupt');
-    await assert.rejects(verifyCompatibilityPacksDirectory(assets), /checksum mismatch/);
     const corrupt = path.join(temp, 'corrupt.asar'); await createPackage(app, corrupt); await assert.rejects(verifyPackagedCompatibilityPacks(corrupt), /checksum mismatch/);
+    for (const id of ['synthetic-alpha-v1', 'synthetic-beta-v1']) await fs.rename(path.join(sources, id), path.join(assets, id, 'source', reference.source.archive));
+    await assert.rejects(verifyCompatibilityPacksDirectory(assets), /checksum mismatch/);
+  } finally { await fs.rm(temp, { recursive: true, force: true }); }
+});
+
+test('stages each verified complete source archive once as a release asset', async () => {
+  const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'compatibility-package-'));
+  try {
+    const { assets } = await fixture(temp), output = path.join(temp, 'release');
+    const staged = await stageCompatibilityPackSources(assets, output);
+    assert.deepEqual(staged, [{ file: path.join(output, reference.source.archive), sha256: sha('test-complete-source') }]);
+    assert.equal(await fs.readFile(staged[0].file, 'utf8'), 'test-complete-source');
+    await fs.writeFile(path.join(assets, 'synthetic-beta-v1/source', reference.source.archive), 'tampered');
+    await assert.rejects(stageCompatibilityPackSources(assets, output), /checksum mismatch/);
   } finally { await fs.rm(temp, { recursive: true, force: true }); }
 });
 

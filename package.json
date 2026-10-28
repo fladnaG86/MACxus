@@ -16,13 +16,14 @@
     "test:ci-tools": "node --import ./scripts/test-environment.mjs --test scripts/ci/*.test.mjs",
     "build:mac-backend": "tsc -p tsconfig.electron.json && node scripts/build-mac-backend.mjs",
     "prepare:mac-runtime-dlls": "node scripts/prepare-mac-runtime-dlls.mjs",
-    "dist:mac": "npm run prepare:mac-runtime-dlls && npm run build:mac-backend && npm run prepare:mac-media-pack && npm run clean && npm run typecheck && vite build && tsc -p tsconfig.electron.json && electron-builder --mac dmg --arm64 --publish never",
+    "dist:mac": "npm run prepare:mac-runtime-dlls && npm run build:mac-backend && npm run prepare:mac-media-pack && npm run clean && npm run typecheck && vite build && tsc -p tsconfig.electron.json && electron-builder --mac dmg --arm64 --publish never && npm run stage:mac-release-sources",
     "build": "npm run clean && npm run typecheck && npm run test && vite build && tsc -p tsconfig.electron.json",
     "dist": "npm run build && electron-builder --linux AppImage --publish never",
     "pack": "npm run build && electron-builder --linux dir --publish never",
     "compatibility:generate": "node scripts/compatibility/generate.mjs",
     "compatibility:check": "node scripts/compatibility/generate.mjs --check",
     "prepare:mac-media-pack": "node scripts/prepare-compatibility-packs.mjs",
+    "stage:mac-release-sources": "node scripts/stage-compatibility-pack-sources.mjs release",
     "test:compatibility": "node --test scripts/ci/compatibility.test.mjs"
   },
   "dependencies": {
@@ -56,6 +57,7 @@
       "dist-electron/**/*",
       "assets/**/*",
       "!assets/fonts/**/*",
+      "!assets/compatibility-packs/*/source/*.tar.gz",
       "package.json",
       "LICENSE"
     ],

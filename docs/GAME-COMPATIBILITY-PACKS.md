@@ -12,7 +12,8 @@ build tag to a unique pack ID. The launcher reads only the selected manifest.
 Unknown games and unsupported engine versions use their normal runner. A corrupt
 selected manifest, mismatched fingerprints or failed signature stops preparation.
 Source checkouts without generated DLLs can use the normal runner; macOS packaging
-requires every registered pack to be complete inside the actual ASAR.
+requires every registered pack to be complete inside the actual ASAR, except the
+complete source archive, which is published as an asset of the same release.
 
 The current `wine-engine-overlay` handler supports **x86_64 Rosetta CrossOver and
 CrossOver Preview**. It verifies original PE DLLs and Unix companion libraries,

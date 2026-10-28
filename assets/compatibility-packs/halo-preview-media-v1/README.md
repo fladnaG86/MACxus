@@ -3,7 +3,8 @@
 Wine PE DLLs, LGPL-2.1-or-later. Modified from the official CrossOver 26.3.0
 Wine sources using the source patch at
 `assets/runtime-patches/crossover-preview-halo-mf-software-output.patch`.
-The complete original source archive is included in `source/`, and the LGPL
+The complete original source archive (`crossover-sources-26.3.0.tar.gz`) is
+published as an asset of the same MACxus GitHub release as the app, and the LGPL
 license is `COPYING.LIB`. The manifest records all source/artifact hashes, the
 accepted Preview build and the per-DLL reproducible build timestamps. The
 `relative-source-v1` policy invokes configure using `../sources/wine/configure`
@@ -21,8 +22,9 @@ https://github.com/zachspartofaday/MACxus/blob/main/docs/HALO-PREVIEW-MEDIA.md
 The build recipe is included under `source/build-scripts/`; restore it into the
 repository's `scripts/` directory and `source/src/shared/` into `src/shared/`
 when reconstructing the source layout. The
-corresponding patch, manifest and complete Wine source archive are supplied with
-this pack, so the original source download need not remain available to rebuild.
+corresponding patch and manifest are supplied with this pack and the complete
+Wine source archive with the same release, so the original source download need
+not remain available to rebuild.
 
 Users supply their own CrossOver app. MACxus makes and signs a private copy for
 Halo only. This pack does not contain CrossOver, game files, GStreamer or FFmpeg.

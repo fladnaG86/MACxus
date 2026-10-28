@@ -12,7 +12,9 @@ The shared handler reads its Store/build route and declarative settings from the
 manifest; its existing engine cache and bottle paths are preserved.
 
 macOS distribution builds include the two verified Wine DLLs, their LGPL license,
-complete original source archive and source patch. Users do not need compilers
+source patch and build recipe. The complete original source archive
+(`crossover-sources-26.3.0.tar.gz`, SHA-256 in the manifest) is published as an
+asset of the same GitHub release as the DMG. Users do not need compilers
 or manual engine/configuration edits. On Halo's first launch, MACxus verifies the
 installed Preview build and prepares a locally signed engine copy and a dedicated
 Halo bottle under its application data. Bottle initialization uses unmodified
@@ -72,7 +74,10 @@ which survive stripping. Do not invoke configure with an absolute source path.
 This relative policy reproduces the original tested DLL hashes without requiring
 a shared fixed temporary directory or a changed payload.
 Generated DLLs and the source archive remain ignored by Git, and the actual app
-ASAR is checked for both DLLs, the complete source archive and the LGPL license.
+ASAR is checked for both DLLs, the source patch and the LGPL license, and must
+not contain the complete source archive. `npm run dist:mac` ends with
+`npm run stage:mac-release-sources`, which verifies the archive and copies it to
+`release/`; upload it with the DMG on every release.
 A different toolchain that produces different bytes requires candidate
 revalidation and a manifest update; packaging never accepts it silently.
 
