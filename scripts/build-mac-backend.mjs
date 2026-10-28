@@ -59,7 +59,7 @@ const oldTmp = env.TMPDIR;
 try {
   env.TMPDIR = fixtureRoot + path.sep;
   cargo(['test', ...features, '-p', 'xodus-cli']);
-  for (const filter of ['credential_', 'content_license_', 'content_ticket_', 'ticket_diagnostic_']) cargo(['test', ...features, '-p', 'xodus', filter]);
+  for (const filter of ['credential_', 'content_license_', 'content_ticket_', 'xbox_ticket_', 'ticket_diagnostic_']) cargo(['test', ...features, '-p', 'xodus', filter]);
   cargo(['test', ...features, '-p', 'xodus-service', 'store_']);
 } finally {
   if (oldTmp === undefined) delete env.TMPDIR; else env.TMPDIR = oldTmp;

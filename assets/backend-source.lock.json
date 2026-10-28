@@ -5,7 +5,7 @@
   "commit": "53ea781dcd073e31d7ea68e894134e9c959bff04",
   "rust": "1.99.0",
   "cargoLockSha256": "2259b343e00dadc263018beb7664b12e9d58a0b73bff502ad566f5f8619ce28a",
-  "patchId": "linux-run-v43",
+  "patchId": "linux-run-v44",
   "compatibility": "linux-run-v22",
   "macCompatibility": "macos-run-v2",
   "patches": [
@@ -51,6 +51,7 @@
     { "file": "xodus-licensing-jwe.patch", "sha256": "6f0087e657f225e9a770405fbb34c2317f840615742c89b62f241f1b65c590ca" },
     { "file": "xodus-hosted-signin.patch", "sha256": "f52b16944ca7dfc837337e0257be380467f01872706252d7c2e981db0c57a8bc" },
     { "file": "xodus-macos-launch.patch", "sha256": "09e4e53d90ded4bc06745d30b960a4bd2f17750b98282521b3a4a13b5b8bd613" },
-    { "file": "xodus-macos-keychain-bundle.patch", "sha256": "9e25544e196b8077893ad5b6835ffc6acde2646408cdc55fed3fc41273727c18" }
+    { "file": "xodus-macos-keychain-bundle.patch", "sha256": "9e25544e196b8077893ad5b6835ffc6acde2646408cdc55fed3fc41273727c18" },
+    { "file": "xodus-xbox-jwe.patch", "sha256": "e77a076406bfacedfef0ee4eb8629052c21f8312ce367724610b46e3bb468cfb" }
   ]
 }

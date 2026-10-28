@@ -1,0 +1,84 @@
+diff --git a/crates/xodus/src/api/xbox/auth.rs b/crates/xodus/src/api/xbox/auth.rs
+--- a/crates/xodus/src/api/xbox/auth.rs
++++ b/crates/xodus/src/api/xbox/auth.rs
+@@ -12,7 +12,7 @@
+         properties: UserAuthProperties {
+             auth_method: "RPS".to_string(),
+             site_name: "user.auth.xboxlive.com".to_string(),
+-            rps_ticket,
++            rps_ticket: crate::models::secrets::xbox_ticket(rps_ticket),
+         },
+     };
+ 
+diff --git a/crates/xodus/src/models/licensing_ticket_tests.rs b/crates/xodus/src/models/licensing_ticket_tests.rs
+--- a/crates/xodus/src/models/licensing_ticket_tests.rs
++++ b/crates/xodus/src/models/licensing_ticket_tests.rs
+@@ -1,5 +1,5 @@
+ //! Public synthetic data only, no account, keyring or network access.
+-use super::{Token, licensing_ticket, store_ticket};
++use super::{Token, licensing_ticket, store_ticket, xbox_ticket};
+ use crate::models::soap;
+ use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
+ use serde_json::json;
+@@ -18,6 +18,39 @@
+         "RequestedSecurityToken":{"BinarySecurityToken":{"@Id":"fixture","$value":raw}}
+     })).unwrap();
+     Token::try_from(response).unwrap()
++}
++
++#[test]
++fn xbox_ticket_jwe_uses_t_prefix_without_changing_stored_token_or_ciphertext() {
++    for raw in [
++        jwe(json!({"alg":"dir","enc":"A128CBC-HS256"}), ""),
++        jwe(json!({"alg":"RSA-OAEP-256","enc":"A256GCM"}), "a2V5"),
++    ] {
++        let Token::Compact(stored) = delegation(&raw) else { panic!("fixture"); };
++        assert_eq!(stored, format!("d={raw}"));
++        for input in [stored.clone(), raw.clone(), format!("t={raw}")] {
++            assert_eq!(xbox_ticket(input), format!("t={raw}"));
++        }
++        assert_eq!(store_ticket(stored.clone()), format!("t={raw}"));
++        assert_eq!(licensing_ticket(stored), raw);
++    }
++}
++
++#[test]
++fn xbox_ticket_keeps_legacy_and_malformed_values_byte_exact() {
++    let valid = jwe(json!({"alg":"dir","enc":"A256GCM"}), "");
++    let oversized = jwe(json!({"alg":"dir","enc":"A256GCM","kid":"a".repeat(9000)}), "");
++    for input in [
++        "d=opaque".to_string(), "t=opaque&p=proof".into(), "opaque".into(),
++        "".into(), "d=".into(), "d=eyJ.abc".into(),
++        "d=eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIxIn0.c2ln".into(),
++        "d=opaque..iv.ciphertext.tag".into(),
++        format!("d={valid}.extra"), format!("d={oversized}"),
++        format!("d={}", valid.replace("..", ".+.")),
++        format!("d={}", jwe(json!({"alg":"dir"}), "")),
++    ] {
++        assert_eq!(xbox_ticket(input.clone()), input);
++    }
+ }
+ 
+ #[test]
+diff --git a/crates/xodus/src/models/secrets.rs b/crates/xodus/src/models/secrets.rs
+--- a/crates/xodus/src/models/secrets.rs
++++ b/crates/xodus/src/models/secrets.rs
+@@ -80,8 +80,16 @@
+     }
+ }
+ 
+-/// Store and licensing services reject delegation-compact tickets in the "d="
+-/// form that Xbox Live sign-in needs (InvalidMsaTicketFormat) and accept the
++/// Xbox accepts new compact JWE tickets with the "t=" prefix. Older opaque
++/// tickets keep their original wire representation. Apply only at the Xbox
++/// request boundary, without changing stored tokens or their payloads.
++pub fn xbox_ticket(ticket: String) -> String {
++    let bare = ticket.strip_prefix("d=").or_else(|| ticket.strip_prefix("t=")).unwrap_or(&ticket);
++    if is_compact_jwe(bare) { format!("t={bare}") } else { ticket }
++}
++
++/// Store and licensing services reject opaque delegation tickets in the "d="
++/// form (InvalidMsaTicketFormat) and accept the
+ /// same value as "t=". Convert only where a ticket is sent to those services.
+ pub fn store_ticket(ticket: String) -> String {
+     match ticket.strip_prefix("d=") {

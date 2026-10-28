@@ -50,6 +50,7 @@ command('cargo', ['test', '--locked', ...offline, ...features, '-p', 'xodus', 'k
 command('cargo', ['test', '--locked', ...offline, ...features, '-p', 'xodus', 'keyring_persistence_', '--', '--test-threads=1']);
 command('cargo', ['test', '--locked', ...offline, ...features, '-p', 'xodus', 'content_license_']);
 command('cargo', ['test', '--locked', ...offline, ...features, '-p', 'xodus', 'content_ticket_']);
+command('cargo', ['test', '--locked', ...offline, ...features, '-p', 'xodus', 'xbox_ticket_']);
 command('cargo', ['test', '--locked', ...offline, ...features, '-p', 'xodus', 'ticket_diagnostic_']);
 command('cargo', ['test', '--locked', ...offline, '-p', 'xodus-service', 'store_']);
 command('cargo', ['test', '--locked', ...offline, ...features, '-p', 'msixvc', 'streaming_']);

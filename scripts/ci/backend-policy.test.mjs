@@ -84,6 +84,25 @@ test('JWE support changes only licensing ticket formatting, not Xbox or Store au
   assert.ok(build.includes("'-p', 'xodus', 'content_ticket_'"));
 });
 
+test('Xbox JWE authentication fix is pinned after the shared detector and tested by both backend builds', async () => {
+  const lock = JSON.parse(await fs.readFile('assets/backend-source.lock.json', 'utf8'));
+  const entry = lock.patches.find(p => p.file === 'xodus-xbox-jwe.patch');
+  assert.ok(entry);
+  const patch = await fs.readFile(`assets/${entry.file}`, 'utf8');
+  assert.equal(createHash('sha256').update(patch).digest('hex'), entry.sha256);
+  assert.ok(lock.patches.indexOf(entry) > lock.patches.findIndex(p => p.file === 'xodus-licensing-jwe.patch'));
+  const files = [...patch.matchAll(/^diff --git a\/(\S+) b\/\S+$/gm)].map(match => match[1]);
+  assert.deepEqual(files.sort(), [
+    'crates/xodus/src/api/xbox/auth.rs', 'crates/xodus/src/models/licensing_ticket_tests.rs',
+    'crates/xodus/src/models/secrets.rs',
+  ].sort());
+  for (const name of ['xbox_ticket_jwe_uses_t_prefix_without_changing_stored_token_or_ciphertext',
+    'xbox_ticket_keeps_legacy_and_malformed_values_byte_exact']) assert.ok(patch.includes(name));
+  for (const file of ['scripts/build-backend.mjs', 'scripts/build-mac-backend.mjs']) {
+    assert.ok((await fs.readFile(file, 'utf8')).includes("'xbox_ticket_'"), file);
+  }
+});
+
 test('auth response consistency and coherent credential persistence are pinned and account-free tested', async () => {
   const lock = JSON.parse(await fs.readFile('assets/backend-source.lock.json', 'utf8'));
   assert.ok(lock.patches.some(p => p.file === 'xodus-auth-consistency.patch'));

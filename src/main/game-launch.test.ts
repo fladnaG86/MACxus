@@ -39,7 +39,7 @@ describe('backend compatibility tag', () => {
     expect(backendCompatibility('linux')).toBe(backendLock.compatibility);
     expect(backendCompatibility('linux')).toBe('linux-run-v22');
     expect(backendCompatibility('darwin')).toBe('macos-run-v2');
-    expect(backendLock.patchId).toBe('linux-run-v43');
+    expect(backendLock.patchId).toBe('linux-run-v44');
     if (process.platform === 'darwin') {
       expect(LINUX_RUN_PATCH).toBe('macos-run-v2');
       expect(() => gameLaunchArguments({ path: '/package', executable: 'Game.exe' }, '/wine', '', 'linux-run-v22')).toThrow('current managed Xodus backend');
