@@ -11,7 +11,9 @@ module.exports = async function afterPack(context) {
     const backend = path.join(context.appOutDir, 'MACxus.app', 'Contents', 'Resources', 'backend');
     const { manifest } = await readBundledBackend(backend, 'arm64');
     const { verifyMacBackendSigning } = await import('./mac-backend-signing.mjs');
+    const { signMacApp } = await import('./mac-app-signing.mjs');
     verifyMacBackendSigning(backend, manifest.signingIdentity);
+    signMacApp(path.join(context.appOutDir, 'MACxus.app'));
     return;
   }
   if (context.electronPlatformName !== 'linux') return;

@@ -6,9 +6,11 @@ import { BackendManager } from '../dist-electron/main/backend.js';
 import { verifyPackagedRuntimeDlls } from './mac-runtime-dlls.mjs';
 
 import { verifyPackagedCompatibilityPacks } from './compatibility-packs.mjs';
+import { verifyMacAppSeal } from './mac-app-signing.mjs';
 
 const app = process.argv[2];
 if (!app || process.argv.length !== 3) throw Error('Usage: verify-mac-bundle.mjs MACxus.app');
+verifyMacAppSeal(path.resolve(app));
 await verifyPackagedRuntimeDlls(path.resolve(app, 'Contents/Resources/app.asar'));
 await verifyPackagedCompatibilityPacks(path.resolve(app, 'Contents/Resources/app.asar'));
 const profile = await fs.mkdtemp(path.join(os.tmpdir(), 'macxus-first-launch-'));
