@@ -78,6 +78,12 @@ Each fix uncovered the next one (27 October 2026, FH6 3.461.691.0, Highball engi
 
 Still open: **150–300 ms freezes about every 1.3 s** after the title menu (measured from frame timestamps of a screen recording; the title menu is clean). Not caused by logging (same with `WINEDEBUG=-all`). Most likely cause: the game's copy protection under Rosetta, a problem Highball already measured and reported to Apple as FB25100017 ([highball#415](https://github.com/gauthierpiarrette/highball/issues/415)). About every 1.1–1.3 s it runs a job of about 2,000 instructions that trap on purpose (`c000001d`, handled by the game's own exception handler, which also writes into the code page it executes) while holding a lock the frame needs. A trap costs about 1.5 µs natively and 15–60 µs under Rosetta, so the job lasts 100–300 ms. Wine's share is about 5%; no `ROSETTA_*` variable helps. An earlier suspect, SHA1 hashing through `bcrypt`, is ruled out: those calls happen only while loading, not during play. Lower CPU load (30 fps, low settings, Metal HUD off), fullscreen and a higher process priority shorten the freezes but do not remove them. One FHE11 during the first world load (empty stack in `CrashReport.xml`), not seen again. Backend warning "could not authorise a PlayFab token": the game still gets its own PlayFab tokens.
 
+### 20. Forza Horizon 5: GPU identity and timestamp queries
+
+Two settings take the Store build (3.688.109.0) past startup on M1 Max, and the bundled profile now applies both. With D3DMetal's default AMD adapter the game crashes at startup; the game ships `amd_ags_x64.dll`, so the AGS path is the likely cause, though the crash site was not disassembled. An NVIDIA identity avoids it. After that, loading never finishes because D3DMetal has no D3D12 timestamp queries (`Unsupported: EndQuery`, `ResolveQueryData`); the Highball shim emulates them. The clue came from u/Shot-Tangerine-3374's r/macgaming post on FH5 running on an M5 MacBook Air.
+
+The repeated `xsts_authorize_privilege` status 400 for `gameservices.fh5.forzamotorsport.net` looks like the cause of the stall, but it is not: the game gets past loading while that error continues. Forza online services remain unavailable. One run crashed after about 5 minutes during loading (NULL write in system code, empty game stack); cause unknown.
+
 ## Italiano
 
 ### 1. Avvio senza `WINE_DLL_FILE_MAP`
@@ -149,6 +155,12 @@ Ogni correzione ha mostrato il problema successivo (27 ottobre 2026, FH6 3.461.6
 
 Resta da fare: **blocchi da 150–300 ms ogni circa 1,3 s** dopo il menu iniziale (misurati sui tempi dei frame di una registrazione dello schermo; il menu iniziale è pulito). Non dipendono dal log (stesso risultato con `WINEDEBUG=-all`). Causa più probabile: la protezione anti-copia del gioco sotto Rosetta, un problema che Highball ha già misurato e segnalato ad Apple come FB25100017 ([highball#415](https://github.com/gauthierpiarrette/highball/issues/415)). Circa ogni 1,1–1,3 s esegue un lavoro di circa 2.000 istruzioni che vanno apposta in errore (`c000001d`, gestite dal gestore di eccezioni del gioco, che scrive anche nella pagina di codice che esegue) tenendo un lock che serve al frame. Ogni errore costa circa 1,5 µs su un processore nativo e 15–60 µs sotto Rosetta, quindi il lavoro dura 100–300 ms. La parte di Wine è circa il 5%; nessuna variabile `ROSETTA_*` aiuta. Il sospetto precedente, il calcolo SHA1 tramite `bcrypt`, è escluso: quelle chiamate avvengono solo durante i caricamenti, non mentre si gioca. Ridurre il carico della CPU (30 fps, qualità bassa, HUD Metal spento), lo schermo intero e una priorità più alta del processo accorciano i blocchi ma non li eliminano. Un FHE11 durante il primo caricamento del mondo è capitato una volta (stack vuoto nel `CrashReport.xml`), poi non più. Avviso del backend "could not authorise a PlayFab token": il gioco ottiene comunque i suoi token PlayFab.
 
+### 20. Forza Horizon 5: identità GPU e timestamp query
+
+Due impostazioni portano la versione Store (3.688.109.0) oltre l'avvio su M1 Max, e ora il profilo incluso le applica entrambe. Con l'adapter AMD di default di D3DMetal il gioco crasha all'avvio; il gioco include `amd_ags_x64.dll`, quindi la causa probabile è il percorso AGS, ma il punto del crash non è stato disassemblato. L'identità NVIDIA lo evita. Dopo, il caricamento non finisce perché D3DMetal non ha le timestamp query D3D12 (`Unsupported: EndQuery`, `ResolveQueryData`); lo shim di Highball le emula. L'indizio viene dal post di u/Shot-Tangerine-3374 su r/macgaming su FH5 in esecuzione su un MacBook Air M5.
+
+Il ripetuto `xsts_authorize_privilege` status 400 per `gameservices.fh5.forzamotorsport.net` sembra la causa dello stallo, ma non lo è: il gioco supera il caricamento mentre l'errore continua. I servizi online Forza restano non disponibili. Una run è crashata dopo circa 5 minuti durante il caricamento (scrittura su NULL in codice di sistema, stack del gioco vuoto); causa sconosciuta.
+
 ## Credits / Ringraziamenti
 
 MACxus exists because of these people and projects. Thank you.
@@ -162,6 +174,7 @@ MACxus esiste grazie a queste persone e progetti. Grazie.
 - [Sikarugir](https://github.com/Sikarugir-App/Template) — the runtime frameworks (GLib/GStreamer) Highball needs on macOS / i framework runtime (GLib/GStreamer) che servono a Highball su macOS.
 - [NotProton](https://github.com/NotProtonNot/NotProton) — reference while studying the launch chain / riferimento per studiare la catena di avvio.
 - [MetalHorizon](https://github.com/alexandreunitypro/MetalHorizon-FH6-Mac-Launcher) — alexandreunitypro: the d3d12 shim with the `SV_ShadingRate` fix and the Forza Horizon 6 notes (AVX) / lo shim d3d12 con la correzione `SV_ShadingRate` e gli appunti su Forza Horizon 6 (AVX).
+- u/Shot-Tangerine-3374 — the Forza Horizon 5 report that pointed at timestamp queries / la prova di Forza Horizon 5 che ha indicato le timestamp query
 - [Ferestre](https://github.com/icex/ferestre) — icex: the Forza Horizon 6 recipe that pointed at the PlayFab saves / la ricetta di Forza Horizon 6 che ha indicato i salvataggi PlayFab.
 - [Wine](https://www.winehq.org), [CodeWeavers CrossOver](https://www.codeweavers.com/crossover), Apple D3DMetal (Game Porting Toolkit), [SDL](https://www.libsdl.org).
 

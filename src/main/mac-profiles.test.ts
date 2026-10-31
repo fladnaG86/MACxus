@@ -54,6 +54,12 @@ describe('bundled mac-profiles.json', () => {
     }
   });
 
+  it('seeds Forza Horizon 5 with the NVIDIA identity on Highball and the d3d12 shim on', async () => {
+    const profiles = await loadMacProfiles(undefined, () => {});
+    expect(profiles['9NNX1VVR3KNQ']?.engine).toBe('highball');
+    expect(profiles['9NNX1VVR3KNQ']?.env).toEqual({ D3DM_VENDOR_ID: '0x10de', D3DM_DEVICE_ID: '0x2786', D3DM_DEVICE_DESCRIPTION: 'NVIDIA GeForce RTX 4070', HB_D3D12_TSSHIM: '1' });
+  });
+
   it('returns an empty set when the file is missing', async () => {
     expect(await loadMacProfiles('/nonexistent/mac-profiles.json', () => {})).toEqual({});
   });

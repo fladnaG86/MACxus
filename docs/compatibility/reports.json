@@ -231,6 +231,60 @@
       ]
     },
     {
+      "id": "forza-horizon-5",
+      "title": "Forza Horizon 5",
+      "store": "microsoft-store",
+      "storeId": "9NNX1VVR3KNQ",
+      "reports": [
+        {
+          "id": "forza-horizon-5-highball-m1max-mac12",
+          "result": "issues",
+          "layer": "highball",
+          "layerVersion": "engine-wine-11.0-20261014T003801Z",
+          "architecture": "x86_64-rosetta",
+          "macOS": "27.2",
+          "chip": "M1 Max",
+          "macModel": null,
+          "macxusVersion": "0.3.11-mac.12",
+          "gameVersion": "3.688.109.0",
+          "runtimeVersion": "11.0-20261022-gf4adc821",
+          "graphics": {
+            "backend": "d3dmetal",
+            "version": "4.0b3"
+          },
+          "testedAt": "2026-10-31",
+          "scope": [
+            "menu",
+            "gameplay"
+          ],
+          "checks": {
+            "launch": "passed",
+            "gameplay": "issues",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "issues"
+          },
+          "controllers": [],
+          "requirements": [
+            {
+              "en": "MACxus 0.3.11-mac.12 or later: the Forza Horizon 5 profile selects Highball, reports an NVIDIA GPU and turns the d3d12 shim on.",
+              "it": "MACxus 0.3.11-mac.12 o successivo: il profilo di Forza Horizon 5 seleziona Highball, segnala una GPU NVIDIA e accende lo shim d3d12."
+            }
+          ],
+          "summary": {
+            "en": "One 13-minute session ended cleanly. One earlier run crashed after about 5 minutes during loading, so the first launches may need a retry. Forza online services fail with XSTS 400.",
+            "it": "Una sessione di 13 minuti si è chiusa regolarmente. Una run precedente è crashata dopo circa 5 minuti durante il caricamento, quindi i primi avvii possono richiedere un secondo tentativo. I servizi online Forza falliscono con XSTS 400."
+          },
+          "sources": [
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/fladnaG86/MACxus/blob/main/docs/DISCOVERIES.md#20-forza-horizon-5-gpu-identity-and-timestamp-queries"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "forza-horizon-6",
       "title": "Forza Horizon 6",
       "store": "microsoft-store",

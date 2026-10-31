@@ -25,5 +25,15 @@
     "engine": "crossover-preview",
     "env": {},
     "note": "Halo movie compatibility: CrossOver Preview Rosetta"
+  },
+  "9NNX1VVR3KNQ": {
+    "engine": "highball",
+    "env": {
+      "D3DM_VENDOR_ID": "0x10de",
+      "D3DM_DEVICE_ID": "0x2786",
+      "D3DM_DEVICE_DESCRIPTION": "NVIDIA GeForce RTX 4070",
+      "HB_D3D12_TSSHIM": "1"
+    },
+    "note": "Forza Horizon 5: con l'adapter AMD di default crasha all'avvio; lo spoof NVIDIA lo evita. Lo shim d3d12 emula le timestamp query assenti in D3DMetal, senza cui il caricamento non finisce."
   }
 }
