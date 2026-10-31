@@ -406,6 +406,8 @@ export interface AccountLibraryPage {
   cursor?: string;
   checkedAt: string;
   skippedEntitlements?: number;
+  /** The requested cursor outlived its snapshot; this is a new first page. */
+  restarted?: boolean;
 }
 
 export interface LauncherApi {

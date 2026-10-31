@@ -162,6 +162,20 @@ it('does not publish a late response after an account switch',async()=>{
   library.select('two@example.test','/backend','US'); finish(output()); await rejected;
 });
 
+it('restarts from a fresh first page when a cursor outlives its five minute snapshot',async()=>{
+  vi.useFakeTimers({toFake:['Date']});
+  try {
+    const entries=Array.from({length:61},(_,i)=>row(String(i).padStart(12,'0')));
+    const library=new AccountLibrary(async ids=>ids.map(product),async()=>output(entries));
+    library.select('one@example.test','/backend','US');
+    const first=await library.get('all');
+    vi.setSystemTime(Date.now()+5*60_000+1);
+    const restarted=await library.get('all',first.cursor);
+    expect(restarted.restarted).toBe(true); expect(restarted.products).toHaveLength(60); expect(restarted.cursor).not.toBe(first.cursor);
+    expect((await library.get('all',restarted.cursor)).restarted).toBeUndefined();
+  } finally { vi.useRealTimers(); }
+});
+
 it('binds pagination to snapshot and filter, rather than accepting arbitrary product IDs',async()=>{
   const entries=Array.from({length:61},(_,i)=>row(String(i).padStart(12,'0')));
   const library=new AccountLibrary(async ids=>ids.map(product),async()=>output(entries));
@@ -169,5 +183,5 @@ it('binds pagination to snapshot and filter, rather than accepting arbitrary pro
   const first=await library.get('all'); expect(first.products).toHaveLength(60); expect(first.cursor).toBeTruthy();
   const last=await library.get('all',first.cursor); expect(last.products).toHaveLength(1); expect(last.cursor).toBeUndefined();
   await expect(library.get('owned',first.cursor)).rejects.toThrow('Invalid');
-  await library.get('all',undefined,true); await expect(library.get('all',first.cursor)).rejects.toThrow('expired');
+  await library.get('all',undefined,true); const restarted=await library.get('all',first.cursor); expect(restarted.restarted).toBe(true); expect(restarted.products).toHaveLength(60);
 });

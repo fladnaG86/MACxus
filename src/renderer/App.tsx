@@ -543,10 +543,11 @@ export function AccountGames({ data, toast, selectedId, select, menu, filters, o
     try {
       const next = await window.launcher.getAccountLibrary(kind, refresh ? undefined : visible?.cursor, refresh);
       if (currentIdentity.current !== identity) return;
-      if (!refresh && visible?.cursor && next.cursor === visible.cursor) throw Error(t("Library pagination did not advance. Refresh the library to try again."));
+      const replace = refresh || next.restarted;
+      if (!replace && visible?.cursor && next.cursor === visible.cursor) throw Error(t("Library pagination did not advance. Refresh the library to try again."));
       // This instance is remounted on identity changes, so pending callbacks
       // cannot publish another account's products into the active component.
-      setResult(old => ({ ...next, products: refresh ? next.products : [...(old?.products ?? []), ...next.products.filter(p => !old?.products.some(old => old.productId === p.productId))] }));
+      setResult(old => ({ ...next, products: replace ? next.products : [...(old?.products ?? []), ...next.products.filter(p => !old?.products.some(old => old.productId === p.productId))] }));
     } catch (error) { if (currentIdentity.current === identity) setError(errorMessage(error)); }
     finally { if (currentIdentity.current === identity) setBusy(false); }
   }

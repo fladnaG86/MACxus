@@ -139,6 +139,14 @@ export class AccountLibrary {
   async get(kind: Kind, cursor?: string, refresh = false): Promise<AccountLibraryPage> {
     if (kind !== 'all' && kind !== 'owned' && kind !== 'gamepass') throw Error('Invalid library filter.');
     if (typeof refresh !== 'boolean' || (cursor !== undefined && typeof cursor !== 'string')) throw Error('Invalid library request.');
+    // A snapshot lasts five minutes and is replaced when a download is planned, so
+    // an old cursor is routine: start over instead of failing the page.
+    const live = this.cached && this.cached.until > Date.now() ? this.cached.key : undefined;
+    const restarted = !refresh && Boolean(cursor?.match(/^[a-f0-9-]{36}:/)) && !cursor!.startsWith(`${live}:`);
+    const page = await this.page(kind, restarted ? undefined : cursor, refresh);
+    return restarted ? { ...page, restarted } : page;
+  }
+  private async page(kind: Kind, cursor: string | undefined, refresh: boolean): Promise<AccountLibraryPage> {
     const cached = await this.load(cursor, refresh);
     if (cached !== this.cached || !this.identity) throw Error('Account library changed. Refresh this page.');
     if (refresh) cursor = undefined;
