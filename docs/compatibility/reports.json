@@ -231,6 +231,54 @@
       ]
     },
     {
+      "id": "dice-a-million",
+      "title": "Dice a Million",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "macModel": null,
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "controllers": [],
+          "requirements": [],
+          "id": "dice-a-million-highball-m1max",
+          "result": "works",
+          "layer": "highball",
+          "layerVersion": null,
+          "architecture": "unknown",
+          "macOS": "27.2",
+          "chip": "M1 Max",
+          "macxusVersion": null,
+          "graphics": {
+            "backend": "d3dmetal",
+            "version": null
+          },
+          "testedAt": "2026-10-26",
+          "scope": [
+            "gameplay"
+          ],
+          "checks": {
+            "launch": "passed",
+            "gameplay": "passed",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "summary": {
+            "en": "Played for hours with no glitches, using mouse and keyboard. No settings or compatibility changes needed.",
+            "it": "Giocato per ore senza glitch, con mouse e tastiera. Nessuna impostazione o modifica di compatibilità necessaria."
+          },
+          "sources": [
+            {
+              "kind": "community",
+              "url": "https://github.com/fladnaG86/MACxus/issues/19"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "forza-horizon-5",
       "title": "Forza Horizon 5",
       "store": "microsoft-store",
@@ -668,6 +716,54 @@
             {
               "kind": "historical",
               "url": "https://github.com/fladnaG86/MACxus/blob/4bbef31/docs/COMPATIBILITY.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "microsoft-flight-simulator-2024",
+      "title": "Microsoft Flight Simulator 2024",
+      "store": "microsoft-store",
+      "storeId": null,
+      "reports": [
+        {
+          "macModel": "MacBook Pro, 36 GB",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "controllers": [],
+          "requirements": [],
+          "id": "msfs-2024-highball-m3pro",
+          "result": "fails",
+          "layer": "highball",
+          "layerVersion": "engine-wine-11.0-20261014T003801Z-0024-app-packages-0023-spatial-mixer",
+          "architecture": "x86_64-rosetta",
+          "macOS": "27.2 (26B5091g)",
+          "chip": "M3 Pro",
+          "macxusVersion": "0.3.11",
+          "graphics": {
+            "backend": "d3dmetal",
+            "version": null
+          },
+          "testedAt": "2026-10-29",
+          "scope": [
+            "launch"
+          ],
+          "checks": {
+            "launch": "failed",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "summary": {
+            "en": "Does not launch on the Intel Highball engine. No log attached; cause not established.",
+            "it": "Non si avvia sul motore Highball Intel. Nessun log allegato; causa non accertata."
+          },
+          "sources": [
+            {
+              "kind": "community",
+              "url": "https://github.com/fladnaG86/MACxus/issues/18"
             }
           ]
         }
