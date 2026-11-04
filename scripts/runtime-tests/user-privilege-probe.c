@@ -5,6 +5,8 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdarg.h>
 #include <roapi.h>
 #include <winstring.h>
 #define WIDL_using_Windows_Data_Json
@@ -57,8 +59,73 @@ static HRESULT xuser_signed_request(XUserHandle user, const char *method, const 
     return S_OK;
 }
 #define TRACE(...) ((void)0)
-#define ERR(...) ((void)0)
+static char last_diagnostic[512];
+static void record_diagnostic(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vsnprintf(last_diagnostic, sizeof(last_diagnostic), format, args);
+    va_end(args);
+    fputs(last_diagnostic, stderr);
+}
+#define ERR(...) record_diagnostic(__VA_ARGS__)
 #include "user-privilege-adapter.inc"
+
+static void test_refusal_metadata(void)
+{
+    const struct { const char *body; BOOL valid; DWORD code; } cases[] = {
+        {"{\"XErr\":2148916233}", TRUE, 2148916233u},
+        {"{\"XErr\":0}", TRUE, 0},
+        {"{\"XErr\":4294967295}", TRUE, 0xffffffffu},
+        {"{\"XErr\":\"2148916233\"}", FALSE, 0},
+        {"{\"XErr\":-1}", FALSE, 0},
+        {"{\"XErr\":4294967296}", FALSE, 0},
+        {"{\"XErr\":1.5}", FALSE, 0},
+        {"{\"XErr\":null}", FALSE, 0},
+        {"{\"XErr\":}", FALSE, 0},
+        {"{\"XErr\":+1}", FALSE, 0},
+        {"{\"XErr\":0x10}", FALSE, 0},
+        {"{\"XErr\":01}", FALSE, 0},
+        {"{\"XErr\":1e2}", FALSE, 0},
+        {"{\"XErr\":1.0}", FALSE, 0},
+        {"{\"XErr\":1,\"XErr\":2}", FALSE, 0},
+        {"{\"XErr\":1,}", FALSE, 0},
+        {"{\"XErr\":1}garbage", FALSE, 0},
+        {"{\"Message\":\"bad\\q\",\"XErr\":1}", FALSE, 0},
+        {"{\"Message\":\"bad\\u00xz\",\"XErr\":1}", FALSE, 0},
+        {"{\"Message\":\"bad\nvalue\",\"XErr\":1}", FALSE, 0},
+        {"{\"Message\":\"\xc0\x80\",\"XErr\":1}", FALSE, 0},
+        {"{\"Message\":\"\xed\xa0\x80\",\"XErr\":1}", FALSE, 0},
+        {"{\"Message\":\"\xf4\x90\x80\x80\",\"XErr\":1}", FALSE, 0},
+        {"{\"Message\":\"\xf0\x9f\x9a\x80\",\"XErr\":1}", TRUE, 1},
+        {"{\"Message\":\"quote \\\" backslash \\\\ \\u00e9\",\"XErr\":1}", TRUE, 1},
+        {" \t{\"Identity\":\"0\",\"XErr\":2148916233,\"Message\":\"\",\"Retry\":false}\r\n", TRUE, 2148916233u},
+        {"{\"XErr\":1,\"Unexpected\":{}}", FALSE, 0},
+        {"{\"XErr\":1,\"Unexpected\":[]}", FALSE, 0},
+        {"{\"XErr\":1,\"\\u0058Err\":2}", FALSE, 0},
+        {"{\"Message\":\"synthetic-secret-never-logged\"}", FALSE, 0},
+        {"invalid", FALSE, 0},
+    };
+    DWORD code;
+    for (UINT i = 0; i < sizeof(cases)/sizeof(*cases); ++i)
+    {
+        code = 123;
+        CHECK("numeric-error-metadata", xsts_error_code((const BYTE *)cases[i].body,
+            strlen(cases[i].body), &code) == cases[i].valid && code == cases[i].code);
+    }
+    CHECK("no-error-body", !xsts_error_code(NULL, 0, &code) && !code);
+    CHECK("bounded-error-body", !xsts_error_code((const BYTE *)"{}", 16385, &code) && !code);
+}
+
+static void test_refusal_stream(void)
+{
+    struct XUser user = { .deviceToken="device", .userToken="user", .proofKey="{\"kty\":\"EC\"}", .titleToken="title", .xuid=123 };
+    adapter_status = 400;
+    adapter_response = "{\"XErr\":2148916233,\"Message\":\"RESPONSE_BODY_MUST_STAY_PRIVATE\",\"Redirect\":\"https://response-private.example.test/\"}";
+    CHECK("stream-refusal-stays-failure", user_verify_privilege(&user.IUser_iface,254) == E_FAIL);
+    CHECK("stream-only-numeric-metadata", strstr(last_diagnostic, "xerr_present 1, xerr 2148916233") &&
+        !strstr(last_diagnostic, "RESPONSE_BODY_MUST_STAY_PRIVATE") && !strstr(last_diagnostic, "response-private"));
+}
 
 static void test_server_adapter(void)
 {
@@ -88,6 +155,11 @@ static void test_server_adapter(void)
     adapter_response = cases[0].response;
     adapter_status = 400;
     CHECK("adapter-http-400-not-granted", user_verify_privilege(&user.IUser_iface,254) == E_FAIL);
+    adapter_response = "{\"XErr\":2148916233,\"Message\":\"synthetic-secret-never-logged\",\"Redirect\":\"https://private.example.test/\"}";
+    CHECK("adapter-refusal-stays-failure", user_verify_privilege(&user.IUser_iface,254) == E_FAIL);
+    CHECK("adapter-numeric-only-refusal", strstr(last_diagnostic, "xerr_present 1, xerr 2148916233") &&
+        !strstr(last_diagnostic, "synthetic-secret") && !strstr(last_diagnostic, "private.example"));
+    adapter_response = cases[0].response;
     adapter_status = 403;
     CHECK("adapter-http-403-not-granted", user_verify_privilege(&user.IUser_iface,254) == E_FAIL);
     adapter_status = 200; adapter_transport_hr = HRESULT_FROM_WIN32(ERROR_TIMEOUT);
@@ -266,8 +338,15 @@ static void test_lifetime(IXThreadingImpl *threads)
         CloseHandle(user.entered); CloseHandle(user.gate);
     }
 }
-int main(void)
+int main(int argc, char **argv)
 {
+    if (argc == 2 && !strcmp(argv[1], "--refusal-only"))
+    {
+        test_refusal_stream();
+        test_refusal_metadata();
+        printf("REFUSAL_CHECKS %ld FAILURES %ld\n", checks, failures);
+        return failures ? 1 : 0;
+    }
     HMODULE dll = LoadLibraryA("xgameruntime.dll");
     HRESULT (WINAPI *query)(const GUID *, REFIID, void **);
     IXThreadingImpl *threads;
@@ -280,6 +359,7 @@ int main(void)
         FAILED(query(&CLSID_XUserImpl, &IID_IXUserImpl, (void **)&users))) return 2;
     user.iface.lpVtbl = &user_vtbl; user.refs = 1;
     test_claims();
+    test_refusal_metadata();
     test_server_adapter();
     CHECK("null-user", privilege_begin(threads, NULL, 0, 254, &block, verify) == E_INVALIDARG);
     CHECK("null-block", privilege_begin(threads, &user.iface, 0, 254, NULL, verify) == E_INVALIDARG);

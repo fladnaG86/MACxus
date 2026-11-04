@@ -1,0 +1,92 @@
+--- a/dlls/xgameruntime/xuser.c
++++ b/dlls/xgameruntime/xuser.c
+@@ -1922,6 +1922,8 @@
+                 goto complete;
+             }
+ 
++            auth_metadata(info.tokenType ? "token-route-auth" : "token-route-anonymous",
++                context->user, S_OK, 0, TRUE, !!context->user->titleToken);
+             if (context->isUtf16)
+             {
+                 /* The working community stand-in returns a present, empty
+@@ -1930,21 +1932,20 @@
+                 /* IUser writes 104 base64 characters, without a terminator.
+                  * Public results are C strings, including the trailing NUL in
+                  * their buffer counts, just like the authorization token. */
+-                context->dataSize = sizeof(*context->dataUtf16) + (auth ? (wcslen( auth ) + 1) * sizeof(WCHAR) : 0) + (info.policy ? 105 * sizeof(WCHAR) : sizeof(WCHAR));
++                context->dataSize = sizeof(*context->dataUtf16) + (auth ? wcslen( auth ) + 1 : 1) * sizeof(WCHAR) + (info.policy ? 105 * sizeof(WCHAR) : sizeof(WCHAR));
+                 if (!(context->dataUtf16 = calloc( 1, context->dataSize )))
+                 {
+                     hr = E_OUTOFMEMORY;
+                     goto complete;
+                 }
+-                if (auth)
+-                {
+-                    context->dataUtf16->tokenCount = wcslen( auth ) + 1;
+-                    context->dataUtf16->token = (WCHAR *)(context->dataUtf16 + 1);
+-                    wcscpy( (WCHAR *)context->dataUtf16->token, auth );
+-                }
++                /* An unauthenticated endpoint still returns an owned empty
++                 * C string, not a null token pointer. This grants no token. */
++                context->dataUtf16->tokenCount = auth ? wcslen( auth ) + 1 : 1;
++                context->dataUtf16->token = (WCHAR *)(context->dataUtf16 + 1);
++                if (auth) wcscpy( (WCHAR *)context->dataUtf16->token, auth );
+                 if (info.policy)
+                 {
+-                    if (auth)
++                    if (auth && *auth)
+                     {
+                         if (!(size = WideCharToMultiByte( CP_UTF8, WC_ERR_INVALID_CHARS, auth, -1, NULL, 0, NULL, NULL ))) goto error;
+                         if (!(buffer = calloc( 1, size )))
+@@ -1955,41 +1956,41 @@
+                         if (!WideCharToMultiByte( CP_UTF8, WC_ERR_INVALID_CHARS, auth, -1, buffer, size, NULL, NULL )) goto error;
+                     }
+                     context->dataUtf16->signatureCount = 105;
+-                    context->dataUtf16->signature = (WCHAR *)(context->dataUtf16 + 1) + (auth ? wcslen( auth ) + 1 : 0);
+-                    if (FAILED(hr = IUser_GetSignature( &context->user->IUser_iface, info.policy->version, context->method, context->url, (auth ? buffer : ""), min( context->bodySize, info.policy->maxBodyBytes ), context->bodyBuffer, signature ))) goto complete;
++                    context->dataUtf16->signature = (WCHAR *)(context->dataUtf16 + 1) + context->dataUtf16->tokenCount;
++                    if (FAILED(hr = IUser_GetSignature( &context->user->IUser_iface, info.policy->version, context->method, context->url, (buffer ? buffer : ""), min( context->bodySize, info.policy->maxBodyBytes ), context->bodyBuffer, signature ))) goto complete;
+                     if (!MultiByteToWideChar( CP_UTF8, MB_ERR_INVALID_CHARS, signature, 104, (WCHAR *)context->dataUtf16->signature, 104 )) goto error;
+                 }
+                 else
+                 {
+                     context->dataUtf16->signatureCount = 1;
+-                    context->dataUtf16->signature = (WCHAR *)(context->dataUtf16 + 1) + (auth ? wcslen( auth ) + 1 : 0);
++                    context->dataUtf16->signature = (WCHAR *)(context->dataUtf16 + 1) + context->dataUtf16->tokenCount;
+                 }
+             }
+             else
+             {
+-                if (auth && !(size = WideCharToMultiByte( CP_UTF8, WC_ERR_INVALID_CHARS, auth, wcslen( auth ), NULL, 0, NULL, NULL ))) goto error;
+-                context->dataSize = sizeof(*context->data) + (auth ? size + 1 : 0) + (info.policy ? 105 : 1);
++                if (auth && *auth && !(size = WideCharToMultiByte( CP_UTF8, WC_ERR_INVALID_CHARS, auth, wcslen( auth ), NULL, 0, NULL, NULL ))) goto error;
++                context->dataSize = sizeof(*context->data) + size + 1 + (info.policy ? 105 : 1);
+                 if (!(context->data = calloc( 1, context->dataSize )))
+                 {
+                     hr = E_OUTOFMEMORY;
+                     goto complete;
+                 }
+-                if (auth)
++                context->data->tokenSize = size + 1;
++                context->data->token = (char *)(context->data + 1);
++                if (auth && *auth)
+                 {
+-                    context->data->tokenSize = size + 1;
+-                    context->data->token = (char *)(context->data + 1);
+                     if (!WideCharToMultiByte( CP_UTF8, WC_ERR_INVALID_CHARS, auth, wcslen( auth ), (char *)context->data->token, size, NULL, NULL )) goto error;
+                 }
+                 if (info.policy)
+                 {
+                     context->data->signatureSize = 105;
+-                    context->data->signature = (char *)(context->data + 1) + (auth ? size + 1 : 0);
++                    context->data->signature = (char *)(context->data + 1) + context->data->tokenSize;
+                     if (FAILED(hr = IUser_GetSignature( &context->user->IUser_iface, info.policy->version, context->method, context->url, (auth ? context->data->token : ""), min( context->bodySize, info.policy->maxBodyBytes ), context->bodyBuffer, (char *)context->data->signature ))) goto complete;
+                 }
+                 else
+                 {
+                     context->data->signatureSize = 1;
+-                    context->data->signature = (char *)(context->data + 1) + (auth ? size + 1 : 0);
++                    context->data->signature = (char *)(context->data + 1) + context->data->tokenSize;
+                 }
+             }
+             goto complete;

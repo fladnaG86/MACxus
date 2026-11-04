@@ -6,6 +6,9 @@ import { createConnection, createServer, type Server, type Socket } from 'node:n
 import path from 'node:path';
 import { backendDiagnostic, observeBackendChild } from './backend-diagnostics.js';
 import { CredentialErrorReader } from './credential-errors.js';
+import { createStoreAddonDiscovery, STORE_ADDON_DISCOVERY_REQUEST, STORE_ADDON_DISCOVERY_RESPONSE } from './store-addon-discovery.js';
+
+export type AddonDiscoveryHandler = (payload: Buffer, signal: AbortSignal) => Promise<Buffer>;
 
 export interface XodusServiceSession {
   socketPath: string;
@@ -20,10 +23,13 @@ export interface XodusBridge {
   stop(): Promise<void>;
 }
 
-export async function startXodusBridge(socketPath: string): Promise<XodusBridge> {
+export async function startXodusBridge(socketPath: string, discovery?: AddonDiscoveryHandler): Promise<XodusBridge> {
   const key = randomBytes(32).toString('hex');
   const expected = Buffer.from(key, 'ascii');
   const clients = new Set<Socket>();
+  const queries = new Set<Promise<void>>();
+  const stopped = new AbortController();
+  let stopping: Promise<void> | undefined;
   const server: Server = createServer((client) => {
     clients.add(client);
     client.once('close', () => clients.delete(client));
@@ -36,19 +42,52 @@ export async function startXodusBridge(socketPath: string): Promise<XodusBridge>
       if (!timingSafeEqual(supplied, expected)) { client.destroy(); return; }
       const remaining = received.subarray(expected.length);
       client.removeListener('data', authenticate);
-      client.pause();
-      client.setTimeout(0);
-      const upstream = createConnection(socketPath);
-      clients.add(upstream);
-      upstream.once('close', () => clients.delete(upstream));
-      upstream.once('error', () => client.destroy());
-      client.once('error', () => upstream.destroy());
-      upstream.once('connect', () => {
-        if (remaining.length) upstream.write(remaining);
-        client.pipe(upstream);
-        upstream.pipe(client);
-        client.resume();
-      });
+      const forward = (bytes: Buffer) => {
+        client.pause();
+        client.setTimeout(0);
+        const upstream = createConnection(socketPath);
+        clients.add(upstream);
+        upstream.once('close', () => clients.delete(upstream));
+        upstream.once('error', () => client.destroy());
+        client.once('error', () => upstream.destroy());
+        client.once('close', () => upstream.destroy());
+        upstream.once('connect', () => {
+          if (client.destroyed) { upstream.destroy(); return; }
+          if (bytes.length) upstream.write(bytes);
+          client.pipe(upstream);
+          upstream.pipe(client);
+          client.resume();
+        });
+      };
+      if (!discovery) { forward(remaining); return; }
+      let frame: Buffer = remaining;
+      const collect = (bytes: Buffer) => {
+        frame = Buffer.concat([frame, bytes]);
+        if (frame.length < 8) return;
+        if (frame.readUInt32LE(0) !== 0x58445358) { client.destroy(); return; }
+        if (frame.readUInt16LE(4) !== STORE_ADDON_DISCOVERY_REQUEST) {
+          client.removeListener('data', collect); forward(frame); return;
+        }
+        const size = frame.readUInt16LE(6);
+        if (!size || size > 4096 || frame.length > 8 + size) { client.destroy(); return; }
+        if (frame.length !== 8 + size) return;
+        client.removeListener('data', collect);
+        client.pause();
+        client.setTimeout(90_000, () => client.destroy());
+        const cancelled = new AbortController();
+        client.once('close', () => cancelled.abort());
+        const signal = AbortSignal.any([cancelled.signal, stopped.signal]);
+        const query = Promise.resolve().then(() => discovery(frame.subarray(8), signal)).then(payload => {
+          if (signal.aborted || client.destroyed) return;
+          if (!payload.length || payload.length > 60_000) { client.destroy(); return; }
+          const header = Buffer.alloc(8);
+          header.writeUInt32LE(0x58445358); header.writeUInt16LE(STORE_ADDON_DISCOVERY_RESPONSE, 4); header.writeUInt16LE(payload.length, 6);
+          client.end(Buffer.concat([header, payload]));
+        }).catch(() => { client.destroy(); }).finally(() => { queries.delete(query); });
+        queries.add(query);
+      };
+      client.on('data', collect);
+      collect(Buffer.alloc(0));
     };
     client.on('data', authenticate);
     client.on('error', () => client.destroy());
@@ -62,10 +101,14 @@ export async function startXodusBridge(socketPath: string): Promise<XodusBridge>
   return {
     port: address.port,
     key,
-    stop: async () => {
+    stop: () => stopping ??= (async () => {
+      stopped.abort();
       for (const socket of clients) socket.destroy();
       await new Promise<void>((resolve) => server.close(() => resolve()));
-    },
+      // Discovery may still be reaping its account helper after cancellation.
+      // Do not end the session or release its resources before that completes.
+      await Promise.allSettled([...queries]);
+    })(),
   };
 }
 
@@ -117,6 +160,7 @@ export async function startXodusService(
   userData: string,
   onStatus: (message: string) => void,
   signal?: AbortSignal,
+  options?: { addonDiscoveryParent: string },
 ): Promise<XodusServiceSession> {
   const binary = path.join(path.dirname(backendBinary), 'xodus-service');
   try { await fs.access(binary, constants.X_OK); }
@@ -168,7 +212,7 @@ export async function startXodusService(
       if (signal?.aborted) throw new Error('Account service operation cancelled.');
       if (spawnError) throw new Error(`Could not start xodus-service: ${spawnError.message}`);
       if (await socketReady(socketPath)) {
-        bridge = await startXodusBridge(socketPath);
+        bridge = await startXodusBridge(socketPath, options ? createStoreAddonDiscovery(backendBinary, options.addonDiscoveryParent) : undefined);
         backendDiagnostic({ operation: 'service', event: 'validation', stage: 'ready' });
         onStatus('Xodus account service and private loopback bridge are ready.');
         return { socketPath, bridgePort: bridge.port, bridgeKey: bridge.key, stop };

@@ -192,7 +192,7 @@ static void current_child( const WCHAR *executable, BOOL missing )
     WCHAR command[MAX_PATH + 64];
     DWORD code = 99, wait;
     startup.cb = sizeof(startup);
-    swprintf(command, ARRAY_SIZE(command), L"\"%ls\" --chunks-%ls", executable, missing ? L"missing" : L"current");
+    swprintf(command, ARRAY_SIZE(command), L"\"%ls\" --chunks-%ls", executable, GetEnvironmentVariableW(L"NEXUS_PROBE_CROWDED", NULL, 0) ? L"crowded" : missing ? L"missing" : L"current");
     CHECK("chunks-child-start", CreateProcessW(executable, command, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &process));
     if (!process.hProcess) return;
     wait = WaitForSingleObject(process.hProcess, 15000);
@@ -213,6 +213,45 @@ static void current_fixtures( void )
     CHECK("chunks-self-path", GetModuleFileNameW(NULL, original, MAX_PATH));
     CHECK("chunks-self-copy", CopyFileW(original, executable, TRUE));
     current_child(executable, FALSE);
+    content_join(root, L"layout_00000009-1111-2222-3333-444444444444.xml", file);
+    write_text(file, "<Package><Chunk Id=\"1\"><FileGroup SourcePath=\"Z:\\build-machine\" DestinationPath=\".\" Include=\"logo.png\"/></Chunk></Package>");
+    current_child(executable, FALSE);
+    {
+        const char *group = "<FileGroup SourcePath=\"Z:\\build-machine\" DestinationPath=\".\" Include=\"logo.png\"/>";
+        const char *begin = "<Package><Chunk Id=\"1\">", *end = "</Chunk></Package>";
+        SIZE_T size = strlen(begin) + 17000 * strlen(group) + strlen(end) + 1;
+        char *large = malloc(size), *cursor;
+        UINT i;
+        CHECK("current-large-layout-allocated", large != NULL && size > 1024 * 1024);
+        if (large)
+        {
+            cursor = large; memcpy(cursor, begin, strlen(begin)); cursor += strlen(begin);
+            for (i = 0; i < 17000; i++) { memcpy(cursor, group, strlen(group)); cursor += strlen(group); }
+            strcpy(cursor, end); write_text(file, large); free(large);
+            current_child(executable, FALSE);
+            content_join(root, L"logo.png", file); DeleteFileW(file);
+            current_child(executable, TRUE);
+            write_text(file, "payload");
+            content_join(root, L"layout_00000009-1111-2222-3333-444444444444.xml", file);
+        }
+    }
+    write_text(file, "<Package><Chunk Id=\"1\"><FileGroup SourcePath=\".\" DestinationPath=\"../outside\" Include=\"logo.png\"/></Chunk></Package>");
+    current_child(executable, TRUE);
+    /* Unsupported payload structures must never disappear from readiness. */
+    {
+        const char *bad[] = {
+            "<Package><Chunk Id=\"1\"><FileGroup SourcePath=\".\" Include=\"logo.png\"/></Chunk><FileGroup SourcePath=\".\" Include=\"missing.bin\"/></Package>",
+            "<Package><Chunk Id=\"1\"><FileGroup SourcePath=\".\" Include=\"logo.png\"/></Chunk><Unknown><FileGroup SourcePath=\".\" Include=\"missing.bin\"/></Unknown></Package>",
+            "<Package><Chunk Id=\"1\"><FileGroup SourcePath=\".\" Include=\"logo.png\"/></Chunk><Features><FileGroup SourcePath=\".\" Include=\"missing.bin\"/></Features></Package>",
+            "<Package><Chunk Id=\"1\"><FileGroup SourcePath=\".\" Include=\"logo.png\"/></Chunk><Features><Feature Id=\"Hidden\"><FileGroup SourcePath=\".\" Include=\"missing.bin\"/></Feature></Features></Package>"
+        };
+        for (UINT i = 0; i < ARRAY_SIZE(bad); i++)
+        { write_text(file, bad[i]); current_child(executable, TRUE); }
+    }
+    write_text(file, "<Package/>"); current_child(executable, TRUE);
+    write_text(file, "<Package><Chunk Id=\"1\"><FileGroup SourcePath=\".\" Include=\"logo.png\"/></Chunk><Chunk Id=\"1\"/></Package>");
+    current_child(executable, TRUE);
+    fixture(L"current-base", "Nexus.Base", "B00000000001", NULL, NULL, 9, TRUE);
     content_join(root, L"logo.png", file); DeleteFileW(file);
     current_child(executable, TRUE);
     write_text(file, "payload");
@@ -223,6 +262,22 @@ static void current_fixtures( void )
     content_join(root, L"appxmanifest.xml", file);
     write_text(file, "<Package><Identity Name=\"Wrong\"/></Package>");
     current_child(executable, TRUE);
+    fixture(L"current-base", "Nexus.Base", "B00000000001", NULL, NULL, 9, TRUE);
+    {
+        WCHAR crowded[MAX_PATH], child[MAX_PATH], leaf[32];
+        UINT i;
+        content_join(folder, L"crowded", crowded); CHECK("crowded-root", CreateDirectoryW(crowded, NULL));
+        for (i = 0; i < 513; i++)
+        {
+            swprintf(leaf, ARRAY_SIZE(leaf), L"entry-%u", i);
+            content_join(crowded, leaf, child); write_text(child, "synthetic");
+        }
+        CHECK("crowded-roots-set", SetEnvironmentVariableW(L"XODUS_CONTENT_ROOTS", crowded));
+        CHECK("crowded-mode-set", SetEnvironmentVariableW(L"NEXUS_PROBE_CROWDED", L"1"));
+        current_child(executable, FALSE);
+        SetEnvironmentVariableW(L"NEXUS_PROBE_CROWDED", NULL);
+        SetEnvironmentVariableW(L"XODUS_CONTENT_ROOTS", folder);
+    }
 }
 
 static void actual_runtime( const char *child )
@@ -243,6 +298,17 @@ static void actual_runtime( const char *child )
     CHECK("runtime-initialize", initialize(0, 0, 0, &options) == S_OK);
     CHECK("runtime-query", query(&CLSID_XPackageImpl, &IID_IXPackageImpl, (void **)&package) == S_OK && package);
     if (!package) return;
+    if (child && !strcmp(child, "--chunks-crowded"))
+    {
+        XPackageChunkSelector selector = {0};
+        selector.type = XPackageChunkSelectorType_Chunk; selector.chunkId = 123;
+        CHECK("crowded-current-package", IXPackageImpl_XPackageChangeChunkInstallOrder(package, "00000009111122223333444444444444", 0, NULL) == S_OK);
+        CHECK("crowded-current-selection", IXPackageImpl_XPackageChangeChunkInstallOrder(package, "00000009111122223333444444444444", 1, &selector) == S_OK);
+        CHECK("crowded-unknown-stays-bounded", IXPackageImpl_XPackageChangeChunkInstallOrder(package, "00000099111122223333444444444444", 0, NULL) == HRESULT_FROM_WIN32(ERROR_MORE_DATA));
+        CHECK("crowded-unrelated-stays-bounded", IXPackageImpl_XPackageChangeChunkInstallOrder(package, "00000006111122223333444444444444", 0, NULL) == HRESULT_FROM_WIN32(ERROR_MORE_DATA));
+        IXPackageImpl_Release(package);
+        return;
+    }
     if (child)
     {
         chunk_order(package, "00000009111122223333444444444444", !strcmp(child, "--chunks-current") ? S_OK : E_GAMEPACKAGE_NO_PACKAGE_IDENTIFIER);
@@ -287,7 +353,7 @@ static void actual_runtime( const char *child )
 int main( int argc, char **argv )
 {
     WCHAR temporary[MAX_PATH];
-    if (argc == 2 && (!strcmp(argv[1], "--chunks-current") || !strcmp(argv[1], "--chunks-missing")))
+    if (argc == 2 && (!strcmp(argv[1], "--chunks-current") || !strcmp(argv[1], "--chunks-missing") || !strcmp(argv[1], "--chunks-crowded")))
     {
         actual_runtime(argv[1]);
         printf("CHUNK CHILD CHECKS %u FAILURES %u\n", checks, failures);
