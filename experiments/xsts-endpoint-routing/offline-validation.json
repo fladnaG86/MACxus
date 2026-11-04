@@ -1,0 +1,135 @@
+{
+  "baseCommit": "530de61702498447d7d901567a50fd6ed1dfa9e1",
+  "sourceLockSHA256": "4cf5755e027316c8d6784a48d74537f560ac77827f8b1c58d6b8dea3bc90a57f",
+  "lockedRuntimeSourceFiles": 36,
+  "freshRuntimeCObjects": 23,
+  "localComponentSHA256": "7df0a07a13b84b2bf10011d58d062831a0832aaa4e5d6454ee4c661fcb47207e",
+  "baselineEndpointRegressionExit": 42,
+  "candidateAccountFreeProbes": [
+    {
+      "name": "title-endpoint",
+      "exitCode": 0,
+      "summary": [
+        "Endpoint regressions passed: wildcard backtracking/case, metadata precedence, policy relocation/ownership, WebSocket scheme and host boundaries"
+      ]
+    },
+    {
+      "name": "windows-title-auth",
+      "exitCode": 0,
+      "summary": [
+        "Windows title helper: success, same-key payload, refusal, malformed/empty result, zero identity and escaping regressions passed"
+      ]
+    },
+    {
+      "name": "preferred-udp-port",
+      "exitCode": 0,
+      "summary": [
+        "CHECKS preferred-udp-port: null output rejected; no platform preference returned"
+      ]
+    },
+    {
+      "name": "user-privilege",
+      "exitCode": 0,
+      "summary": [
+        "CHECKS 1191 FAILURES 0"
+      ]
+    },
+    {
+      "name": "token-dispatch",
+      "exitCode": 0,
+      "summary": [
+        "CHECKS 88 FAILURES 0"
+      ]
+    },
+    {
+      "name": "init-inline",
+      "exitCode": 0,
+      "summary": [
+        "CHECKS 6 FAILURES 0"
+      ]
+    },
+    {
+      "name": "init-retry",
+      "exitCode": 0,
+      "summary": [
+        "CHECKS 7 FAILURES 0"
+      ]
+    },
+    {
+      "name": "init-default",
+      "exitCode": 0,
+      "summary": [
+        "CHECKS 6 FAILURES 0"
+      ]
+    }
+  ],
+  "runtimeToolTests": {
+    "passed": 42,
+    "skipped": 7,
+    "failed": 0
+  },
+  "validationLimits": [
+    "Generated pinned Wine SDK reused for headers and import libraries; no independent from-zero SDK/toolchain rebuild.",
+    "Local component checks retain the existing macOS GS last-error header correction.",
+    "No full portable Linux runtime assembled.",
+    "No account service, live authentication or game launched.",
+    "007 online failure attribution and game validation remain pending."
+  ],
+  "installedRuntimeChanged": false,
+  "upstreamSubmission": false,
+  "refusalTraceRegression": [
+    {
+      "candidate": "old-review-candidate",
+      "exitCode": 1,
+      "responseMarkerLeaked": true,
+      "webTraceEnabled": true,
+      "summary": [
+        "REFUSAL_CHECKS 40 FAILURES 10"
+      ]
+    },
+    {
+      "candidate": "fixed",
+      "exitCode": 0,
+      "responseMarkerLeaked": false,
+      "webTraceEnabled": true,
+      "summary": [
+        "REFUSAL_CHECKS 40 FAILURES 0"
+      ]
+    }
+  ],
+  "nativeRefusalParserRegression": {
+    "mutatedInputs": 500000,
+    "acceptedInputsCheckedAgainstPythonJSON": 27115,
+    "productionHelperUsed": true,
+    "ASanUBSan": "passed",
+    "handwrittenSupportedSubset": "flat object; canonical unsigned integers; unescaped keys; strings/booleans/null for other values"
+  },
+  "localReviewResolution": {
+    "reviewedOriginal": "6190fdad14ca8a96cf4c71914817ac840844576b",
+    "P1": "No body is passed to Wine/COM JSON parsers. Complete refusal stdout/stderr checked with trace+web; old implementation leaks the marker, replacement does not.",
+    "P3": "Canonical integer grammar, whole flat-object structure, string escapes, UTF-8 and bounds validated locally; malformed/unsupported shapes omit metadata. Refusal still fails.",
+    "linuxContractRunnerTraceGate": "Added; syntax checked locally, full Linux runner not executed here.",
+    "secondReviewedCandidate": "75464ea615adf4db989911197ed6278b2c4d7665",
+    "productionRecheck": "No production correctness, bounds/UB or refusal-body leakage defect found; prior P1/P3 resolved.",
+    "P3CaptureTruncation": "Output collector retains an explicit truncation flag; privacy gate fails on truncation. New focused tests cover a marker beyond 512000 characters, same-chunk and split-chunk overflow, split markers, and clean/failure/timeout outcomes."
+  },
+  "outputCaptureTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "ownedEmptyTokenFollowup": {
+    "sourceLockSHA256": "ac0fa416026711caf9f7418f4590d7d4a58b18e2f8afcbbe973e9783ddbd491f",
+    "freshRuntimeCObjects": 23,
+    "componentSHA256": "00937e8ae658d141dd9410504e09a359dc8b9fc12e17ae600330d5b8b2ec2098",
+    "accountFreeTokenABI": {
+      "exitCode": 0,
+      "summary": [
+        "CHECKS 140 FAILURES 0"
+      ]
+    },
+    "earlierEightProbeComparison": "Passed; earlier token fixture reported144checks before worker-thread checks were replaced with the main-thread call counter",
+    "independentSourceReconstruction": 36,
+    "gameOnlineAcceptance": false,
+    "privateHTTPObserversIncludedInPatch": false
+  }
+}

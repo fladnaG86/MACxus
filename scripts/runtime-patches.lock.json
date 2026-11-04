@@ -203,6 +203,26 @@
     {
       "file": "assets/xgameruntime-completion-result-lifetime.patch",
       "sha256": "c70ea71a2b3c40b3f0be5b3b788bf3fb0950ad76f90c9cfe7d01b83bd5b0c67a"
+    },
+    {
+      "file": "assets/xgameruntime-windows-title-auth.patch",
+      "sha256": "3dce89d378b528372efd5067a2d34f87debe4a51fcc75e7b42d7f7b8b1563463"
+    },
+    {
+      "file": "assets/xgameruntime-installed-chunk-readiness.patch",
+      "sha256": "0a5019228c4d99dc1016afb16f1e0616904b6e01c72b9f0cec0e39efda5160b9"
+    },
+    {
+      "file": "assets/xgameruntime-store-products.patch",
+      "sha256": "963d4731afe29fc8568c2afc93560b5fb382a0e5d1bf708b2d50d7288def1179"
+    },
+    {
+      "file": "assets/xgameruntime-endpoint-wildcards.patch",
+      "sha256": "99128549bc253941f29a6ed236220f7e6c447cde82e5272ee9ab5de28ce3fd96"
+    },
+    {
+      "file": "assets/xgameruntime-empty-token-result.patch",
+      "sha256": "9f34c611ddb5d060c19df9fd0f871cf66cfd4c1703305fd8edd9bc03d4926d15"
     }
   ],
   "expectedWineSources": {
@@ -225,19 +245,19 @@
     "dlls/xgameruntime/xgamesave.c": "e5122eee6fd6d83bc6c2ff24f9ec8bac2cb145d840b752b28e2277190d95bd67",
     "dlls/xgameruntime/xgamesave-transactions.h": "c4ecbbcfd0dec8af931bf033f3e7612e0e62e123231245d33d614c8f3e1b764b",
     "dlls/xgameruntime/xgamesave.idl": "544319e88951f65b21c74f785fb9376c10cac8b1d57e98c7aa3079348162ccab",
-    "dlls/xgameruntime/xnetworking.c": "cfd8d0110b7ebd622f62317d3134dd866e6538e4a697b06912fa752517fe7caa",
-    "dlls/xgameruntime/xpackage.c": "5aa7f3a1431963c2d5f2371f1ad85c052fc589bf2bb759154ae62300e91233b7",
-    "dlls/xgameruntime/xpackage_content.h": "d3addb58053e44848bfb2be29d3568019196568ad98b605544b3506c03ed1c2f",
+    "dlls/xgameruntime/xnetworking.c": "92764313b569503e293e5c1b1cc4c03dd67ed4091600f479fd1298cc6f6864ca",
+    "dlls/xgameruntime/xpackage.c": "e84339c05b350a27eacb81845ca84ca8a6b6a8b3710d8716cb5093ddd1b85e48",
+    "dlls/xgameruntime/xpackage_content.h": "91739b737a312dc9208577579978f1b1924ef075e3e6e604e30769aa9c96440f",
     "dlls/xgameruntime/xpackage.idl": "189df1454b50e4cdf874592c6c5309985419c0ec20c5bf3dc69dba4bb62accde",
     "dlls/xgameruntime/xpersistentlocalstorage.c": "48111212dcfe4ef328fa482dc8b426ef853b7c961d575aefeaa3b559788809b2",
-    "dlls/xgameruntime/xstore.c": "323183e6c7b6f627888dcd6c7d9be90bc1bf43cb8677b3be4fb06a1539947a5b",
-    "dlls/xgameruntime/xstore_entitled.h": "cae87da7943d625664c94b7179b47f1eedf2cd3dfd3192f99bd1a252b273e289",
+    "dlls/xgameruntime/xstore.c": "f1e4b7a3002d3135a961f1301848f6be674994a10f602521f842b1aac31c77f4",
+    "dlls/xgameruntime/xstore_entitled.h": "5508236159552fa433de072a69a3700460e9ee36b900f63bd48c8a8b253060fd",
     "dlls/xgameruntime/xstore_receipts.h": "637cc315d72bb1ad20ce5529dfb6be4ef01ae8fd08a321aa5e852c1557c1d280",
     "dlls/xgameruntime/xstore_package_license.h": "678f109e0a0af3f5e87951666f7c891af3999658f8698eb8855387ea355e2a31",
     "dlls/xgameruntime/xsystem.c": "a3c151c5d05875b68f49c534aae9d40e3f15ec800af0f85e159ede7c95401880",
     "dlls/xgameruntime/xsystemanalytics.c": "189e99c83273b429325ecefa2b9246c45863c22f0c4006a791ec57b8f7b9d384",
     "dlls/xgameruntime/xthreading.c": "5abacea265da8948b37f1e953e6bbedf8a98f2d21b11c779fd68e53f3f4b1211",
-    "dlls/xgameruntime/xuser.c": "603dc6efbb585544c4f1c1f117848268a09868a083758e4db131e2d19f2580db",
+    "dlls/xgameruntime/xuser.c": "e7c9ba58bc1ecea412fd9366b3cc799f19bb4e87daea3e29255ea3f69c1d4177",
     "dlls/xgameruntime/xuser_audio.h": "66ede45d4fc798612c8dc939b8903bccb0a023228a6618636fd6ed76ca8ed8a7",
     "dlls/xgameruntime/xuser_device_events.h": "ed3b6ac25510b7bff288e36859781811e7de3985d418159ce25a2b00bc6d35cb",
     "dlls/xgameruntime/xuser_privilege.h": "4aa9a2736b59feb4d86cb86d95d99119ab1ccb6ab07b6b9a53c7da61acd0a77b",
@@ -246,8 +266,9 @@
     "dlls/xgameruntime/userprovider.idl": "66fb09670b7dabfc55257475094239018ea9a19ec2be348e56cf2b17ef615d7a",
     "dlls/xgameruntime/xgamesavefiles.h": "5f21c809107e8c67659899a43f98143a4cbba744be5731cc5c68c177fdc7956a",
     "dlls/xgameruntime/xstore_game_license.h": "8bcc2fd256c3e08ba59d9d5211ffb6f70e01a95cef6d0272ddf61bb8d284bffb",
-    "dlls/xgameruntime/xpackage_chunks.h": "7e62bdb9ea50c36d12e3dd208debf9b5fc75bd266f07141475bbad9afaaf11e6",
-    "dlls/xgameruntime/xpackage_monitors.h": "0ee4bf63bee0c907e395fa2bf347cf2634dd9960c7f08e8e84d92a6be1b8b86e"
+    "dlls/xgameruntime/xpackage_chunks.h": "fb803b48df7f31f593e607b3662c1299d3f0247a0b6a5c845b8405b0df0a41bf",
+    "dlls/xgameruntime/xpackage_monitors.h": "0ee4bf63bee0c907e395fa2bf347cf2634dd9960c7f08e8e84d92a6be1b8b86e",
+    "dlls/xgameruntime/xstore_products.h": "74a4c55ae0c90802066eedc58375ee75b98e0da0ad6cd4f8831c8dca56352b7d"
   },
   "runtimeCompatibilitySources": {
     "scripts/runtime-compat/build.mjs": "ac150747020a3a29d1d436c2e2af879e66ea2fe9104d4d330534d6128ba3ea19",
@@ -267,7 +288,7 @@
     "Application-specific device-ID queries return the documented unavailable-ID sentinel, not a unique platform identifier or hardware-attestation token.",
     "PlayFab in-process fallback supports the verified x64 40-export SDK ABI; missing device/conflict/failure UI and final upload before normal SDK cleanup are provided. Forced process termination is not a successful cloud sync. Default-on Gaming Services version metadata is not a Microsoft service implementation.",
     "Store update queries support the verified current-game no-update case; DLC, mandatory updates and downloads remain unsupported",
-    "Entitled-product queries verify fresh signed Store receipts for the current game and config-declared related products, with public catalog metadata. Online access is required; other Store queries, purchase/download APIs and consumable quantities are not supplied by this increment.",
+    "Entitled-product queries verify fresh signed Store receipts for the current game and config-declared related products; explicit-product queries accept bounded requested Store IDs. Both use public catalog metadata without granting ownership. Online access is required; purchase/download APIs, add-on inventory and consumable quantities are not supplied.",
     "Installed Content discovery supports extracted PC packages with matching config/Appx identity, dependency, allowed parent and layout/file presence. It checks nearby installation directories and optional XODUS_CONTENT_ROOTS paths, not an OS-wide registry or full payload integrity. PublisherContent and content mounting remain unsupported; disk metadata never grants a license.",
     "Package license acquire/result/valid/close requires fresh verified signed proof for an installed current/related nontrial Durable package. Handles are bounded by proof/SKU expiry; lost callbacks report expiry only, not account, network or concurrency revocations. Other acquisition variants and mounting remain unsupported.",
     "Game-license change callbacks support registration, queue dispatch and safe unregistration/close. Events reflect changed verified current-title SKU receipts observed during entitlement refresh, not an OS purchase/revocation feed; initial, failed, missing or filtered observations emit no event.",
@@ -275,6 +296,11 @@
     "Partial package/event/privilege APIs are not complete GDK implementations",
     "Single HTTP/2 stream per connection; chunked uploads and proxy/client-certificate transport gaps",
     "Wine assertion observed after manual game exit; cause unresolved",
-    "No multiplayer match or all-title compatibility claim"
+    "No multiplayer match or all-title compatibility claim",
+    "Legacy Windows TitleId authentication uses the retained device/proof-key chain and authenticated title endpoint policies. This source increment is not a published runtime or a blanket multiplayer compatibility claim.",
+    "Current-package chunk readiness validates full-size bounded layouts and installed payload without depending on sibling-package discovery. This does not grant ownership, implement downloads, or publish a runtime release.",
+    "Explicit Store product queries return bounded public catalog metadata; collection ownership requires exact, fresh verified signed SKU receipts. Add-on license discovery, purchases and downloads are not implemented by this increment.",
+    "Shared endpoint wildcard matching and bounded numeric XSTS refusal diagnostics have offline regression coverage; 007 online access is not yet validated with this increment.",
+    "No-token endpoint results contain owned empty strings in both encodings. Successful Xbox token requests in a private 007 trial do not establish successful game-service configuration or online gameplay."
   ]
 }
