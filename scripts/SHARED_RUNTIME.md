@@ -534,3 +534,29 @@ validation of this extracted increment remains separate.
 Product display pricing prefers an available Purchase offer across SKUs, even
 when a Details/Redeem-only SKU appears first. A genuinely free Purchase remains
 zero-priced; the preference follows the action rather than a nonzero price.
+
+### Portable add-on discovery bridge (opt-in foundation)
+
+The launcher can supply `addonDiscoveryParent` to `startXodusService` for a
+verified compatibility-pack launch. This enables the bounded `0x7f01` request /
+`0x7f02` response extension after the existing per-session key authentication.
+Ordinary service frames retain their Unix-socket forwarding path. The bridge
+uses the already selected backend executable, independent of application name,
+install location, or checkout; it does not search for or download an executable.
+
+Discovery reads a complete account library and bounded public catalog metadata.
+It emits candidate product/SKU classification, never an ownership assertion.
+The runtime must still obtain and verify fresh signed exact-SKU receipts before
+returning licenses. Missing classification is retained for signed negative proof;
+missing/incomplete inventory is an error. The 255-candidate bound reserves one
+of the runtime's 256 proof IDs for the base title. Requests are title-bound,
+cancellable, bounded to 80 seconds and one active discovery per session. Bridge
+shutdown aborts pending account/HTTP work and awaits every metadata worker,
+including response-reader cancellation. Failed HTTP responses are cancelled
+before a worker advances, keeping live response bodies within the concurrency
+bound. Raw account responses and subprocess
+errors are not emitted to launcher logs or the game.
+
+This foundation does not enable itself for existing launches. The FH5 runtime
+add-on adapter, versioned pack, and activation path are separate integration
+steps; the temporary Python bridge is not shipped or used by this handler.
