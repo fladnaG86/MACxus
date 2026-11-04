@@ -1,0 +1,47 @@
+{
+  "game": "007 First Light",
+  "launchPath": "Installed MACxus normal Play handler, CrossOver Preview Rosetta 20261015",
+  "fullCandidate": {
+    "commit": "4b62105bee1d0f3cd3451d056487a0bea00daaf4",
+    "nativeDLLSHA256": "729ab0f6b63d73ba179ce6029e32762bba166267387951e3d5520d81a95ff694",
+    "userStage": "Entrance screen / F-to-continue transition before the main menu",
+    "exitCode": 5,
+    "gameFaultOffset": "0xa23453",
+    "runtimeFrame": "async_completion_callback",
+    "xstsRefusalsRecordedBeforeCrash": 0,
+    "userClosed": false
+  },
+  "restoredControl": {
+    "nativeDLLSHA256": "fb4a04c52b8045a482612c309ed2d6e8f8bc386e9e4e091f1ccde5956d8a63f1",
+    "sameBottleAndSettings": true,
+    "userReachedMainMenu": true,
+    "userReportedCrash": false,
+    "online": false,
+    "xstsHTTPStatus": 400,
+    "stoppedByAgentAfterConfirmationForNextComparison": true
+  },
+  "mergeBlockedBy007Regression": true,
+  "crashCauseEstablished": false,
+  "diagnosticsOnlyComparison": {
+    "matcher": "Exact pre-candidate matcher; reviewed diagnostics retained",
+    "nativeDLLSHA256": "fbf19397ba9e93d6be548af5fee1d6b3d6dae57d6ed48f02ba96240fdbcc514d",
+    "sourceSHA256": "24fac10b97c946676daa1c1d6f51704af19334f0ba6cb617d54e3e1ebe95aa3e",
+    "offlineProbesPassed": 5,
+    "gameTrial": "Configuration-fetch failure reproduced; token failures used fallback (endpoint_metadata=0), HTTP400, no accepted numeric XErr",
+    "fullPR26Candidate": false
+  },
+  "originalApplicationsAndGameFilesModified": false,
+  "ownedEmptyTokenComparison": {
+    "nativeDLLSHA256": "100d7ebf799328817e12e878be2a07ed6f5da68e66f13987f22cf2bf4c3e0a89",
+    "metadataXSTSHTTPCounts": {
+      "200": 10
+    },
+    "metadataSuccessfulTokenCompletions": 9,
+    "anonymousRouteObservations": 0,
+    "interpretation": "XSTS200 confirms authentication progress; empty-token change is not yet established as crash cause, and game online acceptance awaits user.",
+    "userReport": "Still no luck connecting online",
+    "online": false,
+    "crashAttribution": "Unproven; prototype remained running through no-token routes but still failed online configuration",
+    "sourceSHA256": "e7c9ba58bc1ecea412fd9366b3cc799f19bb4e87daea3e29255ea3f69c1d4177"
+  }
+}

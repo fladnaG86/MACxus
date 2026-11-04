@@ -29,19 +29,23 @@ struct XUser {
 };
 static HSTRING relying_party, token_type;
 static BOOL signature_fixture;
+static BOOL anonymous_fixture;
 static struct { UINT32 version, maxBodyBytes; } signature_policy = {1, 8192};
 static LONG checks, failures;
+static LONG authorize_calls;
 #define CHECK(name, value) do { ++checks; if (!(value)) { ++failures; printf("FAIL %s\n", name); } } while (0)
 static ULONG WINAPI addref(IUser *iface) { return InterlockedIncrement(&((struct XUser *)iface)->refs); }
 static ULONG WINAPI release(IUser *iface) { return InterlockedDecrement(&((struct XUser *)iface)->refs); }
 static HRESULT WINAPI initialize(IUser *iface, XUserAddOptions options) { return E_NOTIMPL; }
 static HRESULT WINAPI endpoint_info(IUser *iface, const char *url, struct endpoint *info) {
     ZeroMemory(info, sizeof(*info)); info->relyingParty = relying_party; info->tokenType = token_type;
+    if (anonymous_fixture) info->relyingParty = info->tokenType = NULL;
     if (signature_fixture) info->policy = &signature_policy;
     return S_OK;
 }
 static HRESULT WINAPI authorize(IUser *iface, const WCHAR *party, WCHAR **auth) {
     struct XUser *user = (void *)iface;
+    InterlockedIncrement(&authorize_calls);
     if (signature_fixture) {
         *auth = calloc(32, sizeof(WCHAR));
         if (!*auth) return E_OUTOFMEMORY;
@@ -117,6 +121,70 @@ static void test_signature_strings(IXUserImpl *users, IXThreadingImpl *threads) 
     }
     signature_fixture = FALSE;
 }
+static void test_anonymous_strings(IXUserImpl *users, IXThreadingImpl *threads) {
+    anonymous_fixture = TRUE;
+    for (unsigned mode = 0; mode < 4; ++mode) {
+        BOOL utf16 = mode & 1;
+        struct XUser user = {0};
+        XTaskQueueHandle queue = NULL;
+        XAsyncBlock block = {0};
+        SIZE_T size = 0, used = 0;
+        HRESULT hr;
+        BYTE *buffer;
+        ULONGLONG start;
+        signature_fixture = mode >= 2;
+        LONG prior_authorizations = authorize_calls;
+        user.iface.lpVtbl = &vtbl; user.refs = 1; callbacks = 0;
+        CHECK("anonymous-queue", IXThreadingImpl_XTaskQueueCreate(threads, XTaskQueueDispatchMode_Manual, XTaskQueueDispatchMode_Manual, &queue) == S_OK);
+        block.queue = queue; block.callback = complete;
+        hr = utf16 ? IXUserImpl_XUserGetTokenAndSignatureUtf16Async(users, &user, 0, L"GET", L"https://example.invalid", 0, NULL, 0, NULL, &block) :
+            IXUserImpl_XUserGetTokenAndSignatureAsync(users, &user, 0, "GET", "https://example.invalid", 0, NULL, 0, NULL, &block);
+        CHECK("anonymous-begin", hr == S_OK);
+        IXThreadingImpl_XTaskQueueDispatch(threads, queue, XTaskQueuePort_Work, 0);
+        start = GetTickCount64();
+        while (!callbacks && GetTickCount64() - start < 3000) {
+            IXThreadingImpl_XTaskQueueDispatch(threads, queue, XTaskQueuePort_Completion, 0); Sleep(1);
+        }
+        CHECK("anonymous-completed-once", callbacks == 1 && IXThreadingImpl_XAsyncGetStatus(threads, &block, FALSE) == S_OK);
+        CHECK("anonymous-endpoint-does-not-authorize", authorize_calls == prior_authorizations);
+        hr = utf16 ? IXUserImpl_XUserGetTokenAndSignatureUtf16ResultSize(users, &block, &size) :
+            IXUserImpl_XUserGetTokenAndSignatureResultSize(users, &block, &size);
+        CHECK("anonymous-result-size", hr == S_OK && size >= 32);
+        if (hr != S_OK || size < 32) { IXThreadingImpl_XTaskQueueCloseHandle(threads, queue); continue; }
+        buffer = malloc(size + 16); memset(buffer, 0x7f, size + 16);
+        if (utf16) {
+            XUserGetTokenAndSignatureUtf16Data *result = NULL;
+            hr = IXUserImpl_XUserGetTokenAndSignatureUtf16Result(users, &block, size, buffer, &result, &used);
+            CHECK("anonymous-wide-result", hr == S_OK && result == (void *)buffer && used == size);
+            if (hr == S_OK && result) {
+                CHECK("anonymous-wide-empty-token", result->token && result->tokenCount == 1 && result->token[0] == 0);
+                CHECK("anonymous-wide-token-owned", result->token && (BYTE *)result->token >= buffer && (BYTE *)(result->token + result->tokenCount) <= buffer + size);
+                CHECK("anonymous-wide-signature-owned", result->signature && result->signature != result->token &&
+                    (BYTE *)result->signature >= buffer && (BYTE *)(result->signature + result->signatureCount) <= buffer + size);
+                CHECK("anonymous-wide-signature-count", result->signatureCount == (signature_fixture ? 105 : 1));
+                CHECK("anonymous-wide-signature-terminated", result->signature && !result->signature[result->signatureCount - 1]);
+            }
+        } else {
+            XUserGetTokenAndSignatureData *result = NULL;
+            hr = IXUserImpl_XUserGetTokenAndSignatureResult(users, &block, size, buffer, &result, &used);
+            CHECK("anonymous-utf8-result", hr == S_OK && result == (void *)buffer && used == size);
+            if (hr == S_OK && result) {
+                CHECK("anonymous-utf8-empty-token", result->token && result->tokenSize == 1 && result->token[0] == 0);
+                CHECK("anonymous-utf8-token-owned", result->token && (BYTE *)result->token >= buffer && (BYTE *)result->token + result->tokenSize <= buffer + size);
+                CHECK("anonymous-utf8-signature-owned", result->signature && result->signature != result->token &&
+                    (BYTE *)result->signature >= buffer && (BYTE *)result->signature + result->signatureSize <= buffer + size);
+                CHECK("anonymous-utf8-signature-count", result->signatureSize == (signature_fixture ? 105 : 1));
+                CHECK("anonymous-utf8-signature-terminated", result->signature && !result->signature[result->signatureSize - 1]);
+            }
+        }
+        CHECK("anonymous-result-guard", buffer[size] == 0x7f);
+        free(buffer); IXThreadingImpl_XTaskQueueCloseHandle(threads, queue);
+        start = GetTickCount64();
+        while (user.refs != 1 && GetTickCount64() - start < 2000) Sleep(1);
+        CHECK("anonymous-user-released", user.refs == 1);
+    }
+    anonymous_fixture = signature_fixture = FALSE;
+}
 int main(void) {
     HMODULE dll = LoadLibraryA("xgameruntime.dll");
     HRESULT (WINAPI *query)(const GUID *, REFIID, void **);
@@ -173,6 +241,7 @@ int main(void) {
         CloseHandle(user.started); CloseHandle(user.gate);
     }
     test_signature_strings(users, threads);
+    test_anonymous_strings(users, threads);
     WindowsDeleteString(relying_party); WindowsDeleteString(token_type);
     IXUserImpl_Release(users); IXThreadingImpl_Release(threads);
     printf("CHECKS %ld FAILURES %ld\n", checks, failures);

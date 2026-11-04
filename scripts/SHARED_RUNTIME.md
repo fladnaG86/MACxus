@@ -410,3 +410,127 @@ rather than silently changing the base. Component artifacts are uploaded before 
 so a missing base does not lose the clean build. Default publication is off;
 `publish=true` is rejected while the lock is marked `development`. Local
 verification does not claim that a remote GitHub Actions run has succeeded.
+
+
+### Shared endpoint matching and XSTS refusals
+
+`xgameruntime-endpoint-wildcards.patch` fixes wildcard matching in the shared
+endpoint lookup used by both explicit-MSA and legacy Windows title identities.
+Catch-all and trailing `*` patterns consume the remaining hostname, matching
+can backtrack after reaching the end of a pattern, and DNS host comparisons are
+case-insensitive. Exact-host, path-specific, title-list precedence and WebSocket
+upgrade rules remain covered by the endpoint probe. The runtime uses the
+matched service's supplied audience and policy; no game-specific audience is
+added. Existing fallback behavior for genuinely unmatched URLs is retained.
+
+On XSTS refusal the normal error log additionally records whether a bounded
+numeric `XErr` is present, its value, and whether a title token was included.
+An authorization failure during a token request also records whether endpoint
+metadata matched or the existing fallback was used. No response message,
+redirect URL, token or account identity is added to these diagnostics. Missing,
+malformed, fractional or out-of-range `XErr` values are ignored, and responses
+larger than 16 KiB are not parsed for diagnostics. A silent scanner accepts only
+flat UTF-8 objects with unescaped keys, a canonical unsigned-integer `XErr`, and
+string/unsigned-integer/boolean/null values for other fields. Nested values,
+escaped keys and other unsupported shapes produce no error-code metadata.
+The scanner makes no calls to Wine's JSON parser, whose own tracing includes
+its complete input. The refusal-only probe checks complete stdout/stderr with
+`trace+web` enabled and fails if captured output is truncated. A refusal stays a failure;
+there is no audience substitution or automatic removal of a title claim.
+
+The endpoint and privilege probes compile the production helpers using
+synthetic hosts, identities and transport. These are offline regressions, not
+proof that 007 First Light or any other title can connect online. See
+[`experiments/xsts-endpoint-routing/README.md`](../experiments/xsts-endpoint-routing/README.md)
+for the comparison and remaining live-test requirements.
+
+### Legacy Windows title authentication and endpoint policies
+
+`xgameruntime-empty-token-result.patch` keeps token-result storage usable when a
+matched endpoint requires no authorization token. UTF-8 and UTF-16 results then
+contain an owned empty string with its terminator included in the size/count.
+Optional signature storage follows it within the caller's result buffer; a
+signature policy is still applied when present. No authorization request is made
+for a rule with no token type, and failed authorization still returns failure.
+Optional numeric metadata distinguishes authenticated and no-token routes.
+
+The token ABI probe covers both encodings with and without a signature policy,
+buffer ownership and bounds, distinct string storage, termination, preserved
+signatures, and absence of an authorization call for no-token rules. The private
+007 comparison using this change and the wildcard fix completed Xbox token
+requests successfully and continued running, but still failed the game's
+configuration fetch. The original crash's cause and complete online acceptance
+remain unproven; this does not claim Windows-wide or all-title compatibility.
+
+The development lock includes `xgameruntime-windows-title-auth.patch`. For legacy
+Windows packages with a TitleId and no MSAAppId, title authentication uses the
+existing device token and proof key, then requests title-specific endpoint metadata
+with the authenticated title chain. Growing that policy list preserves pointers
+held by earlier endpoints. Lookup prefers specific host/path rules and later
+title rules, including HTTP upgrade policies for WebSockets. The synchronous
+preferred UDP port query now matches its async counterpart: zero means the
+platform has no preference.
+
+The builder includes three account-free source-derived regression probes for this
+increment. Existing MSAAppId authentication remains in place. Source-lock inclusion
+is not promotion of a release artifact; the packaged runtime pin is unchanged.
+FH5's private combined test reached online play, but these authentication changes
+alone do not implement its Store/add-on bridge, UDP socket adaptation, graphics
+or allocator fixes and do not claim complete multiplayer support.
+
+
+Build path handling: Wine and vkd3d configure are invoked using their paths relative
+to the build directory, reusing the Halo recipe helper. Generated Makefiles then
+retain the same source spelling under different temporary roots, including for
+`__FILE__` diagnostics that survive debug stripping. The helper's regression covers
+the runtime's sibling source/build layout and compiles stripped PE fixtures under
+two different absolute roots. Locked source reproduction is verified separately;
+these checks do not claim byte-identical complete runtimes across toolchains or
+dependency builds.
+
+### Installed current-package chunk readiness
+
+`xgameruntime-installed-chunk-readiness.patch` validates the current executable's
+matching on-disk config/Appx identity and bounded chunk layout before attempting
+related-package discovery. An unrelated crowded parent directory therefore cannot
+make an installed current package fail its readiness query. Large base-game layouts
+use a 16 MiB XML bound, 65,536 FileGroups and 131,072 visited entries; identity and
+related-content XML keep the existing 1 MiB bound. DestinationPath resolves payload
+inside the installation, including layouts containing obsolete build-machine
+SourcePaths. Missing files, traversal, ambiguous/invalid layouts and unrelated
+package-discovery limits remain failures.
+
+The account-free package-content regression includes relocated source paths, a
+layout larger than 1 MiB, missing payload, invalid destinations, duplicate chunks
+and a crowded discovery root. This source increment neither grants a license nor
+implements downloads, mounting or a runtime release. Original-installation anchors
+for transient launch views and add-on discovery remain separate work.
+
+Current-package readiness rejects unsupported layout root structures and nested
+payload declarations in feature metadata. Only consumed `Chunk` file groups and
+`Features`/`Feature` metadata may contribute to readiness; a valid chunk cannot
+hide a missing payload inside an ignored container. Synthetic current-package
+and chunk-enumeration regressions cover these rejected structures.
+
+### Explicit Store product catalog queries
+
+`xgameruntime-store-products.patch` implements `XStoreQueryProductsAsync` and
+`XStoreQueryProductsResult` for up to 100 explicitly requested Store IDs. The
+runtime deduplicates IDs, validates product-kind/action filters, and returns
+bounded catalog metadata, SKU availability and pricing through the existing
+query handle lifecycle. Public catalog metadata never establishes ownership:
+collection flags require an exact, unexpired SKU from a freshly verified signed
+Store receipt. Network failures and cancellation propagate as failures.
+
+The Store probe builder embeds generated synthetic catalog fixtures in
+`store-products-probe.exe`; the executable has no current-directory fixture
+path dependency. The account-free probe uses the production parser/provider,
+the real runtime async machinery and an intentionally failing license bridge.
+Its successful async cases substitute only network work with synthetic data.
+This source increment excludes add-on inventory, purchase/download APIs, the
+private Python bridge and runtime release/promotion. Full live service/game
+validation of this extracted increment remains separate.
+
+Product display pricing prefers an available Purchase offer across SKUs, even
+when a Details/Redeem-only SKU appears first. A genuinely free Purchase remains
+zero-priced; the preference follows the action rather than a nonzero price.
