@@ -7,6 +7,7 @@ import { verifyPackagedRuntimeDlls } from './mac-runtime-dlls.mjs';
 
 import { verifyPackagedRuntimePack } from './runtime-packs.mjs';
 import { verifyPackagedCompatibilityPacks } from './compatibility-packs.mjs';
+import { verifyPackagedFH5 } from './fh5-pack.mjs';
 import { verifyMacAppSeal } from './mac-app-signing.mjs';
 
 const app = process.argv[2];
@@ -14,6 +15,7 @@ if (!app || process.argv.length !== 3) throw Error('Usage: verify-mac-bundle.mjs
 verifyMacAppSeal(path.resolve(app));
 await verifyPackagedRuntimeDlls(path.resolve(app, 'Contents/Resources/app.asar'));
 await verifyPackagedCompatibilityPacks(path.resolve(app, 'Contents/Resources/app.asar'));
+await verifyPackagedFH5(path.resolve(app, 'Contents/Resources/app.asar'));
 await verifyPackagedRuntimePack(path.resolve(app, 'Contents/Resources/app.asar'));
 const profile = await fs.mkdtemp(path.join(os.tmpdir(), 'macxus-first-launch-'));
 const oldPath = process.env.PATH;

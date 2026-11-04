@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { createPackage, extractFile } from '@electron/asar';
+import { finished } from 'node:stream/promises';
 import { verifyRuntimeDlls } from '../mac-runtime-dlls.mjs';
 
 const names = ['gamingtcui.dll', 'twinapi.appcore.dll', 'windows.web.dll', 'winhttp.dll', 'xgameruntime.dll'];
@@ -24,7 +25,7 @@ test('validates actual ASAR contents and rejects missing, corrupt or mismatched 
     const verify = async (label, value = manifest) => {
       await fs.writeFile(path.join(dir, 'manifest.json'), JSON.stringify(value));
       const archive = path.join(root, `${label}.asar`);
-      await createPackage(source, archive);
+      await finished(await createPackage(source, archive));
       return verifyRuntimeDlls(name => extractFile(archive, `assets/mac-runtime-dlls/${name}`), manifest);
     };
     await verify('valid');

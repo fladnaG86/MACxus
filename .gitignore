@@ -32,6 +32,11 @@ docs/internal/
 # Generated compatibility pack source archives (prepared during macOS packaging)
 /assets/compatibility-packs/*/source/
 
+# Generated FH5 portable pack payload and corresponding source release archive
+/assets/fh5-preview/payload/
+/assets/fh5-preview/source-release/
+
+/scripts/fh5-pack/__pycache__/
 # This pack consists of our own small, committed source recipe.
 !/assets/compatibility-packs/bond-public-config-v1/source/
 /assets/compatibility-packs/bond-public-config-v1/payload/

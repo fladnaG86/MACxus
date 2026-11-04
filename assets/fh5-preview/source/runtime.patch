@@ -1,0 +1,428 @@
+--- a/dlls/xgameruntime/private.h
++++ b/dlls/xgameruntime/private.h
+@@ -113,3 +113,5 @@
+ extern IXUserDeviceImpl *x_user_device_impl;
+ 
+ HRESULT WINAPI QueryApiImpl( const GUID *classId, REFIID interfaceId, void **out );
++
++HRESULT xodus_store_addon_inventory_xml( const char *request, SIZE_T request_size, char **response, UINT16 *size );
+--- a/dlls/xgameruntime/xuser.c
++++ b/dlls/xgameruntime/xuser.c
+@@ -665,6 +665,13 @@
+ 
+ /* Legacy Windows packages use TitleId instead of MSAAppId. The title token
+  * must belong to the same device/proof key as this user's existing chain. */
++HRESULT xodus_store_addon_inventory_xml( const char *request, SIZE_T request_size, char **response, UINT16 *size )
++{
++    if (!request || !request_size || request_size > 60000 || !response || !size) return E_INVALIDARG;
++    *response = NULL; *size = 0;
++    return xodus_request(0x7f01, request, request_size, response, size);
++}
++
+ static HRESULT windows_title_auth( XUserHandle user )
+ {
+     static const char format[] = "{\"RelyingParty\":\"http://auth.xboxlive.com\",\"TokenType\":\"JWT\","
+--- a/dlls/xgameruntime/xstore.c
++++ b/dlls/xgameruntime/xstore.c
+@@ -27,6 +27,7 @@
+ 
+ #include "xstore_entitled.h"
+ #include "xstore_products.h"
++#include "xstore_addon_licenses.h"
+ #include "xstore_package_license.h"
+ 
+ struct x_store
+@@ -281,20 +282,17 @@
+ 
+ static HRESULT WINAPI x_store_XStoreQueryAddOnLicensesAsync( IXStoreImpl6 *iface, const XStoreContextHandle storeContextHandle, XAsyncBlock *async )
+ {
+-    FIXME( "iface %p, storeContextHandle %p, async %p stub!\n", iface, storeContextHandle, async );
+-    return E_NOTIMPL;
++    return addon_begin(storeContextHandle, async);
+ }
+ 
+ static HRESULT WINAPI x_store_XStoreQueryAddOnLicensesResultCount( IXStoreImpl6 *iface, XAsyncBlock *async, UINT32 *count )
+ {
+-    FIXME( "iface %p, async %p, count %p stub!\n", iface, async, count );
+-    return E_NOTIMPL;
++    return addon_count(async, count);
+ }
+ 
+ static HRESULT WINAPI x_store_XStoreQueryAddOnLicensesResult( IXStoreImpl6 *iface, XAsyncBlock *async, UINT32 count, XStoreAddonLicense *addOnLicenses )
+ {
+-    FIXME( "iface %p, async %p, count %u, addOnLicenses %p stub!\n", iface, async, count, addOnLicenses );
+-    return E_NOTIMPL;
++    return addon_result(async, count, addOnLicenses);
+ }
+ 
+ static HRESULT WINAPI x_store_XStoreQueryConsumableBalanceRemainingAsync( IXStoreImpl6 *iface, const XStoreContextHandle storeContextHandle, const char *storeProductId, XAsyncBlock *async )
+--- /dev/null
++++ b/dlls/xgameruntime/xstore_addon_licenses.h
+@@ -0,0 +1,277 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later
++ * Durable add-on discovery from the authenticated launcher, followed by genuine
++ * nonce/signature/expiry-verified Microsoft SKU licenses. Discovery is not proof
++ * of ownership. Unknown licensed kinds/SKUs fail rather than fabricate results. */
++#define ADDON_MAX_CANDIDATES 255
++struct addon_sku { char id[5]; BOOLEAN packaged; };
++struct addon_candidate
++{
++    char id[13], offer[64];
++    BOOLEAN associated;
++    UINT32 sku_count;
++    struct addon_sku skus[ENTITLED_MAX_SKUS];
++};
++struct addon_inventory
++{
++    UINT32 count;
++    UINT64 valid_until;
++    struct addon_candidate products[ADDON_MAX_CANDIDATES];
++};
++struct addon_async
++{
++    LONG refs, canceled, started;
++    IXThreadingImpl *threading;
++    XAsyncBlock *async;
++    UINT32 count;
++    UINT64 proof_until;
++    XStoreAddonLicense *licenses;
++};
++static const char addon_identity;
++
++static HRESULT addon_parse_inventory( const char *bytes, UINT16 size, struct addon_inventory **out )
++{
++    xmlDocPtr doc = NULL;
++    xmlNodePtr root, node, child;
++    struct addon_inventory *inventory = NULL;
++    char *parent = NULL, *id = NULL, *offer = NULL, *sku = NULL;
++    UINT64 value;
++    BOOLEAN complete;
++    UINT32 i, j;
++    HRESULT hr = E_UNEXPECTED;
++    *out = NULL;
++    if (!bytes || !size || strstr(bytes,"<!DOCTYPE") || strstr(bytes,"<!ENTITY")) return hr;
++    doc = xmlReadMemory(bytes,size,NULL,NULL,XML_PARSE_NONET|XML_PARSE_NOERROR|XML_PARSE_NOWARNING);
++    if (!doc) return hr;
++    root = xmlDocGetRootElement(doc);
++    if (doc->intSubset || doc->extSubset || !root || strcmp((char *)root->name,"Response")) goto done;
++    if (FAILED(entitled_uint(root,"HResult",&value)) || value > UINT32_MAX) goto done;
++    if (FAILED(hr = (HRESULT)value)) goto done;
++    hr = E_UNEXPECTED;
++    parent = entitled_text(root,"ParentProductId");
++    if (!parent || !entitled_id(parent) || strcmp(parent,storeId) ||
++        FAILED(entitled_bool(root,"InventoryComplete",&complete)) || !complete) goto done;
++    if (!(inventory = calloc(1,sizeof(*inventory)))) { hr = E_OUTOFMEMORY; goto done; }
++    if (FAILED(entitled_uint(root,"ValidUntil",&inventory->valid_until)) ||
++        inventory->valid_until <= (UINT64)time(NULL) || inventory->valid_until > (UINT64)time(NULL)+125) goto done;
++    for (node=root->children;node;node=node->next)
++    {
++        struct addon_candidate *product;
++        if (node->type!=XML_ELEMENT_NODE || strcmp((char*)node->name,"Product")) continue;
++        if (inventory->count==ADDON_MAX_CANDIDATES) goto done;
++        product=&inventory->products[inventory->count];
++        id=entitled_text(node,"StoreId");offer=entitled_text(node,"InAppOfferToken");
++        if (!entitled_id(id) || !strcmp(id,storeId) || !offer || strlen(offer)>63 ||
++            FAILED(entitled_bool(node,"AssociatedDurable",&product->associated))) goto done;
++        for (i=0;i<inventory->count;i++) if (!strcmp(inventory->products[i].id,id)) goto done;
++        memcpy(product->id,id,13);strcpy(product->offer,offer);free(id);id=NULL;free(offer);offer=NULL;
++        for (child=node->children;child;child=child->next)
++        {
++            if (child->type!=XML_ELEMENT_NODE || strcmp((char*)child->name,"Sku")) continue;
++            if (product->sku_count==ENTITLED_MAX_SKUS) goto done;
++            sku=entitled_text(child,"SkuId");
++            if (!entitled_sku_id(sku) || FAILED(entitled_bool(child,"HasPackages",&product->skus[product->sku_count].packaged))) goto done;
++            for (j=0;j<product->sku_count;j++) if (!strcmp(product->skus[j].id,sku)) goto done;
++            memcpy(product->skus[product->sku_count++].id,sku,5);free(sku);sku=NULL;
++        }
++        if ((product->associated && !product->sku_count) || (!product->associated && product->sku_count)) goto done;
++        inventory->count++;
++    }
++    *out=inventory;inventory=NULL;hr=S_OK;
++done:
++    free(parent);free(id);free(offer);free(sku);free(inventory);xmlFreeDoc(doc);return hr;
++}
++
++/* Keep signed inactive rows as inactive; unlike an ownership-products query,
++ * this API exposes isActive and expirationDate. Never turn expiry into a grant. */
++static HRESULT addon_receipt_inventory( IJsonObject *claim, const char **ids, UINT32 count,
++    struct receipt_license *licenses, UINT32 *license_count )
++{
++    IJsonArray *array=NULL;
++    IJsonObject *row=NULL;
++    UINT32 size,i,j;
++    double version;
++    char *id=NULL,*sku=NULL,*end=NULL;
++    UINT64 until;
++    HRESULT hr=E_UNEXPECTED;
++    if (FAILED(receipt_get_number(claim,L"tokenVersion",&version)) || version!=1 ||
++        FAILED(receipt_get_array(claim,L"licensableProducts",&array)) ||
++        FAILED(receipt_array_size(array,&size)) || size>512) goto done;
++    for (i=0;i<size;i++)
++    {
++        hr=E_UNEXPECTED;
++        if (FAILED(IJsonArray_GetObjectAt(array,i,&row))) goto done;
++        id=receipt_string(row,L"productId",12);sku=receipt_string(row,L"skuId",4);end=receipt_string(row,L"endDate",64);
++        if (!entitled_id(id) || !entitled_sku_id(sku) || !end || FAILED(receipt_date(end,&until)) || until>INT64_MAX) goto done;
++        for (j=0;j<count && strcmp(ids[j],id);j++);
++        if (j<count)
++        {
++            for (j=0;j<*license_count;j++) if (!strcmp(licenses[j].id,id) && !strcmp(licenses[j].sku,sku)) break;
++            if (j<*license_count) { if (until<licenses[j].expiry) licenses[j].expiry=until; }
++            else
++            {
++                if (*license_count==ENTITLED_MAX_PRODUCTS) goto done;
++                memcpy(licenses[*license_count].id,id,13);memcpy(licenses[*license_count].sku,sku,5);licenses[(*license_count)++].expiry=until;
++            }
++        }
++        free(id);id=NULL;free(sku);sku=NULL;free(end);end=NULL;IJsonObject_Release(row);row=NULL;
++    }
++    hr=S_OK;
++done:
++    if (array) IJsonArray_Release(array);
++    if (row) IJsonObject_Release(row);
++    free(id);free(sku);free(end);return hr;
++}
++
++static HRESULT addon_materialize( const struct addon_inventory *inventory, const struct receipt_license *licenses,
++    UINT32 license_count, UINT64 proof_until, XStoreAddonLicense **out, UINT32 *count )
++{
++    UINT32 i,j,k,written=0;
++    BOOL base=FALSE;
++    XStoreAddonLicense *result;
++    UINT64 now=time(NULL);
++    *out=NULL;*count=0;
++    if (proof_until<=now || inventory->valid_until<=now) return E_ACCESSDENIED;
++    for (i=0;i<license_count;i++) if (!strcmp(licenses[i].id,storeId) && licenses[i].expiry>now) base=TRUE;
++    if (!base) return E_ACCESSDENIED; /* This runtime mounts digital Store titles only. */
++    if (!(result=calloc(license_count?license_count:1,sizeof(*result)))) return E_OUTOFMEMORY;
++    for (i=0;i<license_count;i++)
++    {
++        const struct addon_candidate *product;
++        if (!strcmp(licenses[i].id,storeId)) continue;
++        for (j=0;j<inventory->count && strcmp(inventory->products[j].id,licenses[i].id);j++);
++        if (j==inventory->count) continue; /* A broader receipt cannot add unrelated IDs. */
++        product=&inventory->products[j];
++        if (!product->associated) { free(result);return E_NOTIMPL; }
++        for (k=0;k<product->sku_count && strcmp(product->skus[k].id,licenses[i].sku);k++);
++        if (k==product->sku_count) { free(result);return E_NOTIMPL; }
++        if (product->skus[k].packaged) continue;
++        snprintf(result[written].skuStoreId,sizeof(result[written].skuStoreId),"%s/%s",licenses[i].id,licenses[i].sku);
++        strcpy(result[written].inAppOfferToken,product->offer);
++        result[written].isActive=licenses[i].expiry>now;result[written].expirationDate=licenses[i].expiry;written++;
++    }
++    *out=result;*count=written;return S_OK;
++}
++
++static HRESULT addon_fetch( struct addon_async *context )
++{
++    struct addon_inventory *inventory=NULL;
++    struct receipt_license licenses[ENTITLED_MAX_PRODUCTS];
++    const char *ids[ENTITLED_MAX_PRODUCTS];
++    char request[256],*response=NULL,market[3]="US";
++    WCHAR country[16];
++    UINT16 size;
++    UINT32 count=0,batch,i;
++    UINT64 proof_until=UINT64_MAX;
++    HRESULT hr,com=CoInitializeEx(NULL,COINIT_MULTITHREADED);
++    if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT,LOCALE_SISO3166CTRYNAME,country,ARRAY_SIZE(country)))
++        WideCharToMultiByte(CP_UTF8,0,country,-1,market,sizeof(market),NULL,NULL);
++    if (strlen(market)!=2 || market[0]<'A' || market[0]>'Z' || market[1]<'A' || market[1]>'Z') { hr=E_INVALIDARG;goto done; }
++    snprintf(request,sizeof(request),"<Request><ParentProductId>%s</ParentProductId><Market>%s</Market></Request>",storeId,market);
++    hr=xodus_store_addon_inventory_xml(request,strlen(request),&response,&size);
++    if (SUCCEEDED(hr)) hr=addon_parse_inventory(response,size,&inventory);
++    xodus_store_license_note("store-addon-discovery",hr);
++    if (FAILED(hr)) goto done;
++    ids[0]=storeId;
++    for (i=0;i<inventory->count;i++) ids[i+1]=inventory->products[i].id;
++    for (batch=0;batch<inventory->count+1;batch+=64)
++    {
++        BYTE random[32];char nonce[65],*body=NULL,*jwt=NULL;
++        IJsonObject *claim=NULL;UINT64 expiry;
++        if (InterlockedCompareExchange(&context->canceled,0,0)) { hr=E_ABORT;goto done; }
++        if (inventory->valid_until<=(UINT64)time(NULL)) { hr=E_ACCESSDENIED;goto done; }
++        if (BCryptGenRandom(NULL,random,sizeof(random),BCRYPT_USE_SYSTEM_PREFERRED_RNG)) { hr=E_FAIL;goto done; }
++        for (i=0;i<32;i++) sprintf(nonce+2*i,"%02x",random[i]);
++        hr=xodus_store_license_body(ids+batch,min(64,inventory->count+1-batch),nonce,&body);
++        if (SUCCEEDED(hr)) hr=xodus_store_license_xml(body,strlen(body),&jwt);
++        free(body);
++        if (SUCCEEDED(hr)) hr=receipt_load(jwt,nonce,&claim,&expiry);
++        if (jwt) { SecureZeroMemory(jwt,strlen(jwt));free(jwt); }
++        if (SUCCEEDED(hr))
++        {
++            proof_until=min(proof_until,expiry);
++            hr=addon_receipt_inventory(claim,ids+batch,min(64,inventory->count+1-batch),licenses,&count);
++        }
++        if (claim) IJsonObject_Release(claim);
++        xodus_store_license_note("store-addon-receipt",hr);
++        if (FAILED(hr)) goto done;
++    }
++    hr=addon_materialize(inventory,licenses,count,proof_until,&context->licenses,&context->count);
++    context->proof_until=min(proof_until,inventory->valid_until);
++done:
++    free(response);free(inventory);if (SUCCEEDED(com)) CoUninitialize();return hr;
++}
++
++static void addon_async_release( struct addon_async *context )
++{
++    if (InterlockedDecrement(&context->refs)) return;
++    free(context->licenses);IXThreadingImpl_Release(context->threading);free(context);
++}
++static DWORD WINAPI addon_worker( void *arg )
++{
++    struct addon_async *context=arg;
++    HRESULT hr=E_ABORT;
++    if (!InterlockedCompareExchange(&context->canceled,0,0)) hr=addon_fetch(context);
++    if (InterlockedCompareExchange(&context->canceled,0,0)) hr=E_ABORT;
++    xodus_store_license_note("store-addon-result",hr);
++    IXThreadingImpl_XAsyncComplete(context->threading,context->async,hr,SUCCEEDED(hr)?context->count*sizeof(XStoreAddonLicense):0);
++    addon_async_release(context);return 0;
++}
++static HRESULT WINAPI addon_provider( XAsyncOp op, const XAsyncProviderData *data )
++{
++    struct addon_async *context=data->context;
++    HANDLE worker;HRESULT hr;
++    switch(op)
++    {
++    case XAsyncOp_Begin:return IXThreadingImpl_XAsyncSchedule(context->threading,data->async,0);
++    case XAsyncOp_DoWork:
++        if (InterlockedCompareExchange(&context->started,1,0)) return E_PENDING;
++        if (InterlockedCompareExchange(&context->canceled,0,0)) return E_ABORT;
++        context->async=data->async;InterlockedIncrement(&context->refs);
++        if (!(worker=CreateThread(NULL,0,addon_worker,context,0,NULL))) { hr=HRESULT_FROM_WIN32(GetLastError());addon_async_release(context);return hr; }
++        CloseHandle(worker);return E_PENDING;
++    case XAsyncOp_GetResult:
++        if (!data->buffer || data->bufferSize<context->count*sizeof(XStoreAddonLicense)) return E_INVALIDARG;
++        if (context->proof_until<=(UINT64)time(NULL)) return E_ACCESSDENIED;
++        if (context->count) memcpy(data->buffer,context->licenses,context->count*sizeof(XStoreAddonLicense));
++        return S_OK;
++    case XAsyncOp_Cancel:InterlockedExchange(&context->canceled,TRUE);return S_OK;
++    case XAsyncOp_Cleanup:addon_async_release(context);return S_OK;
++    default:return S_OK;
++    }
++}
++static HRESULT addon_begin( XStoreContextHandle store, XAsyncBlock *async )
++{
++    struct addon_async *context;UINT64 xuid;HRESULT hr;
++    if (!async) return E_INVALIDARG;
++    if (FAILED(hr=entitled_store_user(store,&xuid))) return hr;
++    if (!entitled_id(storeId)) return E_GAME_MISSING_GAME_CONFIG;
++    if (!(context=calloc(1,sizeof(*context)))) return E_OUTOFMEMORY;
++    context->refs=1;
++    if (FAILED(hr=QueryApiImpl(&CLSID_XThreadingImpl,&IID_IXThreadingImpl,(void**)&context->threading))) { free(context);return hr; }
++    hr=IXThreadingImpl_XAsyncBegin(context->threading,async,context,&addon_identity,"XStoreQueryAddOnLicenses",addon_provider);
++    if (FAILED(hr)) addon_async_release(context);
++    return hr;
++}
++static HRESULT addon_count( XAsyncBlock *async, UINT32 *count )
++{
++    IXThreadingImpl *threading;SIZE_T size;HRESULT hr;
++    if (!async || !count) return E_INVALIDARG;
++    *count=0;
++    if (FAILED(hr=QueryApiImpl(&CLSID_XThreadingImpl,&IID_IXThreadingImpl,(void**)&threading))) return hr;
++    hr=IXThreadingImpl_XAsyncGetResultSize(threading,async,&size);IXThreadingImpl_Release(threading);
++    if (FAILED(hr)) return hr;
++    if (size%sizeof(XStoreAddonLicense) || size/sizeof(XStoreAddonLicense)>ENTITLED_MAX_PRODUCTS) return E_UNEXPECTED;
++    *count=size/sizeof(XStoreAddonLicense);return S_OK;
++}
++static HRESULT addon_result( XAsyncBlock *async, UINT32 capacity, XStoreAddonLicense *out )
++{
++    IXThreadingImpl *threading;UINT32 count;HRESULT hr;
++    if (!async || (capacity && !out)) return E_INVALIDARG;
++    if (FAILED(hr=addon_count(async,&count))) return hr;
++    if (capacity<count) return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
++    if (FAILED(hr=QueryApiImpl(&CLSID_XThreadingImpl,&IID_IXThreadingImpl,(void**)&threading))) return hr;
++    /* Empty native async payloads complete/clean up without requiring Result.
++     * Count remains readable and optional zero-size Result is still valid. */
++    hr=IXThreadingImpl_XAsyncGetResult(threading,async,&addon_identity,count*sizeof(XStoreAddonLicense),count?out:NULL,NULL);
++    IXThreadingImpl_Release(threading);return hr;
++}
+--- a/dlls/xgameruntime/xpackage_content.h
++++ b/dlls/xgameruntime/xpackage_content.h
+@@ -348,12 +348,68 @@
+            path[1] == ':' && (path[2] == '\\' || path[2] == '/');
+ }
+ 
++/* A materialized executable lives in a transient view. Discovery must use
++ * the original package installation, never arbitrary siblings of a host temp
++ * directory. An explicit anchor is admitted only when both on-disk manifests,
++ * version and unique layout identifier match the launched package. */
++static BOOL content_unique_layout_id( const WCHAR *path, char *identifier )
++{
++    WCHAR pattern[MAX_PATH];
++    WIN32_FIND_DATAW data;
++    HANDLE find;
++    UINT count = 0;
++    BOOL valid = TRUE;
++
++    if (!content_join(path, L"layout_*.xml", pattern) ||
++        (find = FindFirstFileW(pattern, &data)) == INVALID_HANDLE_VALUE) return FALSE;
++    do
++    {
++        if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
++        if (++count != 1 || !content_layout_id(data.cFileName, identifier)) { valid = FALSE; break; }
++    } while (FindNextFileW(find, &data));
++    FindClose(find);
++    return valid && count == 1;
++}
++
++static HRESULT content_discovery_anchor( WCHAR *path, const struct content_game *current )
++{
++    WCHAR configured[MAX_PATH], absolute[MAX_PATH];
++    struct content_package *packages;
++    char launched_id[33], installed_id[33];
++    DWORD length;
++    BOOL match;
++
++    length = GetEnvironmentVariableW(L"XODUS_CONTENT_PACKAGE_ROOT", configured, MAX_PATH);
++    if (!length) return S_OK;
++    if (length >= MAX_PATH || !content_absolute(configured)) return E_INVALIDARG;
++    length = GetFullPathNameW(configured, MAX_PATH, absolute, NULL);
++    if (!length || length >= MAX_PATH) return E_INVALIDARG;
++    while (length > 3 && (absolute[length - 1] == '\\' || absolute[length - 1] == '/')) absolute[--length] = 0;
++    if (!(packages = calloc(2, sizeof(*packages)))) return E_OUTOFMEMORY;
++    match = content_load(path, &packages[0]) && !packages[0].content &&
++            content_load(absolute, &packages[1]) && !packages[1].content &&
++            !strcmp(current->identity, packages[0].identity) &&
++            !strcmp(current->publisher, packages[0].publisher_id) &&
++            !strcmp(current->store, packages[0].store) &&
++            !strcmp(packages[0].identity, packages[1].identity) &&
++            !strcmp(packages[0].publisher_id, packages[1].publisher_id) &&
++            !strcmp(packages[0].store, packages[1].store) &&
++            !memcmp(&packages[0].version, &packages[1].version, sizeof(XVersion)) &&
++            content_unique_layout_id(path, launched_id) &&
++            content_unique_layout_id(absolute, installed_id) && !stricmp(launched_id, installed_id);
++    free(packages);
++    if (!match) return E_INVALIDARG;
++    wcscpy(path, absolute);
++    return S_OK;
++}
++
+ static HRESULT content_discover( struct content_snapshot *snapshot )
+ {
+     WCHAR path[MAX_PATH], file[MAX_PATH], *sep, *roots, *next;
+     DWORD length;
+     UINT i;
+     HRESULT hr = S_OK;
++    BOOL found = FALSE;
+     if (GetModuleFileNameW(NULL, path, MAX_PATH) && (sep = wcsrchr(path, '\\')))
+     {
+         *sep = 0;
+@@ -361,7 +417,9 @@
+         {
+             if (GetFileAttributesW(file) != INVALID_FILE_ATTRIBUTES)
+             {
+-                hr = content_scan(snapshot, path);
++                found = TRUE;
++                hr = content_discovery_anchor(path, &snapshot->current);
++                if (SUCCEEDED(hr)) hr = content_scan(snapshot, path);
+                 if (SUCCEEDED(hr) && content_join(path, L"DLC", file)) hr = content_scan(snapshot, file);
+                 if (SUCCEEDED(hr) && (sep = wcsrchr(path, '\\')) && sep > path + 2)
+                 { *sep = 0; hr = content_scan(snapshot, path); }
+@@ -372,6 +430,7 @@
+         }
+     }
+     if (FAILED(hr)) return hr;
++    if (!found && GetEnvironmentVariableW(L"XODUS_CONTENT_PACKAGE_ROOT", NULL, 0)) return E_INVALIDARG;
+     length = GetEnvironmentVariableW(L"XODUS_CONTENT_ROOTS", NULL, 0);
+     if (!length) return S_OK;
+     if (length > 32768) return E_INVALIDARG;

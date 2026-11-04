@@ -1,0 +1,159 @@
+{
+  "schema": 1,
+  "scope": "FH5 Store portable pack on M5 Max / Preview Rosetta 20261015 / Metal 4",
+  "payloadSHA256": {
+    "macxus-metal4-timestamps.dylib": "cc7988fd67df029acd288f23184d34fc1d05497a52b0d9a61a88477eb32ef677",
+    "windows.web.dll": "d96352f9c95bde5c1b1c790b5eda80ea06b0772b9d44508ed8b6fb1aaa6e68d6",
+    "d3d12.dll": "5c0e9992cda8da8ab11b973ff98df03b794c4b2fe2a10b1cf9c7d26a46079604",
+    "xgameruntime.dll": "7f3b8bc86edbaa3d85c6579160c32c14afa8d3961a164787e1434474d7411636"
+  },
+  "sourceLockSHA256": "7893b9658f5677842e3c18d18cf0cdf8f31c25bbd0205670d7a605a231d08015",
+  "sourceArchive": {
+    "name": "fh5-preview-v1-source.tar.gz",
+    "sha256": "9f4aa24fb5983ecc8f1a1105cd1ca4df4fb47d319a32262ec364cf7da6ab8e57"
+  },
+  "sameReceiptsAcrossTwoBuildRootsIncludingSpaces": true,
+  "all23RuntimeCObjectsRecompiledPerBuild": true,
+  "toolchain": {
+    "mingwGCC": "16.2.0",
+    "appleClang": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
+    "macOSSDK": "27.0"
+  },
+  "syntheticProbes": [
+    {
+      "name": "wineboot",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "data-fixture",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "input-layout-contracts",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "unused-blend-contracts",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "gpu-clock-reporting",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "io-lifetime",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "stream-debug-contracts",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "store-addons",
+      "exitCode": 0,
+      "summary": [
+        "CHECKS 774 FAILURES 0",
+        "FH5 ADDON CHECKS 850 FAILURES 0"
+      ]
+    },
+    {
+      "name": "metal4-counter-probe",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "metal4-state-probe",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "metal4-order-probe",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "metal4-lifetime-probe",
+      "exitCode": 0,
+      "summary": []
+    }
+  ],
+  "actualPrivateEnginePreparation": {
+    "vendorSignatureVerifiedBeforeCopy": true,
+    "privateLoaderAndBundleSignedAndVerified": true,
+    "originalInstallationModified": false,
+    "receiptStoredInResources": true
+  },
+  "actualPreparedWrapperGPUProbe": {
+    "iterations": 32,
+    "commandListResets": 31,
+    "repeatedResolveCases": 32,
+    "futureQueueSignals": 32,
+    "realGPUReadbacks": true
+  },
+  "launcherTests": {
+    "passed": 1438,
+    "skipped": 10,
+    "failed": 0
+  },
+  "runtimeToolTests": {
+    "passed": 42,
+    "skipped": 7,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "livePortablePackAcceptance": "Normal Play, visible Store/DLC discovery and actual online session/multiplayer confirmed by user; marketplace purchase detail action errors. See normal-play-acceptance.json.",
+  "freshIndependentSolReview": "Exact 609375a recheck found no issues; prior source-release F1 closed. Five Python contracts, three distribution tests, typecheck and archive/source/payload pins independently checked; real full compilation inspected, not rerun.",
+  "knownLimits": [
+    "Black-road investigation intentionally excluded",
+    "Clock calibration still E_NOTIMPL; latency unresolved",
+    "Apple identity with DLSS unresolved; initial pack retains NVIDIA compatibility IDs",
+    "Bounded 4096 native timestamp slots; no long-session or all-mode acceptance",
+    "Microsoft Store exact-build allocator adapter; Steam untested"
+  ],
+  "pipelineDebugRegression": {
+    "explicitZeroDisablesDebug": true,
+    "shaderRecordTypesEnumerated": true,
+    "guardPageChecks": 303,
+    "originalParserFailsSameControl": true,
+    "originalParserExitCode": 5
+  },
+  "followUpFocusedTests": {
+    "launcherPassed": 91,
+    "distributionPassed": 3,
+    "pythonBuildContractsPassed": 5,
+    "typecheck": "passed"
+  },
+  "latestActualPreparedWrapperRepeat": "Corrected e092454 proxy passed32 async GPU iterations. Final metadata-only runtime artifact repeat stopped during vendor first-bottle setup before pack DLL installation; no acceptance claimed for that repeat.",
+  "sourceReleaseConsumer": {
+    "sourceArchiveDescriptorSelfContained": true,
+    "sdkBootstrapAndInstructionsPresent": true,
+    "archiveEntryPointChecksExactPayload": true,
+    "recursiveManifestExcluded": true,
+    "freshSDK25GeneratedInputsVerified": true,
+    "freshAndHistoricalSDKSamePayloadAndArchive": true,
+    "gameLaunched": false,
+    "accountUsed": false,
+    "twoDifferentSDKLocations": true,
+    "sdkPreparedFromPinnedGitObjects": true,
+    "PECodeViewBuildIDDisabledForPathIndependence": true,
+    "standaloneVerificationFromFinalArchive": "passed input checks; same verifier bytes passed all runtime/native probes from prior extraction",
+    "actualStandaloneArchivedBuild": {
+      "realStandaloneArchivedBuildCompleted": true,
+      "noApplicationManifest": true,
+      "compilerStubsUsed": false,
+      "freshSDKUsed": true,
+      "allPayloadsReceiptsAndSourceArchivesEqual": true,
+      "gameLaunched": false,
+      "accountUsed": false
+    }
+  },
+  "offlineValidationGameLaunched": false,
+  "offlineValidationAccountUsed": false
+}

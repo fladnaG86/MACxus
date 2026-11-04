@@ -1,6 +1,7 @@
 // Build-time preparation only. App users receive the verified DLLs and source;
 // no compiler, downloader or signing-key changes are needed on their machine.
 import fs from 'node:fs/promises';
+import { stageFH5Bundle, verifyFH5Directory } from './fh5-pack.mjs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +23,13 @@ const option = name => {
 };
 if (process.argv.includes('--rebuild') && option('--dll-dir')) throw Error('--rebuild cannot reuse --dll-dir artifacts.');
 const selectedId = option('--pack');
+if (selectedId === 'fh5-preview-v1') {
+  const root = path.join(project, 'assets/fh5-preview'), bundle = option('--bundle-dir');
+  if (bundle) await stageFH5Bundle(bundle, root);
+  if (!(await verifyFH5Directory(root)).enabled) throw Error('Build and stage the FH5 source pack before enabling it.');
+  console.log('FH5 source pack payload and corresponding source verified.');
+  process.exit(0);
+}
 const selected = selectedId ? catalog.packs.filter(entry => entry.id === selectedId) : catalog.packs;
 if (selectedId && !selected.length) throw Error(`Unknown compatibility pack: ${selectedId}`);
 if (selected.length !== 1 && (option('--source-archive') || option('--dll-dir'))) throw Error('Select one pack with --pack when supplying local artifacts.');
@@ -97,7 +105,7 @@ for (const entry of selected) {
     await fs.copyFile(patch, path.join(root, 'source', path.posix.basename(lock.patch.path)));
     const recipe = path.join(root, 'source/build-scripts');
     await fs.mkdir(recipe, { recursive: true });
-    for (const name of ['prepare-compatibility-packs.mjs', 'compatibility-packs.mjs', 'compatibility-pack-build.mjs']) await fs.copyFile(path.join(project, 'scripts', name), path.join(recipe, name));
+    for (const name of ['prepare-compatibility-packs.mjs', 'compatibility-packs.mjs', 'compatibility-pack-build.mjs', 'fh5-pack.mjs']) await fs.copyFile(path.join(project, 'scripts', name), path.join(recipe, name));
     const schema = path.join(root, 'source/src/shared');
     await fs.mkdir(schema, { recursive: true });
     await fs.copyFile(path.join(project, 'src/shared/compatibility-pack-schema.mjs'), path.join(schema, 'compatibility-pack-schema.mjs'));
@@ -108,3 +116,5 @@ for (const entry of selected) {
     else await fs.rm(work, { recursive: true, force: true });
   }
 }
+
+if ((await verifyFH5Directory(path.join(project, 'assets/fh5-preview'))).enabled) console.log('Optional FH5 pack payload/source verified.');

@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "scope": "Account-free comparison of actual Preview guest QPC with host clocks",
+  "engine": "CrossOver Preview Rosetta 20261015 / cxpreview-20261015-rc1",
+  "installedNtdllSHA256": "9b35a43bc84d45833510cef64b620648aafdda5e2ef5b527b7cedb123602e701",
+  "samples": 32,
+  "qpcFrequency": 10000000,
+  "nativeContinuous100nsWithinEveryGuestBracket": true,
+  "nativeAbsolute100nsWithinEveryGuestBracket": false,
+  "method": "Guest samples QPC before request and after native host acknowledgement; native host samples clocks between those guest samples",
+  "limitations": [
+    "Cross-process round-trip brackets establish clock domain/epoch, not sub-microsecond calibration accuracy",
+    "No production GetClockCalibration implementation enabled",
+    "Prior native Metal domain probe establishes sampled GPU nanoseconds versus 24 MHz counter ticks; conversion still needs integration validation",
+    "No game latency display or input-to-display measurement acceptance"
+  ],
+  "gameLaunched": false,
+  "accountUsed": false
+}

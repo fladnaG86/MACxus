@@ -1,11 +1,13 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import type { MacEngine } from '../shared/types.js';
+import { supportsFH5PreviewPack } from '../shared/launch-tools.js';
 import { bundledRuntimeDllDirectory, findCrossOver, findCrossOverPreview, findCrossOverPreviewFex, prepareCrossOverRunner, runtimeOverrideDirectory, type CrossOverInstall, type RuntimeDllSource } from './crossover.js';
 import { highballEngineInstalled, highballOverrideDirectory, highballShimDirectory, prepareHighballRunner } from './highball-engine.js';
 import { CROSSOVER_MISSING } from './mac-launch.js';
 import { effectiveMacEngine, loadMacProfiles, macProfileFor, type MacProfiles } from './mac-profiles.js';
 import type { ProtonRunner } from './proton.js';
+import { prepareFH5PreviewPack, defaultFH5Assets, defaultFH5Execute } from './fh5-preview-pack.js';
 import { prepareGameRuntimePack } from './game-runtime-pack.js';
 import { prepareGameCompatibilityPack, type CompatibilityPack, type CompatibilityPackRequest } from './game-compatibility-pack.js';
 
@@ -49,6 +51,8 @@ export interface MacRunnerRequest {
   storeId: string | undefined;
   dataRoot: string;
   runtimeDllDir: string;
+  gameRoot?: string;
+  fh5PreviewCompatibility?: boolean;
   log: (line: string) => void;
 }
 
@@ -57,6 +61,7 @@ export interface MacRunner {
   engine: MacEngine;
   /** Whitelisted per-game environment to add to the launch. */
   profileEnv: Record<string, string>;
+  addonDiscoveryParent?: string;
 }
 
 /**
@@ -74,6 +79,11 @@ export async function prepareMacRunner(request: MacRunnerRequest, deps: MacRunne
   const profileEnv = { ...(profile?.env ?? {}) };
   const bottlesRoot = path.join(request.dataRoot, 'bottles');
   const runtimeDlls: RuntimeDllSource = { dir: request.runtimeDllDir, overrideDir: runtimeOverrideDirectory(request.dataRoot), bundledDir: await bundledRuntimeDllDirectory(request.runtimeDllDir) };
+  if (request.fh5PreviewCompatibility && supportsFH5PreviewPack(request.storeId)) {
+    const fh5 = await prepareFH5PreviewPack({ enabled: true, storeId: request.storeId, gameRoot: request.gameRoot, dataRoot: request.dataRoot, engine: preview, runtime: runtimeDlls, log: request.log },
+      { assets: defaultFH5Assets, execute: defaultFH5Execute, prepare: deps.prepareCrossOver });
+    return { runner: fh5!.runner, engine: 'crossover-preview', profileEnv: {}, addonDiscoveryParent: fh5!.addonDiscoveryParent };
+  }
   if (!runtimeDlls.bundledDir) request.log('Le DLL patchate di MACxus non corrispondono a questo runtime: uso quelle del runtime (alcuni giochi potrebbero non funzionare).');
   const profileText = profile
     ? `profilo ${request.storeId?.toUpperCase()}${profile.note ? ` (${profile.note})` : ''}${Object.keys(profileEnv).length ? `, variabili: ${Object.keys(profileEnv).join(', ')}` : ''}`

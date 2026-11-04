@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "id": "fh5-preview-v1",
+  "storeId": "9NNX1VVR3KNQ",
+  "version": "20261015",
+  "buildTag": "cxpreview-20261015-rc1",
+  "sourceLockSHA256": "fdf7a6fd5db623e9d02b41b1d16759d645d7dba6b7b0c992a4ed83c223007c57",
+  "loaderEntitlementsSHA256": "744210d0e90c98700d63d865654ae3ac5a4e9325969bf8d43adb6b5250d57f46",
+  "preparedLoaderSHA256": "0179c0067abe71215c882593dc50528ce3b508de200c208b5957cdf3f715a91a",
+  "engineFiles": {
+    "lib/apple_gptk/wine/x86_64-windows/d3d12.dll": "1e19c9e72d3e835240690035b32b3f64919191e93a428e6f850ad711a3de564d",
+    "lib/wine/x86_64-unix/ntdll.so": "9b35a43bc84d45833510cef64b620648aafdda5e2ef5b527b7cedb123602e701",
+    "lib/wine/x86_64-unix/wine": "57144ccad16e75a171d48ea4b20974183e76c1cd5f5022bfc4b8917016b126b5",
+    "lib/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal": "a64950e8324cec32c9a442daa1fafd03823bd199fdd84fee5c73679b5fe86660",
+    "lib/apple_gptk/external/D3DMetal.framework/Versions/A/Resources/libmetalirconverter.dylib": "7a5ddc8081054b2c09ede8df1a9a7190fa7c00f3c219232f6e269b4ce02f6ca7",
+    "lib/apple_gptk/external/libd3dshared.dylib": "a70ba718a06c1372e0c7fe747dcd4c3ba6262791ccf0dd5cdebe6a8921c378ef",
+    "lib/apple_gptk/wine/x86_64-windows/d3d12core.dll": "a49a6e2c552c660f1c68c9e6495c3553b2f31f37a967a96c244119dd44f67119",
+    "lib/apple_gptk/wine/x86_64-windows/nvapi64.dll": "2f2229d4f5d5e777ced6d0706b7ca74d3586499b3e54ef395c5271185cc6889f",
+    "lib/apple_gptk/wine/x86_64-unix/nvapi64.so": "a70ba718a06c1372e0c7fe747dcd4c3ba6262791ccf0dd5cdebe6a8921c378ef"
+  },
+  "files": {
+    "macxus-metal4-timestamps.dylib": "f77cb14a1c0c5f4ced62a4c6ef70550358ad0a5e7617047a01060891cc081e1e",
+    "windows.web.dll": "d96352f9c95bde5c1b1c790b5eda80ea06b0772b9d44508ed8b6fb1aaa6e68d6",
+    "macxus-clock.dll": "1de8135b98f479edd050de1d0f496a771c42fc4143d0c4f3679ce83e7d3b6026",
+    "d3d12.dll": "077ab7292a121385f43655fb599b5097fd1dfce3fcedfc803e459652a16eb1e3",
+    "macxus-clock.so": "690c1bdef5133b445ddf9818b38aa4cd6ff381cabbb153d2e580db52bf372ab4",
+    "xgameruntime.dll": "7f3b8bc86edbaa3d85c6579160c32c14afa8d3961a164787e1434474d7411636"
+  },
+  "gameValidation": "Native profile prototype accepted; provider binding, legacy memory and signed compatibility cache changes pending game acceptance",
+  "knownLimitations": [
+    "Latency display is plausible in overlay trial; input-to-display accuracy, actual sleep/resume and long-session drift remain unvalidated",
+    "Black road surfaces remain",
+    "Metal 4 timestamp slot retirement has a bounded 4096-slot implementation",
+    "Native Apple identity / DLSS pairing remains unvalidated; this pack retains NVIDIA compatibility identity"
+  ],
+  "sourceArchive": {
+    "name": "fh5-preview-v1-source.tar.gz",
+    "sha256": "69c29fbe18ecdd52d7e54d2e920f116fdf03c88b4ad161fad8b24bed24fa910f"
+  }
+}

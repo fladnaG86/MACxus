@@ -11,7 +11,7 @@ import type { AccountLibraryPage, AppSnapshot, CatalogProduct, CatalogSearchResu
 import { estimateTimeRemaining } from '../shared/utils';
 import { nexusRuntimeUpdateAvailable, runtimeDisplay } from '../shared/runtime-display';
 import { subscriptionBadge } from '../shared/subscription';
-import { defaultLaunchTools, normalizeLaunchTools } from '../shared/launch-tools';
+import { defaultLaunchTools, normalizeLaunchTools, supportsFH5PreviewPack } from '../shared/launch-tools';
 import type { GameLaunchTools } from '../shared/types';
 import { PackageInstallProvider, usePackageInstall } from './PackageInstall';
 import { PackageSizeInfo } from './PackageSize';
@@ -636,7 +636,7 @@ function GameContentDialog({ game, data, close, toast }: { game: Game; data: App
   </section></div>;
 }
 
-export function GameLaunchToolFields({ value, change, antiCheat = false, mac = false }: { value: GameLaunchTools; change: (value: GameLaunchTools) => void; antiCheat?: boolean; mac?: boolean }) {
+export function GameLaunchToolFields({ value, change, storeId, antiCheat = false, mac = false }: { value: GameLaunchTools; storeId?: string; change: (value: GameLaunchTools) => void; antiCheat?: boolean; mac?: boolean }) {
   const { t } = useI18n();
   const update = (patch: Partial<GameLaunchTools>) => change({ ...value, ...patch });
   return <fieldset className="game-launch-tools"><legend>{t("Launch tools")}</legend>
@@ -647,6 +647,8 @@ export function GameLaunchToolFields({ value, change, antiCheat = false, mac = f
     {/* MangoHud and gamescope exist only on Linux; macOS offers Apple's Metal HUD instead. */}
     {mac ? <><label className="tool-checkbox"><input type="checkbox" checked={value.dlss === true} onChange={event => update({ dlss: event.target.checked })} /><span>{t("Enable DLSS (CrossOver)")}</span></label>
     <small>{t("Enables CrossOver's DLSS support for this game. Requires a compatible game and Apple silicon: macOS Tahoe or newer for D3DMetal, Sonoma or newer for DXMT. Also select DLSS in the game's graphics settings. Does not affect other engines.")}</small>
+    {supportsFH5PreviewPack(storeId) ? <><label className="tool-checkbox"><input type="checkbox" checked={value.fh5PreviewCompatibility === true} onChange={event => update({ fh5PreviewCompatibility: event.target.checked })} /><span>{t("FH5 Preview compatibility pack")}</span></label>
+    <small>{t("For the FH5 Store package on M5 Max with CrossOver Preview Rosetta 20261015. Uses a separate engine and bottle. Turn off to return to the normal launch setup; saved data in the pack bottle is kept.")}</small></> : null}
     <label className="tool-checkbox"><input type="checkbox" checked={value.metalHud === true} onChange={event => update({ metalHud: event.target.checked })} /><span>{t("Show Metal performance HUD")}</span></label>
     <small>{t("Apple's on-screen overlay with frame rate, frame time and GPU memory, for games rendered through D3DMetal.")}</small></> : <>
     <label className="tool-checkbox"><input type="checkbox" checked={value.mangoHud} onChange={event => update({ mangoHud: event.target.checked })} /><span>{t("Enable MangoHud")}</span></label>
@@ -734,7 +736,7 @@ export function LibraryPage({ data, toast, filters, onFiltersChange, selection }
     setMenu(undefined);
     setEditTitle(game.title);
     setEditLocale(game.locale ?? '');
-    setEditTools({ ...defaultLaunchTools, ...game.launchTools });
+    setEditTools({ ...defaultLaunchTools, ...game.launchTools, fh5PreviewCompatibility: supportsFH5PreviewPack(game.storeId) && game.launchTools?.fh5PreviewCompatibility === true });
     setLocaleOptions([]);
     if (kind === 'settings') void window.launcher.getGameLocales(game.id).then(setLocaleOptions).catch((error) => toast({ kind: 'error', message: errorMessage(error) }));
     setDialogGame({ id: game.id, kind });
@@ -854,7 +856,7 @@ export function LibraryPage({ data, toast, filters, onFiltersChange, selection }
         <label>{t("Display name")}<input required value={editTitle} onChange={(event) => setEditTitle(event.target.value)} /></label>
         <label>{t("Game language")}<select value={editLocale} onChange={(event) => setEditLocale(event.target.value)}><option value="">{t("System default")}</option>{localeOptions.map((locale) => <option key={locale} value={locale}>{locale}</option>)}{editLocale && !localeOptions.some((locale) => locale.toLowerCase() === editLocale.toLowerCase()) ? <option value={editLocale}>{editLocale}</option> : null}</select></label>
         <p>{t("Available languages come from the game manifest. All games use the active Xodus Runtime.")}</p>
-        <GameLaunchToolFields value={editTools} change={setEditTools} antiCheat={Boolean(modalGame.antiCheat?.executable)} mac={data.platform === 'darwin'} />
+        <GameLaunchToolFields value={editTools} change={setEditTools} storeId={modalGame.storeId} antiCheat={Boolean(modalGame.antiCheat?.executable)} mac={data.platform === 'darwin'} />
         <div className="dialog-actions"><button type="button" className="secondary" disabled={dialogBusy} data-gamepad-cancel onClick={() => setDialogGame(undefined)}>{t("Cancel")}</button><button className="primary" disabled={dialogBusy || !editTitle.trim()}><Check />{t("Save")}</button></div>
       </form>}
     </section></div> : null}

@@ -1,0 +1,60 @@
+{
+  "gameLaunched": false,
+  "accountUsed": false,
+  "sameCalibratedPrivateEngine": true,
+  "cases": [
+    {
+      "case": "accepted-nvidia",
+      "exitCode": 0,
+      "adapter": "ADAPTER vendor=10de device=2786 dedicated_video=115448725504 dedicated_system=0 shared_system=115448725504 flags=0 name=NVIDIA GeForce RTX 4070",
+      "flags": {
+        "D3DM_ENABLE_METALFX": "1",
+        "DXMT_ENABLE_NVEXT": "1"
+      }
+    },
+    {
+      "case": "apple-name-nvidia-ids",
+      "exitCode": 0,
+      "adapter": "ADAPTER vendor=10de device=2786 dedicated_video=115448725504 dedicated_system=0 shared_system=115448725504 flags=0 name=Apple M5 Max (D3DMetal)",
+      "flags": {
+        "D3DM_ENABLE_METALFX": "1",
+        "DXMT_ENABLE_NVEXT": "1"
+      }
+    },
+    {
+      "case": "apple-ids-dlss",
+      "exitCode": 0,
+      "adapter": "ADAPTER vendor=106b device=0000 dedicated_video=115448725504 dedicated_system=0 shared_system=115448725504 flags=0 name=Apple M5 Max (D3DMetal)",
+      "flags": {
+        "D3DM_ENABLE_METALFX": "1",
+        "DXMT_ENABLE_NVEXT": "1"
+      }
+    },
+    {
+      "case": "apple-ids-no-dlss",
+      "exitCode": 0,
+      "adapter": "ADAPTER vendor=106b device=0000 dedicated_video=115448725504 dedicated_system=0 shared_system=115448725504 flags=0 name=Apple M5 Max (D3DMetal)",
+      "flags": {
+        "D3DM_ENABLE_METALFX": "0",
+        "DXMT_ENABLE_NVEXT": "0"
+      }
+    },
+    {
+      "case": "no-manual-overrides",
+      "exitCode": 0,
+      "adapter": "ADAPTER vendor=10de device=2684 dedicated_video=115448725504 dedicated_system=0 shared_system=115448725504 flags=0 name=AMD Compatibility Mode",
+      "flags": {
+        "D3DM_ENABLE_METALFX": "1",
+        "DXMT_ENABLE_NVEXT": "1"
+      }
+    }
+  ],
+  "scope": "Current calibrated pack account-free DXGI identity matrix; no game or DLSS menu acceptance",
+  "baselineCommit": "f91cbfcdc02462d1bfd1e5f3ebb86ac9bfe62a8c",
+  "conclusions": [
+    "Apple display name can be reported while preserving exact accepted10de/2786IDs",
+    "Explicit Apple106b/device0 identity remains visible with DLSS feature flags; zero is an unknown diagnosticdeviceID, not a proven physicalPCIdeviceID",
+    "Removing manual identity overrides still yields NVIDIA10de/2684 and AMDCompatibilityMode name with DLSS flags",
+    "DXGI adapter probe alone does not establish DLSS menu availability or operation"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "candidateCommit": "609375a10d20f159e2f13a204a4641603252db45",
+  "entryPoint": "Normal MACxus Play in installed reviewed test app",
+  "target": "FH5 Microsoft Store / M5 Max / CrossOver Preview Rosetta 20261015 / Metal 4",
+  "configuration": {
+    "compatibilityPack": true,
+    "NVIDIACompatibilityIdentity": true,
+    "DLSS": true,
+    "MetalHUD": true,
+    "realGPUTimestamps": true,
+    "clockCalibration": false
+  },
+  "payloadSHA256": {
+    "macxus-metal4-timestamps.dylib": "cc7988fd67df029acd288f23184d34fc1d05497a52b0d9a61a88477eb32ef677",
+    "windows.web.dll": "d96352f9c95bde5c1b1c790b5eda80ea06b0772b9d44508ed8b6fb1aaa6e68d6",
+    "d3d12.dll": "5c0e9992cda8da8ab11b973ff98df03b794c4b2fe2a10b1cf9c7d26a46079604",
+    "xgameruntime.dll": "7f3b8bc86edbaa3d85c6579160c32c14afa8d3961a164787e1434474d7411636"
+  },
+  "normalPlay": {
+    "privateEnginePrepared": true,
+    "dedicatedBottleCreated": true,
+    "installedDLLHashesVerified": true,
+    "authenticatedAccountBridgeReady": true,
+    "userReached": "Driving or main menu",
+    "actualOnlineSessionAndMultiplayer": "User confirmed working",
+    "storeAndDLCDiscovery": "User confirmed visible",
+    "marketplacePurchaseDetailAction": "User reported marketplace error; purchase flow not accepted"
+  },
+  "evidenceLimits": [
+    "User gameplay report; no packet-level game-service acceptance proof",
+    "No purchase completed or purchase-flow acceptance",
+    "No new valid performance measurement",
+    "No long-session, Steam or other-hardware claim",
+    "Black-road investigation excluded; prior artifact remains unresolved",
+    "Clock calibration and Apple identity with DLSS remain separate pending work"
+  ],
+  "independentReview": {
+    "head": "609375a10d20f159e2f13a204a4641603252db45",
+    "result": "No findings; source-release F1 closed",
+    "fullCompilation": "Real compile evidence inspected, not independently rerun"
+  }
+}

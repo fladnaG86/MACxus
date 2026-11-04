@@ -1,0 +1,234 @@
+{
+  "schema": 1,
+  "scope": "Portable FH5 Preview GPU/QPC calibration integration; M5 Max / Preview Rosetta 20261015 / Metal 4",
+  "sourceLockSHA256": "5c3dcf279f39509c426c5bdb7ff8381bf8383dee78ce9d6d7cf335180c1ad8ee",
+  "files": {
+    "macxus-metal4-timestamps.dylib": "f77cb14a1c0c5f4ced62a4c6ef70550358ad0a5e7617047a01060891cc081e1e",
+    "windows.web.dll": "d96352f9c95bde5c1b1c790b5eda80ea06b0772b9d44508ed8b6fb1aaa6e68d6",
+    "macxus-clock.dll": "1de8135b98f479edd050de1d0f496a771c42fc4143d0c4f3679ce83e7d3b6026",
+    "d3d12.dll": "4834ca3c96d8e2673b711536d124dc3a2ce1cefb4b1f18931ac0b5b41ac2960d",
+    "macxus-clock.so": "690c1bdef5133b445ddf9818b38aa4cd6ff381cabbb153d2e580db52bf372ab4",
+    "xgameruntime.dll": "7f3b8bc86edbaa3d85c6579160c32c14afa8d3961a164787e1434474d7411636"
+  },
+  "sourceArchive": {
+    "name": "fh5-preview-v1-source.tar.gz",
+    "sha256": "ec53017385c02729017d7cac1dbedc11be476456e2965d34256d29749a48aeeb"
+  },
+  "reproduction": {
+    "allSixPayloadsMatch": true,
+    "buildReceiptsMatch": true,
+    "sourceArchivesMatch": true,
+    "differentOutputRootsIncludingSpaces": true,
+    "sourceLockSHA256": "5c3dcf279f39509c426c5bdb7ff8381bf8383dee78ce9d6d7cf335180c1ad8ee",
+    "files": {
+      "macxus-metal4-timestamps.dylib": "f77cb14a1c0c5f4ced62a4c6ef70550358ad0a5e7617047a01060891cc081e1e",
+      "windows.web.dll": "d96352f9c95bde5c1b1c790b5eda80ea06b0772b9d44508ed8b6fb1aaa6e68d6",
+      "macxus-clock.dll": "1de8135b98f479edd050de1d0f496a771c42fc4143d0c4f3679ce83e7d3b6026",
+      "d3d12.dll": "4834ca3c96d8e2673b711536d124dc3a2ce1cefb4b1f18931ac0b5b41ac2960d",
+      "macxus-clock.so": "690c1bdef5133b445ddf9818b38aa4cd6ff381cabbb153d2e580db52bf372ab4",
+      "xgameruntime.dll": "7f3b8bc86edbaa3d85c6579160c32c14afa8d3961a164787e1434474d7411636"
+    },
+    "sourceArchive": {
+      "name": "fh5-preview-v1-source.tar.gz",
+      "sha256": "ec53017385c02729017d7cac1dbedc11be476456e2965d34256d29749a48aeeb"
+    }
+  },
+  "standaloneArchiveConsumer": {
+    "realCompilation": true,
+    "applicationManifestAbsent": true,
+    "noCompilerStubs": true,
+    "allSixPayloadsEqual": true,
+    "receiptEqual": true,
+    "sourceArchiveEqual": true,
+    "gameLaunched": false,
+    "accountUsed": false
+  },
+  "offlinePackProbes": {
+    "gameLaunched": false,
+    "accountUsed": false,
+    "results": [
+      {
+        "name": "wineboot",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "data-fixture",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "input-layout-contracts",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "unused-blend-contracts",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "gpu-clock-reporting",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "io-lifetime",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "stream-debug-contracts",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "store-addons",
+        "exitCode": 0,
+        "summary": [
+          "CHECKS 774 FAILURES 0",
+          "FH5 ADDON CHECKS 850 FAILURES 0"
+        ]
+      },
+      {
+        "name": "clock-missing-bridge",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "clock-math",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "clock-native",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "metal4-counter-probe",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "metal4-state-probe",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "metal4-order-probe",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "metal4-lifetime-probe",
+        "exitCode": 0,
+        "summary": []
+      }
+    ]
+  },
+  "actualGeneratedWrapper": {
+    "gameLaunched": false,
+    "accountUsed": false,
+    "actualProductionPreparation": true,
+    "allSixProductionPayloads": true,
+    "results": [
+      {
+        "probe": "clock",
+        "exitCode": 0,
+        "summary": [
+          "CLOCK_OK samples=1024 bracketed=1024 monotonic=1024 gpu_frequency=24000000 qpc_frequency=10000000 call_median_ns=1000 call_p99_ns=30200 call_max_ns=65700",
+          "CLOCK_THREADS threads=8 samples=8192 monotonic=8192"
+        ]
+      },
+      {
+        "probe": "query",
+        "exitCode": 0,
+        "summary": [
+          "CALIBRATED_QUERY iteration=0 bracketed=1",
+          "CALIBRATED_QUERY iteration=1 bracketed=1",
+          "CALIBRATED_QUERY iteration=2 bracketed=1",
+          "CALIBRATED_QUERY iteration=3 bracketed=1",
+          "CALIBRATED_QUERY iteration=4 bracketed=1",
+          "CALIBRATED_QUERY iteration=5 bracketed=1",
+          "CALIBRATED_QUERY iteration=6 bracketed=1",
+          "CALIBRATED_QUERY iteration=7 bracketed=1",
+          "CALIBRATED_QUERY iteration=8 bracketed=1",
+          "CALIBRATED_QUERY iteration=9 bracketed=1",
+          "CALIBRATED_QUERY iteration=10 bracketed=1",
+          "CALIBRATED_QUERY iteration=11 bracketed=1",
+          "CALIBRATED_QUERY iteration=12 bracketed=1",
+          "CALIBRATED_QUERY iteration=13 bracketed=1",
+          "CALIBRATED_QUERY iteration=14 bracketed=1",
+          "CALIBRATED_QUERY iteration=15 bracketed=1",
+          "CALIBRATED_QUERY iteration=16 bracketed=1",
+          "CALIBRATED_QUERY iteration=17 bracketed=1",
+          "CALIBRATED_QUERY iteration=18 bracketed=1",
+          "CALIBRATED_QUERY iteration=19 bracketed=1",
+          "CALIBRATED_QUERY iteration=20 bracketed=1",
+          "CALIBRATED_QUERY iteration=21 bracketed=1",
+          "CALIBRATED_QUERY iteration=22 bracketed=1",
+          "CALIBRATED_QUERY iteration=23 bracketed=1",
+          "CALIBRATED_QUERY iteration=24 bracketed=1",
+          "CALIBRATED_QUERY iteration=25 bracketed=1",
+          "CALIBRATED_QUERY iteration=26 bracketed=1",
+          "CALIBRATED_QUERY iteration=27 bracketed=1",
+          "CALIBRATED_QUERY iteration=28 bracketed=1",
+          "CALIBRATED_QUERY iteration=29 bracketed=1",
+          "CALIBRATED_QUERY iteration=30 bracketed=1",
+          "CALIBRATED_QUERY iteration=31 bracketed=1",
+          "ASYNC_OK iterations=32 reset=31 repeated_resolve=32 future_queue_signal=32"
+        ]
+      }
+    ]
+  },
+  "launcherTests": {
+    "passed": 1439,
+    "skipped": 10,
+    "failed": 0
+  },
+  "runtimeToolTests": {
+    "passed": 42,
+    "skipped": 7,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "pythonBuildContractsPassed": 5,
+  "distributionContractsPassed": 3,
+  "experimentalRunnerIsolationTestsPassed": 6,
+  "liveOverlay": {
+    "candidate": "d273c40",
+    "userConfirmed": "Driving/benchmark loads; latency looks plausible",
+    "averageLatencyDisplayed": 61.1,
+    "frameGeneration": "On",
+    "NVIDIADLAA": "On",
+    "Reflex": "On",
+    "performanceAcceptance": false,
+    "actualGameHelperModulesObserved": true,
+    "liveCalibrationCallsObservedReadOnly": 94965,
+    "scalarReturnTrace": {
+      "operation": "GetClockCalibration",
+      "sampledCallCount": 131072,
+      "HRESULT": "S_OK / 00000000",
+      "calibrationImplemented": true,
+      "guestQPCFrequency": 10000000,
+      "GPUFrequencySample": 24000000
+    }
+  },
+  "limits": [
+    "Displayed latency is not independently measured input-to-display latency",
+    "Actual host sleep/resume and long-session drift untested",
+    "Single specified adapter/engine only",
+    "No new acceptance of frame generation correctness or performance",
+    "Black-road investigation excluded"
+  ],
+  "freshIndependentIntegrationReview": {
+    "head": "4e005f4328417d76b893592f55a9303147e80b95",
+    "productionFindings": [],
+    "runnerFinding": "P2 old prototype transformations reapplied to integrated source",
+    "runnerResolution": "Runner now reconstructs current production source directly; no duplicate native export or hook transformation",
+    "runnerValidation": "7 unit/reconstruction tests reach compilation; full documented command against linked-DLL template passes and preserves sentinel",
+    "independentRebuild": "All six production payloads, receipt and archive reproduced exactly; runtime/launcher tests passed"
+  },
+  "integratedNormalPlay": "User confirmed driving/benchmark works and latency is plausible; exact packaged value not supplied. See normal-play-acceptance.json."
+}

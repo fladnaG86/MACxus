@@ -1,0 +1,134 @@
+--- a/d3d12.c
++++ b/d3d12.c
+@@ -134,6 +134,8 @@
+     LONG ref;
+     UINT count;
+     UINT64 *values;
++    ID3D12Resource *results;
++    ID3D12Resource *marker;
+     ID3D12Device *device;
+ } FakeHeap;
+ 
+@@ -153,7 +155,7 @@
+ static ULONG STDMETHODCALLTYPE fh_Release(ID3D12QueryHeap *iface)
+ {
+     FakeHeap *h = (FakeHeap *)iface; ULONG r = InterlockedDecrement(&h->ref);
+-    if (!r) { h->device->lpVtbl->Release(h->device); free(h->values); free(h); }
++    if (!r) { if(h->results)h->results->lpVtbl->Release(h->results);if(h->marker)h->marker->lpVtbl->Release(h->marker);h->device->lpVtbl->Release(h->device); free(h->values); free(h); }
+     return r;
+ }
+ static HRESULT STDMETHODCALLTYPE fh_GetPrivateData(ID3D12QueryHeap *iface, REFGUID guid, UINT *size, void *data) { if (size) *size = 0; return (HRESULT)0x887A0002L; /* DXGI_ERROR_NOT_FOUND */ }
+@@ -211,62 +213,48 @@
+ static PFN_GetTimestampFrequency real_GetTimestampFrequency;
+ static PFN_GetClockCalibration real_GetClockCalibration;
+ 
+-static HRESULT STDMETHODCALLTYPE hook_CreateQueryHeap(ID3D12Device *dev, const D3D12_QUERY_HEAP_DESC *desc, REFIID riid, void **out)
+-{
+-    FakeHeap *h; HRESULT hr;
+-    if (!desc || (desc->Type != D3D12_QUERY_HEAP_TYPE_TIMESTAMP && desc->Type != D3D12_QUERY_HEAP_TYPE_COPY_QUEUE_TIMESTAMP))
+-        return real_CreateQueryHeap(dev, desc, riid, out);
+-    if (!out) return S_FALSE;
+-    h = calloc(1, sizeof *h); if (!h) return E_OUTOFMEMORY;
+-    h->lpVtbl = &fake_heap_vtbl; h->ref = 1; h->count = desc->Count;
+-    h->values = calloc(desc->Count ? desc->Count : 1, sizeof(UINT64));
+-    h->device = dev; dev->lpVtbl->AddRef(dev);
+-    hr = fh_QueryInterface((ID3D12QueryHeap *)h, riid, out);
+-    fh_Release((ID3D12QueryHeap *)h);
+-    LOG("timestamp query heap of %u entries served by the shim (hr 0x%08lx)", desc->Count, (unsigned long)hr);
+-    return hr;
+-}
+-
+-static void STDMETHODCALLTYPE hook_EndQuery(ID3D12GraphicsCommandList *list, ID3D12QueryHeap *heap, D3D12_QUERY_TYPE type, UINT index)
+-{
+-    FakeHeap *h;
+-    if (!is_fake(heap)) { inspect_game_query(list, heap, type, FALSE); real_EndQuery(list, heap, type, index); return; }
+-    h = (FakeHeap *)heap; if (index < h->count) h->values[index] = now_ticks();
+-}
+-
+-static void STDMETHODCALLTYPE hook_BeginQuery(ID3D12GraphicsCommandList *list, ID3D12QueryHeap *heap, D3D12_QUERY_TYPE type, UINT index)
+-{
+-    if (!is_fake(heap)) { inspect_game_query(list, heap, type, TRUE); real_BeginQuery(list, heap, type, index); }
+-}
+-
+-static void STDMETHODCALLTYPE hook_ResolveQueryData(ID3D12GraphicsCommandList *list, ID3D12QueryHeap *heap, D3D12_QUERY_TYPE type,
+-                                                    UINT start, UINT count, ID3D12Resource *dst, UINT64 offset)
+-{
+-    FakeHeap *h; Ring *r; UINT64 bytes, off; LONG64 pos; int tries;
+-    if (!is_fake(heap)) { real_ResolveQueryData(list, heap, type, start, count, dst, offset); return; }
+-    h = (FakeHeap *)heap; r = ring_for(h->device);
+-    if (!r || !dst || !count || start >= h->count) return;
+-    if (start + count > h->count) count = h->count - start;
+-    bytes = (UINT64)count * 8; if (bytes > RING_BYTES / 2) return;
+-    for (tries = 0; tries < 2; tries++) {
+-        pos = InterlockedExchangeAdd64(&r->cursor, (LONG64)bytes); off = (UINT64)pos % RING_BYTES;
+-        if (off + bytes <= RING_BYTES) break;
+-        InterlockedExchangeAdd64(&r->cursor, (LONG64)(RING_BYTES - off));   // skip the tail, start over
+-    }
+-    if (tries == 2) return;
+-    memcpy(r->cpu + off, h->values + start, (size_t)bytes);
+-    list->lpVtbl->CopyBufferRegion(list, dst, offset, r->buffer, off, bytes);
+-}
+-
+-static HRESULT STDMETHODCALLTYPE hook_GetTimestampFrequency(ID3D12CommandQueue *q, UINT64 *f)
+-{
+-    if (!f) return E_INVALIDARG;
+-    *f = qpc_freq; return S_OK;
+-}
+-static HRESULT STDMETHODCALLTYPE hook_GetClockCalibration(ID3D12CommandQueue *q, UINT64 *gpu, UINT64 *cpu)
+-{
+-    UINT64 t = now_ticks(); if (gpu) *gpu = t; if (cpu) *cpu = t; return S_OK;
+-}
++static LONG heap_sequence;
++static HRESULT STDMETHODCALLTYPE hook_CreateQueryHeap(ID3D12Device *dev,const D3D12_QUERY_HEAP_DESC *desc,REFIID iid,void **out){
++    if(!desc||desc->Type!=D3D12_QUERY_HEAP_TYPE_TIMESTAMP)return real_CreateQueryHeap(dev,desc,iid,out);
++    if(!out)return S_FALSE;
++    *out=NULL;if(!desc->Count||desc->Count>524288)return E_INVALIDARG;
++    FakeHeap *h=calloc(1,sizeof *h);if(!h)return E_OUTOFMEMORY;
++    h->lpVtbl=&fake_heap_vtbl;h->ref=1;h->count=desc->Count;h->device=dev;dev->lpVtbl->AddRef(dev);
++    D3D12_HEAP_PROPERTIES hp={.Type=D3D12_HEAP_TYPE_DEFAULT};
++    D3D12_RESOURCE_DESC rd={.Dimension=D3D12_RESOURCE_DIMENSION_BUFFER,.Width=(UINT64)desc->Count*8,.Height=1,.DepthOrArraySize=1,.MipLevels=1,.SampleDesc={1,0},.Layout=D3D12_TEXTURE_LAYOUT_ROW_MAJOR,.Flags=D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS};
++    HRESULT hr=dev->lpVtbl->CreateCommittedResource(dev,&hp,D3D12_HEAP_FLAG_NONE,&rd,D3D12_RESOURCE_STATE_COPY_DEST,NULL,&IID_ID3D12Resource,(void**)&h->results);
++    if(FAILED(hr)){fh_Release((ID3D12QueryHeap*)h);return hr;}
++    hp.Type=D3D12_HEAP_TYPE_UPLOAD;rd.Width=(UINT64)desc->Count*16;rd.Flags=D3D12_RESOURCE_FLAG_NONE;
++    hr=dev->lpVtbl->CreateCommittedResource(dev,&hp,D3D12_HEAP_FLAG_NONE,&rd,D3D12_RESOURCE_STATE_GENERIC_READ,NULL,&IID_ID3D12Resource,(void**)&h->marker);
++    if(FAILED(hr)){fh_Release((ID3D12QueryHeap*)h);return hr;}
++    char token[32];DWORD length=GetEnvironmentVariableA("MACXUS_GPU_QUERY_COOKIE",token,sizeof token);UINT64 cookie=length&&length<sizeof token?_strtoui64(token,NULL,16):0;
++    if(!cookie){fh_Release((ID3D12QueryHeap*)h);return E_FAIL;}
++    void *memory=NULL;D3D12_RANGE empty={0,0};hr=h->marker->lpVtbl->Map(h->marker,0,&empty,&memory);
++    if(FAILED(hr)){fh_Release((ID3D12QueryHeap*)h);return hr;}
++    LONG sequence=InterlockedIncrement(&heap_sequence);if(sequence>4095){h->marker->lpVtbl->Unmap(h->marker,0,NULL);fh_Release((ID3D12QueryHeap*)h);return E_OUTOFMEMORY;}
++    for(UINT index=0;index<desc->Count;index++){
++        UINT64 key=(cookie&0xffffffff00000000ULL)|((UINT64)sequence<<20)|((UINT64)index<<1);
++        ((UINT64*)memory)[index]=key;((UINT64*)memory)[desc->Count+index]=key|1;
++    }
++    h->marker->lpVtbl->Unmap(h->marker,0,NULL);
++    hr=fh_QueryInterface((ID3D12QueryHeap*)h,iid,out);fh_Release((ID3D12QueryHeap*)h);return hr;
++}
++static void STDMETHODCALLTYPE hook_EndQuery(ID3D12GraphicsCommandList *list,ID3D12QueryHeap *heap,D3D12_QUERY_TYPE type,UINT index){
++    if(!is_fake(heap)){real_EndQuery(list,heap,type,index);return;}
++    FakeHeap *h=(FakeHeap*)heap;if(type!=D3D12_QUERY_TYPE_TIMESTAMP||index>=h->count)return;
++    list->lpVtbl->CopyBufferRegion(list,h->results,(UINT64)index*8,h->marker,(UINT64)index*8,8);
++}
++static void STDMETHODCALLTYPE hook_BeginQuery(ID3D12GraphicsCommandList *list,ID3D12QueryHeap *heap,D3D12_QUERY_TYPE type,UINT index){if(!is_fake(heap))real_BeginQuery(list,heap,type,index);}
++static void STDMETHODCALLTYPE hook_ResolveQueryData(ID3D12GraphicsCommandList *list,ID3D12QueryHeap *heap,D3D12_QUERY_TYPE type,UINT start,UINT count,ID3D12Resource *destination,UINT64 offset){
++    if(!is_fake(heap)){real_ResolveQueryData(list,heap,type,start,count,destination,offset);return;}
++    FakeHeap *h=(FakeHeap*)heap;if(!destination||type!=D3D12_QUERY_TYPE_TIMESTAMP||start>=h->count||!count||count>h->count-start)return;
++    for(UINT index=0;index<count;index++)
++        list->lpVtbl->CopyBufferRegion(list,destination,offset+(UINT64)index*8,h->marker,((UINT64)h->count+start+index)*8,8);
++}
++static HRESULT STDMETHODCALLTYPE hook_GetTimestampFrequency(ID3D12CommandQueue *queue,UINT64 *frequency){if(!frequency)return E_INVALIDARG;*frequency=1000000000;return S_OK;}
++// Calibration, copy queues, bundles, reset/retirement and multi-queue concurrency
++// need separate validation. Do not invent a CPU/GPU calibration for the prototype.
++static HRESULT STDMETHODCALLTYPE hook_GetClockCalibration(ID3D12CommandQueue *queue,UINT64 *gpu,UINT64 *cpu){return E_NOTIMPL;}
+ 
+ // ---- patching ------------------------------------------------------------------------------
+ 
+@@ -1142,7 +1130,7 @@
+         alloc->lpVtbl->Release(alloc);
+     }
+     inspect_device(dev);
+-    LOG("device %p patched (timestamp frequency %llu Hz)", (void *)dev, (unsigned long long)qpc_freq);
++    LOG("device %p patched (real GPU bridge; GPU frequency 1000000000 Hz; calibration unsupported)", (void *)dev);
+ }
+ 
+ // ---- exports -------------------------------------------------------------------------------

@@ -169,3 +169,13 @@ describe('prepareMacRunner', () => {
       .rejects.toThrow(CROSSOVER_MISSING);
   });
 });
+
+
+it('ignores a stale FH5 pack toggle for an unrelated game and preserves its normal runner', async () => {
+  const cx = await crossOverWithGptk(await tmp()), calls: string[] = [];
+  const result = await prepareMacRunner({ setting: 'crossover', storeId: '9PN198B459VB', dataRoot: '/unrelated-game', runtimeDllDir: '/dll', fh5PreviewCompatibility: true, log: () => {} }, deps(cx, undefined, calls));
+  expect(result.engine).toBe('crossover');
+  expect(result.runner.command).toBe('/cx');
+  expect(result.addonDiscoveryParent).toBeUndefined();
+  expect(calls[0]).toBe('crossover /unrelated-game/bottles');
+});

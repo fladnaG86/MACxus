@@ -203,3 +203,15 @@ it('offers a package-relative executable override on every platform and shows th
   expect(html).toMatch(/<input[^>]*value="Binaries\/WinGDK\/Game-WinGDK-Shipping\.exe"/);
   expect(renderToStaticMarkup(<GameLaunchToolFields value={defaultLaunchTools} change={() => {}} />)).toContain('Custom executable');
 });
+
+
+it('offers the FH5 pack only for its Store identity on macOS', () => {
+  const render = (storeId?: string, mac = true, enabled = false) => renderToStaticMarkup(<GameLaunchToolFields value={{ ...defaultLaunchTools, fh5PreviewCompatibility: enabled }} change={() => {}} storeId={storeId} mac={mac} />);
+  for (const storeId of [undefined, '9PN198B459VB', '9NKV34XDW014', 'Forza Horizon 5', '9NNX1VVR3KNQ-extra']) {
+    expect(render(storeId)).not.toContain('FH5 Preview compatibility pack');
+    expect(render(storeId, true, true)).not.toContain('FH5 Preview compatibility pack');
+  }
+  expect(render('9NNX1VVR3KNQ')).toContain('FH5 Preview compatibility pack');
+  expect(render('9nnx1vvr3knq', true, true)).toContain('checked');
+  expect(render('9NNX1VVR3KNQ', false)).not.toContain('FH5 Preview compatibility pack');
+});

@@ -1032,16 +1032,19 @@ async function prepareGameLaunch(id: string): Promise<void> {
     let protonRunner: ProtonRunner | undefined;
     let macEngine = '';
     let macProfileEnv: Record<string, string> = {};
+    let addonDiscoveryParent: string | undefined;
     if (isMac) {
       // macOS: the game runs in the shared CrossOver bottle, or in the Highball
       // prefix when that engine is chosen (globally or by the game's profile). The selected runtime
       // `wine` is the Linux build and is never executed here; it only locates
       // the runtime DLLs copied into the bottle.
-      const mac = await prepareMacRunner({ setting: store.settings.macEngine, storeId: inspected.storeId ?? game.storeId, dataRoot, runtimeDllDir: runtimeDllDirectory(wine), log: writeLaunchLog });
+      const mac = await prepareMacRunner({ setting: store.settings.macEngine, storeId: inspected.storeId ?? game.storeId, dataRoot, runtimeDllDir: runtimeDllDirectory(wine), gameRoot: game.path, fh5PreviewCompatibility: game.launchTools?.fh5PreviewCompatibility === true, log: writeLaunchLog });
       protonRunner = mac.runner;
       macEngine = mac.engine;
       macProfileEnv = mac.profileEnv;
-      args[2] = protonRunner.command;
+      addonDiscoveryParent = mac.addonDiscoveryParent;
+      if (addonDiscoveryParent && !cloudRuntime) throw Error('The FH5 pack requires a runtime with the authenticated Xodus bridge.');
+      args[2] = protonRunner.launchCommand ?? protonRunner.command;
     } else {
       launchWrapper = await prepareGameWrapper(wine, game.launchTools, path.join(dataRoot, 'launch-wrappers'), process.env, game.path);
       protonRunner = await prepareProtonRunner(wine, compatibilityDataPath, steamRoot, launchWrapper.command);
@@ -1074,7 +1077,7 @@ async function prepareGameLaunch(id: string): Promise<void> {
       addGameLog('Metal performance HUD enabled for this game.');
     }
     if (isMac && protonRunner) {
-      const macOptions = await prepareMacLaunchOptions(protonRunner.command, game.launchTools,
+      const macOptions = await prepareMacLaunchOptions(protonRunner.launchCommand ?? protonRunner.command, game.launchTools,
         path.join(dataRoot, 'launch-wrappers'), environment, macProfileEnv, macEngine);
       launchWrapper = macOptions;
       args[2] = macOptions.command;
@@ -1099,7 +1102,7 @@ async function prepareGameLaunch(id: string): Promise<void> {
       // macOS caps AF_UNIX socket paths at 104 bytes; fall back to the temp dir
       // when <userData>/service-sessions/game-XXXXXX/xodus.sock would not fit.
       if (isMac && !serviceSocketPathFits(path.join(serviceRoot, 'service-sessions', 'game-XXXXXX', 'xodus.sock'))) serviceRoot = os.tmpdir();
-      serviceSession = await startXodusService(binary, serviceRoot, addGameLog);
+      serviceSession = await startXodusService(binary, serviceRoot, addGameLog, undefined, addonDiscoveryParent ? { addonDiscoveryParent } : undefined);
       serviceSessions.set(operationId, serviceSession);
       environment.XODUS_SOCKET = serviceSession.socketPath;
       environment.XODUS_BRIDGE_PORT = String(serviceSession.bridgePort);
@@ -1227,7 +1230,7 @@ async function installGameVcRuntime(id: string): Promise<void> {
     if (process.platform === 'darwin') {
       // macOS: VC++ goes into the same prefix the game launches in (CrossOver
       // bottle or Highball prefix), whose drive_c sits directly in it (no pfx/).
-      protonRunner = (await prepareMacRunner({ setting: store.settings.macEngine, storeId: inspected.storeId ?? game.storeId, dataRoot, runtimeDllDir: runtimeDllDirectory(wine), log: addLine })).runner;
+      protonRunner = (await prepareMacRunner({ setting: store.settings.macEngine, storeId: inspected.storeId ?? game.storeId, dataRoot, runtimeDllDir: runtimeDllDirectory(wine), gameRoot: game.path, fh5PreviewCompatibility: game.launchTools?.fh5PreviewCompatibility === true, log: addLine })).runner;
       prefix = protonRunner.compatibilityDataPath;
     } else {
       protonRunner = await prepareProtonRunner(wine, compatibilityDataPath, path.join(app.getPath('home'), '.steam', 'root'));

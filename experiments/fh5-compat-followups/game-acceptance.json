@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "functionalCandidate": "105216ab60d6ab76129cfebc267dec967c46a8b2",
+  "test": "Private diagnostic using complete production payloads and accepted GPU/calibration patch chain",
+  "userAcceptance": "Benchmark finished; no startup dialog",
+  "performanceMeasurement": false,
+  "normalMACxusPlayValidation": false,
+  "installedAppChanged": false,
+  "sourceGameChanged": false,
+  "compatibilityDatabase": {
+    "loadedDatabase27": true,
+    "missingPathErrors": 0,
+    "invalidSignatureErrors": 0,
+    "FH5LookupObserved": true,
+    "specificRuleMatchProven": false
+  },
+  "heapImport": {
+    "sampledCalls": 10,
+    "observedInitializations": 2,
+    "callsPerInitialization": 5,
+    "allObservedHRESULTs": "80004001",
+    "callerRVA": "a2859b",
+    "successfulOrdinaryAllocationsFollowed": true,
+    "benchmarkCompleted": true,
+    "exactFallbackBranchProven": false,
+    "assessment": "Unsupported import is tolerated in this tested benchmark; no fake implementation added"
+  },
+  "calibration": {
+    "samples": 37,
+    "allSucceeded": true,
+    "realGPUQueryFrequency": 24000000
+  },
+  "unhandledSEHErrors": 0,
+  "backendExit": {
+    "code": 0,
+    "signal": null
+  },
+  "gameAutomaticallyTimedOut": false,
+  "files": {
+    "macxus-metal4-timestamps.dylib": "f77cb14a1c0c5f4ced62a4c6ef70550358ad0a5e7617047a01060891cc081e1e",
+    "windows.web.dll": "d96352f9c95bde5c1b1c790b5eda80ea06b0772b9d44508ed8b6fb1aaa6e68d6",
+    "macxus-clock.dll": "1de8135b98f479edd050de1d0f496a771c42fc4143d0c4f3679ce83e7d3b6026",
+    "d3d12.dll": "077ab7292a121385f43655fb599b5097fd1dfce3fcedfc803e459652a16eb1e3",
+    "macxus-clock.so": "690c1bdef5133b445ddf9818b38aa4cd6ff381cabbb153d2e580db52bf372ab4",
+    "xgameruntime.dll": "7f3b8bc86edbaa3d85c6579160c32c14afa8d3961a164787e1434474d7411636"
+  },
+  "limits": [
+    "No performance comparison",
+    "No native Apple-ID or black-road fix",
+    "Legacy adapter independently validated against real provider; this game trace does not count its memory calls",
+    "Integrated normal MACxus Play still pending"
+  ]
+}
