@@ -8,7 +8,7 @@ paths. The complete small source recipe is included beside the manifest.
 
 ## Evidence and acceptance
 
-The shared endpoint/authentication candidate in PR #26 allowed Xbox token
+The shared endpoint/authentication candidate in [fork PR #26](https://github.com/zachspartofaday/MACxus/pull/26) allowed Xbox token
 requests to succeed, but 007 configuration still failed. A private diagnostic
 identified unsigned Azure Blob GET/HEAD requests with an unsupported Authorization
 value supplied in the title's inline header block. Azure returned HTTP 400 and
@@ -29,8 +29,12 @@ handling, but that does not establish a redirect cause or the identity of the
 network implementation used here. No vendor DLL is replaced in the game folder.
 
 The pack addresses configuration retrieval only. It does not install the shared
-PR #26 authentication candidate; keep that runtime selected when validating the
-combined setup. Merged #22–#24 alone did not provide 007 online acceptance.
+authentication runtime; keep a matching runtime selected when validating the
+combined setup. The grouped [upstream runtime PR #21](https://github.com/fladnaG86/MACxus/pull/21) contains that shared foundation;
+this pack is [upstream PR #23](https://github.com/fladnaG86/MACxus/pull/23). Neither
+publication nor offline tests establish live portable-pack acceptance. The earlier
+fork PRs #22–#24 alone did not provide 007 online acceptance. Preserve the
+[separate offline, ARM/FEX and private-online reports](https://github.com/zachspartofaday/MACxus/blob/upstream/fh5-preview-pack/docs/compatibility/games/007-first-light.md) when comparing results.
 
 ## Build and portability
 

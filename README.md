@@ -34,6 +34,8 @@ Developed and mostly tested on one machine (MacBook Pro M1 Max, macOS 27.2, Cros
 
 Working so far: TUNIC, Deep Rock Galactic, Minecraft Dungeons II, Nine Sols, Super Meat Boy 3D, Mad King Redemption, MARVEL Cosmic Invasion, Vampire Survivors, and Space Marine 2 offline. Halo works with M1 glitches; Forza Horizon 6 does not.
 
+The source-built FH5 Preview pack has separate M5 Max reports for normal Play/multiplayer and later launch/calibration/identity trials. Black road areas and marketplace errors remain. 007 has an offline gameplay report and a successful private online control; its narrower portable pack still needs a live test. These are unpublished test configurations; see the per-game reports and [pack guide](docs/GAME-COMPATIBILITY-PACKS.md).
+
 **[Game compatibility](docs/COMPATIBILITY.md#english): alphabetical layer comparison matrix and per-game test reports.** Tried a game? [Send a game report](https://github.com/fladnaG86/MACxus/issues/new?template=02-game-report.yml).
 
 ### Requirements
@@ -94,6 +96,8 @@ MACxus accede con il tuo account Microsoft, mostra la libreria (giochi acquistat
 Sviluppato e provato soprattutto su una macchina (MacBook Pro M1 Max, macOS 27.2, CrossOver 26.3), con alcuni resoconti della community da Mac M4 e M5. Aspettati qualche spigolo.
 
 Funzionano finora: TUNIC, Deep Rock Galactic, Minecraft Dungeons II, Nine Sols, Super Meat Boy 3D, Mad King Redemption, MARVEL Cosmic Invasion, Vampire Survivors e Space Marine 2 offline. Halo funziona con glitch su M1; Forza Horizon 6 no.
+
+Il pack FH5 Preview compilato dai sorgenti ha resoconti separati su M5 Max per Play normale/multiplayer e prove successive di avvio/calibrazione/identità. Restano zone nere della strada ed errori marketplace. 007 ha una prova di gioco offline e un controllo privato online riuscito; il pack portabile più ristretto deve ancora essere provato nel gioco. Sono configurazioni di prova non pubblicate; consulta le schede dei giochi e la [guida ai pack](docs/GAME-COMPATIBILITY-PACKS.md).
 
 **[Compatibilità dei giochi](docs/COMPATIBILITY.md#italiano): matrice alfabetica di confronto tra motori e resoconti delle prove per gioco.** Hai provato un gioco? [Invia un resoconto](https://github.com/fladnaG86/MACxus/issues/new?template=02-game-report.yml).
 

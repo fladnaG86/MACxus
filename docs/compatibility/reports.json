@@ -5,7 +5,7 @@
       "id": "007-first-light",
       "title": "007 First Light",
       "store": "microsoft-store",
-      "storeId": null,
+      "storeId": "9PN198B459VB",
       "reports": [
         {
           "id": "bond-preview-rosetta-m5max",
@@ -89,6 +89,60 @@
             {
               "kind": "historical",
               "url": "https://github.com/fladnaG86/MACxus/pull/8"
+            }
+          ]
+        },
+        {
+          "id": "bond-preview-public-config-control",
+          "result": "partial",
+          "layer": "crossover-preview",
+          "layerVersion": null,
+          "architecture": "x86_64-rosetta",
+          "macOS": null,
+          "chip": null,
+          "macModel": null,
+          "macxusVersion": "Private configuration control with shared runtime candidate 63f5e7c",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "d3dmetal",
+            "version": null
+          },
+          "testedAt": "2026-11-02",
+          "scope": [
+            "menu",
+            "online"
+          ],
+          "checks": {
+            "launch": "passed",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "passed"
+          },
+          "controllers": [],
+          "requirements": [
+            {
+              "en": "Private broader WinHTTP configuration control with shared runtime candidate 63f5e7c. This is distinct from the narrower portable bond-public-config-v1 pack, whose live game acceptance remains pending.",
+              "it": "Controllo privato WinHTTP più ampio con il runtime condiviso candidato 63f5e7c. È distinto dal pack portabile più ristretto bond-public-config-v1, ancora da verificare nel gioco."
+            }
+          ],
+          "summary": {
+            "en": "The user reported online access after the isolated configuration control; observed configuration GET/HEAD requests changed from HTTP 400 to 200. This test does not establish gameplay, every online feature, or live acceptance of the portable pack. The earlier offline and ARM/FEX reports remain separate.",
+            "it": "L’utente ha confermato l’accesso online dopo il controllo isolato della configurazione; le richieste GET/HEAD osservate sono passate da HTTP 400 a 200. La prova non verifica il gioco completo, tutte le funzioni online o il pack portabile nel gioco. Restano separati i precedenti resoconti offline e ARM/FEX."
+          },
+          "sources": [
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/xsts-endpoint-routing/azure-anonymous-control.json"
+            },
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/xsts-endpoint-routing/portable-pack-validation.json"
+            },
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/fladnaG86/MACxus/pull/23"
             }
           ]
         }
@@ -327,6 +381,117 @@
             {
               "kind": "maintainer",
               "url": "https://github.com/fladnaG86/MACxus/blob/main/docs/DISCOVERIES.md#20-forza-horizon-5-gpu-identity-and-timestamp-queries"
+            }
+          ]
+        },
+        {
+          "id": "fh5-preview-portable-m5max-online",
+          "result": "issues",
+          "layer": "crossover-preview",
+          "layerVersion": "20261015 (cxpreview-20261015-rc1)",
+          "architecture": "x86_64-rosetta",
+          "macOS": null,
+          "chip": "M5 Max",
+          "macModel": null,
+          "macxusVersion": "Unpublished normal-Play test build (source 609375a1)",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "d3dmetal",
+            "version": null
+          },
+          "testedAt": null,
+          "scope": [
+            "gameplay",
+            "online"
+          ],
+          "checks": {
+            "launch": "passed",
+            "gameplay": "issues",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "passed"
+          },
+          "controllers": [],
+          "requirements": [
+            {
+              "en": "Unpublished normal-Play test build from source 609375a1; enable the FH5 Preview compatibility pack for Store ID 9NNX1VVR3KNQ. M5 Max, Metal 4 and the fingerprinted Preview Rosetta build are required. This baseline used NVIDIA compatibility identity, DLSS and real GPU timestamps, without clock calibration.",
+              "it": "Build di prova non pubblicata con Play normale, sorgenti 609375a1; attivare FH5 Preview compatibility pack per lo Store ID 9NNX1VVR3KNQ. Richiede M5 Max, Metal 4 e la build Preview Rosetta verificata. Questa base usava identità compatibile NVIDIA, DLSS e timestamp GPU reali, senza calibrazione degli orologi."
+            }
+          ],
+          "summary": {
+            "en": "Normal MACxus Play reached driving/menu, and the user confirmed an online session and multiplayer. Store/DLC entries were visible, but opening marketplace purchase details returned an error; purchasing is not accepted. Black road/material regions remain unresolved. No controlled performance, Steam, other-hardware or long-session result is claimed.",
+            "it": "Play normale di MACxus ha raggiunto guida/menu; l’utente ha confermato sessione online e multiplayer. Le voci Store/DLC erano visibili, ma i dettagli d’acquisto davano un errore marketplace; gli acquisti non sono verificati. Restano zone nere della strada/materiali. Nessun risultato controllato su prestazioni, Steam, altro hardware o sessioni lunghe."
+          },
+          "sources": [
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-preview-portable/normal-play-acceptance.json"
+            },
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/fladnaG86/MACxus/pull/24"
+            }
+          ]
+        },
+        {
+          "id": "fh5-preview-integrated-m5max-launch",
+          "result": "partial",
+          "layer": "crossover-preview",
+          "layerVersion": "20261015 (cxpreview-20261015-rc1)",
+          "architecture": "x86_64-rosetta",
+          "macOS": null,
+          "chip": "M5 Max",
+          "macModel": null,
+          "macxusVersion": "Installed fork build (source c2bb656e)",
+          "gameVersion": null,
+          "runtimeVersion": null,
+          "graphics": {
+            "backend": "d3dmetal",
+            "version": null
+          },
+          "testedAt": "2026-11-04",
+          "scope": [
+            "launch"
+          ],
+          "checks": {
+            "launch": "passed",
+            "gameplay": "unknown",
+            "video": "unknown",
+            "audio": "unknown",
+            "online": "unknown"
+          },
+          "controllers": [],
+          "requirements": [
+            {
+              "en": "Installed fork build c2bb656e with fh5-preview-v1 enabled for the FH5 Store package; M5 Max, Metal 4, macOS 26+ and Preview Rosetta 20261015 are recipe requirements. The exact tested macOS/game versions were not recorded in this acceptance.",
+              "it": "Build del fork installata c2bb656e con fh5-preview-v1 attivo per FH5 Store; la ricetta richiede M5 Max, Metal 4, macOS 26+ e Preview Rosetta 20261015. Le versioni esatte di macOS/gioco non sono registrate in questa accettazione."
+            },
+            {
+              "en": "Uses a separate engine and bottle. Disabling the pack returns to the normal setup while retaining the pack bottle and saves; saves are not automatically migrated. Requires a build containing the verified pack, not just the shared runtime fixes.",
+              "it": "Usa motore e bottle separati. Disattivare il pack ripristina l’avvio normale conservando bottle e salvataggi del pack; i salvataggi non vengono migrati automaticamente. Serve una build contenente il pack verificato, non bastano le correzioni del runtime condiviso."
+            }
+          ],
+          "summary": {
+            "en": "The user confirmed launch after the pinned-provider alias correction removed the invalid-pack preparation error. This latest acceptance covers launch only; multiplayer and marketplace were not retested. Earlier, separate normal-Play trials confirmed a plausible 35 ms latency display and the Apple M5 Max name with DLSS/DLAA. Those trials do not measure input-to-display latency or validate native Apple vendor IDs with DLSS. Black road areas, purchasing, real sleep/resume, long-session drift, Steam and broader hardware coverage remain unresolved or untested.",
+            "it": "L’utente ha confermato l’avvio dopo la correzione dell’alias del provider verificato che eliminava l’errore di preparazione del pack. Questa accettazione copre solo l’avvio; multiplayer e marketplace non sono stati riprovati. Prove precedenti e separate con Play normale hanno confermato latenza visualizzata plausibile di 35 ms e nome Apple M5 Max con DLSS/DLAA. Non misurano la latenza input-schermo né verificano ID vendor Apple nativi con DLSS. Restano irrisolti o non provati zone nere della strada, acquisti, sospensione/ripresa reale, deriva su sessioni lunghe, Steam e altro hardware."
+          },
+          "sources": [
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-compat-followups/installed-play-acceptance.json"
+            },
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-clock-calibration/normal-play-acceptance.json"
+            },
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-apple-identity/normal-play-acceptance.json"
+            },
+            {
+              "kind": "maintainer",
+              "url": "https://github.com/fladnaG86/MACxus/pull/24"
             }
           ]
         }

@@ -26,15 +26,16 @@
     "macxus-clock.so": "690c1bdef5133b445ddf9818b38aa4cd6ff381cabbb153d2e580db52bf372ab4",
     "xgameruntime.dll": "7f3b8bc86edbaa3d85c6579160c32c14afa8d3961a164787e1434474d7411636"
   },
-  "gameValidation": "Native profile prototype accepted; provider binding, legacy memory and signed compatibility cache changes pending game acceptance",
+  "gameValidation": "Original portable pack reached normal Play and multiplayer; separate calibration/identity trials passed; latest integrated installed build has user-confirmed launch only",
   "knownLimitations": [
-    "Latency display is plausible in overlay trial; input-to-display accuracy, actual sleep/resume and long-session drift remain unvalidated",
-    "Black road surfaces remain",
+    "35 ms latency display reported in a separate normal-Play calibration trial; input-to-display accuracy, actual sleep/resume and long-session drift remain unvalidated",
+    "Black road surfaces remain; marketplace purchase details report an error and purchasing is not accepted",
     "Metal 4 timestamp slot retirement has a bounded 4096-slot implementation",
-    "Native Apple identity / DLSS pairing remains unvalidated; this pack retains NVIDIA compatibility identity"
+    "Apple GPU name with Preview-selected NVIDIA compatibility IDs in DLSS mode; native Apple vendor IDs with DLSS remain unvalidated",
+    "No new multiplayer test of the latest integrated build; no Steam or broader hardware acceptance"
   ],
   "sourceArchive": {
     "name": "fh5-preview-v1-source.tar.gz",
-    "sha256": "69c29fbe18ecdd52d7e54d2e920f116fdf03c88b4ad161fad8b24bed24fa910f"
+    "sha256": "919f02d3a4310b5f66831e67cb19fd50cf0076b5dafd809fa1182f9c56d209ed"
   }
 }

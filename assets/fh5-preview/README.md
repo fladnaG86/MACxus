@@ -4,17 +4,32 @@ An opt-in, source-built compatibility pack for the **FH5 Microsoft Store package
 (`9NNX1VVR3KNQ`) on **M5 Max**, macOS 26+, CrossOver Preview **Rosetta 20261015**
 (build `cxpreview-20261015-rc1`). Metal 4 is required. This is the portable
 packaging of components previously exercised in private FH5 driving, benchmark
-and online tests. The original portable pack passed normal Play and multiplayer
-on this target. The separate calibration overlay completed a user benchmark with
-a plausible average-latency display of 61.1. The integrated calibration payload
-still needs its own normal-Play trial; this is not input-to-display measurement
-acceptance. See `experiments/fh5-preview-portable/normal-play-acceptance.json` and
-`experiments/fh5-clock-calibration` in the repository.
+and online tests. These are unpublished test builds, with separate acceptance:
 
-The game’s launch settings expose “FH5 Preview compatibility pack.” It is off by
-default. Enabling it requires an app build containing the verified payload. The
-launcher validates the engine/renderer fingerprints, makes a private engine copy,
-signs only that copy, and uses a dedicated bottle. It does not modify the installed
+- The original normal-Play portable pack reached an online session and multiplayer.
+  Store/DLC entries were visible, but marketplace purchase details returned an error.
+- A later normal-Play calibration build completed driving/benchmark with a plausible
+  displayed average latency of 35 ms. An earlier private diagnostic displayed
+  61.1 ms; these are different runs, not a controlled comparison or independently
+  measured input-to-display latency.
+- A separate normal-Play identity build retained DLSS/DLAA and displayed
+  `Apple M5 Max (D3DMetal)`. Preview still supplies NVIDIA compatibility IDs in
+  DLSS mode; native Apple vendor identity with DLSS remains unvalidated.
+- The latest installed combined build passed user-confirmed launch after the
+  pinned-provider alias fix. Multiplayer and marketplace were not retested on
+  that exact build.
+
+See the [per-configuration reports](https://github.com/zachspartofaday/MACxus/blob/upstream/fh5-preview-pack/docs/compatibility/games/forza-horizon-5.md),
+`experiments/fh5-preview-portable/normal-play-acceptance.json`,
+`experiments/fh5-clock-calibration/normal-play-acceptance.json`,
+`experiments/fh5-apple-identity/normal-play-acceptance.json` and
+`experiments/fh5-compat-followups/installed-play-acceptance.json` in the repository.
+
+Only FH5's launch settings on macOS expose “FH5 Preview compatibility pack.”
+It is off by default; unrelated games ignore stale values of this setting.
+Enabling it requires an app build containing the verified payload. The launcher
+validates the engine/renderer fingerprints, makes a private engine copy, signs
+only that copy, and uses a dedicated bottle. It does not modify the installed
 Preview app or the original game. The launcher installs the new runtime/proxy
 only into that bottle and enables native injection only for the game command;
 registry/locale/prerequisite tools and Stop retain the ordinary vendor runner.
@@ -30,10 +45,12 @@ uninstall script or modification of the original game/application.
 
 ## Components and bounds
 
-- Shared authentication, readiness and product-query changes from fork PRs
-  #22–#24, plus the add-on license adapter and bounded installation-root mapping.
+- Shared authentication, readiness and product-query compatibility, plus the
+  add-on license adapter and bounded installation-root mapping. The source pack
+  retains its own validated runtime base; updating the shared runtime alone
+  does not replace this payload.
 - Native authenticated discovery through the selected backend and launcher
-  bridge (#25). Catalog metadata supplies candidates; the runtime separately
+  bridge. Catalog metadata supplies candidates; the runtime separately
   verifies fresh signed exact-SKU receipts. Unknown/incomplete inventory fails
   conservatively. Public metadata never grants ownership.
 - Real Metal 4 GPU query timestamps and paired GPU/QPC calibration through an
@@ -50,8 +67,10 @@ uninstall script or modification of the original game/application.
   settings are written, profile handles remain provider-owned, and driver
   versions are obtained from the native API. The isolated full GPU/calibration
   trial reached the benchmark without the startup dialog and displayed `576.2`
-  with DLAA/frame generation retained; the integrated pack still needs normal
-  Play validation for this addition. No version number or dialog is overridden.
+  with DLAA/frame generation retained. The latest integrated-build launch
+  acceptance is separate from that benchmark trial. The displayed version is
+  Preview's compatibility version, not an NVIDIA macOS driver. No version
+  number or dialog is overridden.
 - Both NVAPI adapters require the pinned provider PE, matching loaded executable
   bytes and its expected query entry point. The launcher copies the verified PE
   from the user's selected engine into the dedicated bottle; no vendor binary
@@ -68,7 +87,9 @@ uninstall script or modification of the original game/application.
 - `MACXUS_FH5_HEAP_TRACE=1` is a bounded, read-only diagnostic for heap import and
   nearby successful allocations. It is off in normal Play. The native synthetic
   control returns `E_NOTIMPL` for address import and succeeds with an ordinary
-  heap; whether FH5's particular call takes a harmless fallback remains pending.
+  heap. A private game diagnostic completed the benchmark despite the observed
+  import failures and made successful ordinary allocations afterward. The exact
+  fallback branch remains unproven; no fake heap-import implementation is added.
 - Explicit input-layout offsets; the tested
   absent-render-target blend adjustment; guest committed-memory accounting and
   dual-stack UDP TTL handling. Normal diagnostic observers remain off.
@@ -77,8 +98,9 @@ uninstall script or modification of the original game/application.
   changing allocator data. It uses the game’s own functions and does not write
   game instructions. Other executable builds are refused by that adapter.
 
-The pack retains NVIDIA compatibility identity. Native Apple identity with DLSS
-is unvalidated; it is not enabled by this recipe. Black road regions remain,
+The pack shows the Apple GPU name while retaining Preview-selected NVIDIA
+compatibility IDs in DLSS mode. Native Apple identity with DLSS is unvalidated;
+it is not enabled by this recipe. Black road regions and marketplace errors remain,
 actual sleep/resume and long-session calibration drift remain unvalidated, and
 Metal query-identity retirement remains a bounded 4096-slot implementation.
 No all-modes, all-game-builds, Steam-edition or long-session acceptance is claimed.

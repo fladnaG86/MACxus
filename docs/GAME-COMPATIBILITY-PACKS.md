@@ -1,9 +1,25 @@
 # Game compatibility packs
 
-MACxus can apply a tested compatibility fix to one Store product and one exact
-CrossOver build. Halo's movie fix is the first bundled pack. Adding another
-supported Wine PE overlay uses the same handler; it does not require another
-branch in the launcher. A pack does not establish compatibility for other games.
+MACxus can apply a compatibility fix to one Store product and one exact
+CrossOver build. Packs use private engines or bottles; they do not establish
+support for other titles. Source-check success is not release or game acceptance.
+
+| Pack | Selection and requirements | Observed scope and remaining limits |
+| --- | --- | --- |
+| [Halo movies](HALO-PREVIEW-MEDIA.md) | Exact catalog route; Rosetta Preview engine | Startup movies and specified controller input tested; full gameplay acceptance is not established by those tests. |
+| [007 public configuration](../assets/compatibility-packs/bond-public-config-v1/README.md) | Store `9PN198B459VB`; Preview Rosetta `20261015`, build `cxpreview-20261015-rc1` | Private broader control reached online. The narrower portable pack has offline contracts and build checks; live portable-pack acceptance is pending. |
+| [FH5 Preview](../assets/fh5-preview/README.md) | Store `9NNX1VVR3KNQ`; opt-in **FH5 Preview compatibility pack** in that game's settings on macOS; M5 Max, macOS 26+, Metal 4 and the exact Preview build above | Original normal-Play pack reached multiplayer; later calibration/identity and integrated-launch tests have separate evidence. Black road areas and marketplace purchase errors remain. |
+
+See the [compatibility matrix](COMPATIBILITY.md) and its per-game reports for the
+actual tested configurations. Requirements such as macOS 26+ do not mean every
+version or compatible-looking Mac has been tested. No Steam-edition or general
+multiplayer compatibility follows from these Store-title reports.
+
+The sections below describe the catalog's `wine-engine-overlay` handler used by
+Halo. The 007 runtime pack and opt-in FH5 source pack use separately validated
+handlers; they are not extra entries in that catalog. Their linked READMEs cover
+building, selection and rollback. Shared runtime authentication/Store fixes alone
+do not install these per-game packs or guarantee game-service acceptance.
 
 ## Selection and isolation
 
