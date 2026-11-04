@@ -1,10 +1,10 @@
 name: Media pack reproducibility
 on:
   pull_request:
-    paths: ['assets/compatibility-packs/**', 'assets/runtime-patches/crossover-preview-halo-mf-software-output.patch', 'src/shared/compatibility-pack-schema.*', 'scripts/compatibility-pack-build.*', 'scripts/compatibility-packs.*', 'scripts/prepare-compatibility-packs.mjs', 'scripts/preview-media-experiment.lock.json', '.github/workflows/media-pack-reproducibility.yml']
+    paths: ['assets/compatibility-packs/**', 'assets/runtime-patches/crossover-preview-halo-mf-software-output.patch', 'src/shared/compatibility-pack-schema.*', 'scripts/compatibility-pack-build.*', 'scripts/compatibility-packs.*', 'scripts/prepare-compatibility-packs.mjs', 'scripts/prepare-mac-media-packs.mjs', 'scripts/prepare-runtime-pack.mjs', 'scripts/runtime-packs.*', 'src/shared/runtime-pack-schema.*', 'scripts/preview-media-experiment.lock.json', '.github/workflows/media-pack-reproducibility.yml']
   push:
     branches: [main, 'fix/**']
-    paths: ['assets/compatibility-packs/**', 'assets/runtime-patches/crossover-preview-halo-mf-software-output.patch', 'src/shared/compatibility-pack-schema.*', 'scripts/compatibility-pack-build.*', 'scripts/compatibility-packs.*', 'scripts/prepare-compatibility-packs.mjs', 'scripts/preview-media-experiment.lock.json', '.github/workflows/media-pack-reproducibility.yml']
+    paths: ['assets/compatibility-packs/**', 'assets/runtime-patches/crossover-preview-halo-mf-software-output.patch', 'src/shared/compatibility-pack-schema.*', 'scripts/compatibility-pack-build.*', 'scripts/compatibility-packs.*', 'scripts/prepare-compatibility-packs.mjs', 'scripts/prepare-mac-media-packs.mjs', 'scripts/prepare-runtime-pack.mjs', 'scripts/runtime-packs.*', 'src/shared/runtime-pack-schema.*', 'scripts/preview-media-experiment.lock.json', '.github/workflows/media-pack-reproducibility.yml']
   workflow_dispatch:
 permissions:
   contents: read

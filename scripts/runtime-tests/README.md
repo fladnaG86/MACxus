@@ -69,6 +69,10 @@ The runtime does not provide a unique platform device identifier.
   validation through the real package ABI. Already-installed chunks need no
   reordering; empty package identifiers are rejected, not treated as the current
   package. These checks do not establish a title's startup compatibility.
+  Current-package regressions also cover build-machine SourcePath relocation via
+  DestinationPath, a layout over 1 MiB, missing payload, traversal/empty/duplicate
+  layouts, and a crowded sibling-discovery root. The current package must remain
+  ready while unknown or unrelated package discovery still enforces its bounds.
   Uses only synthetic files in a disposable prefix, without accounts or licensing.
   File presence checks are not a full package-integrity or ownership verification.
 - `package-legacy-probe.c`: independent raw x64 COM-slot checks for the legacy
@@ -98,6 +102,23 @@ The runtime does not provide a unique platform device identifier.
   with two isolated device roots and a closed memory transport. Checks delayed
   completion, overlapping revisions, failed transfers, durable retries and
   session-release notifications without contacting cloud services.
+- `windows-title-auth-probe.c`: compiles the actual legacy Windows title-token helper
+  with a closed synthetic HTTP/JSON transport. Checks retained device/proof key,
+  TitleId payload, refused/empty/malformed replies, zero identity and escaped input.
+- `title-endpoint-probe.c`: compiles the production wildcard/endpoint lookup and
+  policy-table growth. Checks title-specific/path precedence, relocated existing
+  policy pointers, overflow, WebSocket upgrades, catch-all/trailing-star
+  backtracking, DNS case and host/scheme boundaries.
+- `user-privilege-probe.c --refusal-only`: exercises the production diagnostic
+  scanner and a closed synthetic HTTP-400 transport. Rejects malformed numeric
+  JSON and unsupported nested/escaped-key objects. The contract runner enables
+  Wine's `trace+web` channel and checks complete stdout/stderr for response-body
+  markers, including a message and redirect that must never be emitted. Truncated
+  capture fails the check, even if the marker lies beyond retained output.
+- `preferred-udp-port-probe.c`: compiles the synchronous networking adapter and
+  checks rejected null output and a successful zero/no-platform-preference result.
+  These three probes use no Xbox account, game or live network. Their generated
+  source includes are test-only and are never packaged.
 - `user-audio-probe.c`: communication audio endpoint getters and notification
   lifetime using the actual helper, a closed MMDevice source and real task queues.
   Covers Unicode, missing devices, failed initialization, queue cancellation,
@@ -275,3 +296,21 @@ checks the resulting package-local storage identity, so a misleading success
 without loading the configuration cannot pass. Three fresh processes use
 synthetic configuration and no account/network/cloud. This does not prove a
 game's version gate or the cause of an early game exit.
+
+Current-package readiness regressions also reject root-level FileGroups, unknown
+payload containers, FileGroups inside Features, and nested payload under Feature.
+These cases accompany a valid chunk so silently skipping the invalid declaration
+would produce a detectable false readiness result.
+
+`store-products-probe.exe` adds explicit product-query regressions using the
+production `xstore_products.h` and cleanup helpers. `build-store-probes.mjs`
+generates and embeds synthetic JSON fixtures, so probes run from any working
+directory. Cases cover unowned public listings, exact-SKU ownership/expiry,
+malformed/unrequested/duplicate catalog rows, action/kind filtering, package
+metadata, cancellation before and during worker execution, failure propagation,
+identity separation, one-shot result transfer, stale proof and closing a query
+from its enumeration callback. No live account or catalog fixture is needed.
+
+Mixed-SKU pricing fixtures exercise both SKU orders with paid and genuinely free
+Purchase offers. A Details/Redeem listing must not mask the Purchase display
+price; price magnitude is not used as an ownership or Purchase signal.

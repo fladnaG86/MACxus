@@ -1,0 +1,246 @@
+--- a/dlls/xgameruntime/xuser.c
++++ b/dlls/xgameruntime/xuser.c
+@@ -23,6 +23,7 @@
+ #include <afunix.h>
+ #include <libxml/parser.h>
+ #include <libxml/tree.h>
++#include <stdint.h>
+ #include "private.h"
+ #include "userprovider.h"
+ #include "util.h"
+@@ -662,6 +663,76 @@
+     return hr;
+ }
+ 
++/* Legacy Windows packages use TitleId instead of MSAAppId. The title token
++ * must belong to the same device/proof key as this user's existing chain. */
++static HRESULT windows_title_auth( XUserHandle user )
++{
++    static const char format[] = "{\"RelyingParty\":\"http://auth.xboxlive.com\",\"TokenType\":\"JWT\","
++        "\"Properties\":{\"DeviceToken\":\"%s\",\"TitleId\":%lu,\"ProofKey\":%s}}";
++    IJsonObject *object = NULL;
++    HSTRING token = NULL;
++    char *body = NULL, *replacement = NULL;
++    BYTE *buffer = NULL;
++    SIZE_T body_size = 0, buffer_size = 0;
++    DWORD status = 0;
++    int body_length, written;
++    HRESULT hr = E_INVALIDARG;
++
++    if (!titleId || !user->deviceToken || !user->proofKey) goto cleanup;
++    for (const unsigned char *c = (const unsigned char *)user->deviceToken; *c; ++c)
++        if (*c < 0x20 || *c == '"' || *c == '\\') goto cleanup;
++    if (strlen(user->deviceToken) > 1024 * 1024 || strlen(user->proofKey) > 1024 * 1024) goto cleanup;
++    body_length = snprintf(NULL, 0, format, user->deviceToken, (unsigned long)titleId, user->proofKey);
++    if (body_length <= 0 || body_length >= 1024 * 1024) goto cleanup;
++    body_size = (SIZE_T)body_length + 1;
++    if (!(body = calloc(1, body_size))) { hr = E_OUTOFMEMORY; goto cleanup; }
++    written = snprintf(body, body_size, format, user->deviceToken, (unsigned long)titleId, user->proofKey);
++    if (written != body_length) goto cleanup;
++    hr = xuser_signed_request(user, "POST", "https://title.auth.xboxlive.com/title/authenticate", NULL,
++        "x-xbl-contract-version: 1\r\nContent-Type: application/json\r\n",
++        body, strlen(body), &status, &buffer, &buffer_size);
++    if (FAILED(hr)) goto cleanup;
++    if (status != 200) { hr = E_ACCESSDENIED; goto cleanup; }
++    if (FAILED(hr = parse_json((char *)buffer, buffer_size, &object))) goto cleanup;
++    if (FAILED(hr = get_json_string(object, L"Token", &token))) goto cleanup;
++    if (!(replacement = hstring_to_utf8(token))) { hr = E_OUTOFMEMORY; goto cleanup; }
++    if (!*replacement) { hr = HRESULT_FROM_WIN32(ERROR_INVALID_DATA); goto cleanup; }
++    if (user->titleToken) { SecureZeroMemory(user->titleToken, strlen(user->titleToken)); free(user->titleToken); }
++    user->titleToken = replacement;
++    replacement = NULL;
++    hr = S_OK;
++cleanup:
++    auth_metadata("windows-title", user, hr, status, TRUE, SUCCEEDED(hr));
++    if (object) IJsonObject_Release(object);
++    if (token) WindowsDeleteString(token);
++    if (buffer) { SecureZeroMemory(buffer, buffer_size); free(buffer); }
++    if (body) { SecureZeroMemory(body, body_size); free(body); }
++    if (replacement) { SecureZeroMemory(replacement, strlen(replacement)); free(replacement); }
++    return hr;
++}
++
++/* Appending a title's policy table must not invalidate the pointers already
++ * held by default endpoints. Allocate first, rebase against the still-live old
++ * array, then retire that array. Keep the private IUser endpoint ABI unchanged. */
++static HRESULT append_endpoint_policies( XUserHandle user, UINT32 count, struct policy **appended )
++{
++    struct policy *replacement;
++    *appended = NULL;
++    if (!count) return S_OK;
++    if (count > UINT32_MAX - user->policiesLen ||
++        (SIZE_T)user->policiesLen + count > SIZE_MAX / sizeof(*replacement)) return E_OUTOFMEMORY;
++    if (!(replacement = calloc((SIZE_T)user->policiesLen + count, sizeof(*replacement)))) return E_OUTOFMEMORY;
++    if (user->policiesLen) memcpy(replacement, user->policies, user->policiesLen * sizeof(*replacement));
++    for (UINT32 i = 0; i < user->endpointsLen; ++i)
++        if (user->endpoints[i].policy)
++            user->endpoints[i].policy = replacement + (user->endpoints[i].policy - user->policies);
++    *appended = replacement + user->policiesLen;
++    free(user->policies);
++    user->policies = replacement;
++    user->policiesLen += count;
++    return S_OK;
++}
++
+ static HRESULT load_endpoints( XUserHandle user, BYTE *buffer, SIZE_T size )
+ {
+     IJsonObject *payload = NULL, *tmpObject = NULL;
+@@ -670,7 +741,7 @@
+     struct policy *policyCursor = NULL;
+     struct endpoint *endpointCursor = NULL;
+     DOUBLE jsonNumber;
+-    UINT32 arraySize;
++    UINT32 arraySize, policy_count = 0;
+     HSTRING hostType = NULL;
+     const WCHAR* hostTypeRaw = NULL;
+     HRESULT hr = S_OK;
+@@ -685,13 +756,8 @@
+         if (FAILED(hr = IJsonArray_QueryInterface(jsonPolicies, &IID_IVector_IJsonValue, (void **)&jsonPoliciesVector))) goto cleanup;
+         if (FAILED(hr = IVector_IJsonValue_get_Size(jsonPoliciesVector, &arraySize))) goto cleanup;
+ 
+-        if (!(policyCursor = realloc(user->policies, sizeof(struct policy) * (user->policiesLen + arraySize)))) {
+-            hr = E_OUTOFMEMORY;
+-            goto cleanup;
+-        }
+-        user->policies = policyCursor;
+-        policyCursor = user->policies + user->policiesLen;
+-        user->policiesLen = user->policiesLen + arraySize;
++        policy_count = arraySize;
++        if (FAILED(hr = append_endpoint_policies(user, arraySize, &policyCursor))) goto cleanup;
+ 
+         for (UINT32 i = 0; i < arraySize; i++) {
+             if (FAILED(hr = IJsonArray_GetObjectAt(jsonPolicies, i, &tmpObject))) goto cleanup;
+@@ -709,7 +775,11 @@
+     if (FAILED(hr = IJsonArray_QueryInterface(jsonEndpoints, &IID_IVector_IJsonValue, (void **)&jsonEndpointsVector))) goto cleanup;
+     if (FAILED(hr = IVector_IJsonValue_get_Size(jsonEndpointsVector, &arraySize))) goto cleanup;
+ 
+-    if (!(endpointCursor = realloc(user->endpoints, sizeof(struct endpoint) * (user->endpointsLen + arraySize)))) {
++    if (!arraySize) goto cleanup;
++    if (arraySize > UINT32_MAX - user->endpointsLen ||
++        (SIZE_T)user->endpointsLen + arraySize > SIZE_MAX / sizeof(struct endpoint))
++    { hr = E_OUTOFMEMORY; goto cleanup; }
++    if (!(endpointCursor = realloc(user->endpoints, sizeof(struct endpoint) * ((SIZE_T)user->endpointsLen + arraySize)))) {
+         hr = E_OUTOFMEMORY;
+         goto cleanup;
+     }
+@@ -727,11 +797,12 @@
+ 
+         if (FAILED(get_json_string(tmpObject, L"RelyingParty", &(endpointCursor + i)->relyingParty))) (endpointCursor + i)->relyingParty = NULL;
+         if (FAILED(get_json_string(tmpObject, L"TokenType", &(endpointCursor + i)->tokenType))) (endpointCursor + i)->tokenType = NULL;
+-        if (SUCCEEDED(get_json_number(tmpObject, L"SignaturePolicyIndex", &jsonNumber)) && policyCursor && jsonNumber < (user->policiesLen - (policyCursor - user->policies))) {
+-            (endpointCursor + i)->policy = policyCursor + (UINT32)jsonNumber;
+-        } else {
+-            (endpointCursor + i)->policy = NULL;
++        if (SUCCEEDED(get_json_number(tmpObject, L"SignaturePolicyIndex", &jsonNumber)) &&
++            policyCursor && jsonNumber >= 0 && jsonNumber < policy_count && jsonNumber == (UINT32)jsonNumber)
++        {
++            endpointCursor[i].policy = policyCursor + (UINT32)jsonNumber;
+         }
++        /* An absent table must never borrow a different list's policy. */
+         if (SUCCEEDED(get_json_string(tmpObject, L"HostType", &hostType))) {
+             hostTypeRaw = WindowsGetStringRawBuffer(hostType, NULL);
+             (endpointCursor + i)->wildcard = wcscmp(hostTypeRaw, L"wildcard") == 0;
+@@ -802,6 +873,9 @@
+     char *deviceTicket = NULL, *deviceToken = NULL, *userTicket = NULL;
+     struct XUser *impl = user;
+     WCHAR *auth = NULL;
++    char *title_auth = NULL;
++    DWORD title_status = 0;
++    BOOL legacy_windows = (!msaAppId || !*msaAppId) && titleId;
+     SIZE_T size;
+     HRESULT hr;
+ 
+@@ -816,7 +890,17 @@
+         goto cleanup;
+     }
+     if (FAILED(hr = sisu_auth( impl, userTicket, deviceToken, &auth ))) goto cleanup;
+-    if (FAILED(hr = http_request( L"GET", L"https://title.mgt.xboxlive.com/titles/current/endpoints", NULL, auth, ACCEPT_JSON, &currentBuffer, &size ))) goto cleanup;
++    if (legacy_windows)
++    {
++        if (FAILED(hr = windows_title_auth(impl))) goto cleanup;
++        if (FAILED(hr = xsts_authorize(impl, "http://xboxlive.com", TRUE, &title_auth))) goto cleanup;
++        hr = xuser_signed_request(impl, "GET", "https://title.mgt.xboxlive.com/titles/current/endpoints",
++            title_auth, "x-xbl-contract-version: 1\r\n", NULL, 0, &title_status, &currentBuffer, &size);
++        if (SUCCEEDED(hr) && title_status != 200) hr = E_ACCESSDENIED;
++        auth_metadata("windows-title-endpoints", impl, hr, title_status, TRUE, TRUE);
++        if (FAILED(hr)) goto cleanup;
++    }
++    else if (FAILED(hr = http_request( L"GET", L"https://title.mgt.xboxlive.com/titles/current/endpoints", NULL, auth, ACCEPT_JSON, &currentBuffer, &size ))) goto cleanup;
+     if (FAILED(hr = load_endpoints( impl, currentBuffer, size ))) goto cleanup;
+ 
+ cleanup:
+@@ -826,6 +910,7 @@
+     if (deviceToken) free( deviceToken );
+     if (userTicket) free( userTicket );
+     if (auth) free( auth );
++    if (title_auth) { SecureZeroMemory(title_auth, strlen(title_auth)); free(title_auth); }
+     return hr;
+ }
+ 
+@@ -911,7 +996,7 @@
+             patOff++;
+             inpOff++;
+         }
+-        else if (lastWildcard != -1)
++        else if (lastWildcard != UINT32_MAX)
+         {
+             patOff = lastWildcard + 1;
+             inpOff = ++lastMatch;
+@@ -927,6 +1012,8 @@
+     URL_COMPONENTSW uc = { .dwStructSize = sizeof(URL_COMPONENTSW), .dwSchemeLength = -1, .dwHostNameLength = -1, .dwUrlPathLength = -1 };
+     struct XUser *impl = impl_from_IUser( iface );
+     struct endpoint *match = NULL;
++    UINT32 best_host = 0, best_path = 0;
++    BOOL best_exact = FALSE;
+     INT32 urlWSize;
+     WCHAR *urlW;
+     HRESULT hr;
+@@ -946,16 +1033,25 @@
+         const WCHAR *protocol = WindowsGetStringRawBuffer( impl->endpoints[i].protocol, &protocolLen );
+         const WCHAR *host = WindowsGetStringRawBuffer( impl->endpoints[i].host, &hostLen );
+         const WCHAR *path = WindowsGetStringRawBuffer( impl->endpoints[i].path, &pathLen );
+-        if (uc.dwSchemeLength != protocolLen || wcsnicmp( uc.lpszScheme, protocol, protocolLen )) continue;
+-        if (impl->endpoints[i].path && (uc.dwUrlPathLength < pathLen || wcsncmp( uc.lpszUrlPath, path, pathLen ))) continue;
+-        if (impl->endpoints[i].wildcard)
++        const WCHAR *scheme = uc.lpszScheme;
++        UINT32 scheme_len = uc.dwSchemeLength, host_score = 0;
++        BOOL exact = !impl->endpoints[i].wildcard;
++        /* WebSocket tokens/signatures apply to the HTTP upgrade request. */
++        if (scheme_len == 3 && !wcsnicmp(scheme, L"wss", 3)) { scheme = L"https"; scheme_len = 5; }
++        else if (scheme_len == 2 && !wcsnicmp(scheme, L"ws", 2)) { scheme = L"http"; scheme_len = 4; }
++        if (scheme_len != protocolLen || wcsnicmp(scheme, protocol, protocolLen)) continue;
++        if (impl->endpoints[i].path && (uc.dwUrlPathLength < pathLen || wcsncmp(uc.lpszUrlPath, path, pathLen))) continue;
++        if (exact)
+         {
+-            if (!match && match_wildcard( host, hostLen, uc.lpszHostName, uc.dwHostNameLength )) match = &impl->endpoints[i];
+-            continue;
++            if (uc.dwHostNameLength != hostLen || wcsnicmp(uc.lpszHostName, host, hostLen)) continue;
+         }
+-        if (uc.dwHostNameLength != hostLen || wcsnicmp( uc.lpszHostName, host, hostLen )) continue;
+-        match = &impl->endpoints[i];
+-        break;
++        else if (!match_wildcard(host, hostLen, uc.lpszHostName, uc.dwHostNameLength)) continue;
++        for (UINT32 j = 0; j < hostLen; ++j) if (host[j] != '*' && host[j] != '?') ++host_score;
++        if (match && (host_score < best_host ||
++            (host_score == best_host && exact < best_exact) ||
++            (host_score == best_host && exact == best_exact && pathLen < best_path))) continue;
++        /* Equal rules prefer the later (title-specific) list. */
++        match = &impl->endpoints[i]; best_host = host_score; best_exact = exact; best_path = pathLen;
+     }
+     free( urlW );
+     if (!match) return E_FAIL;
+--- a/dlls/xgameruntime/xnetworking.c
++++ b/dlls/xgameruntime/xnetworking.c
+@@ -73,8 +73,10 @@
+ 
+ static HRESULT WINAPI x_networking_XNetworkingQueryPreferredLocalUdpMultiplayerPort( IXNetworkingImpl2 *iface, UINT16 *preferredLocalUdpMultiplayerPort )
+ {
+-    FIXME( "iface %p, preferredLocalUdpMultiplayerPort %p stub!\n", iface, preferredLocalUdpMultiplayerPort );
+-    return E_NOTIMPL;
++    if (!preferredLocalUdpMultiplayerPort) return E_INVALIDARG;
++    /* Match the async query: no platform preference, so let bind choose. */
++    *preferredLocalUdpMultiplayerPort = 0;
++    return S_OK;
+ }
+ 
+ /* The platform has no actual port preference on this runtime; completing

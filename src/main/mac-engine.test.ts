@@ -75,6 +75,21 @@ describe('prepareMacRunner', () => {
     const other = await prepareMacRunner({ ...request, storeId: 'another-game' }, options);
     expect(other.profileEnv).toEqual({}); expect(selected.at(-1)).toEqual([stable, '/d/bottles']);
   });
+  it('stages a native runtime pack after one ordinary setup in its dedicated bottle', async () => {
+    const cx = await crossOverWithGptk(await tmp()); cx.version = '20261015';
+    const options = deps(cx, undefined, []); options.findCrossOverPreview = async () => cx;
+    const events: string[] = [];
+    options.prepareRuntimeCompatibility = async () => ({ installation: cx, bottlesRoot: '/private-runtime/bottles',
+      environment: { MACXUS_007_PUBLIC_CONFIG: '1' }, validatePrefix: async () => { events.push('validate'); },
+      configurePrefix: async () => { events.push('overlay'); } });
+    options.prepareCrossOver = async (engine, bottles) => {
+      expect(engine).toBe(cx); expect(bottles).toBe('/private-runtime/bottles'); events.push('ordinary setup');
+      return { command: '/runner', compatibilityDataPath: `${bottles}/xbox` };
+    };
+    const result = await prepareMacRunner({ setting: 'crossover-preview', storeId: '9PN198B459VB', dataRoot: '/data', runtimeDllDir: '/runtime', log: () => {} }, options);
+    expect(events).toEqual(['validate', 'ordinary setup', 'overlay']);
+    expect(result.profileEnv.MACXUS_007_PUBLIC_CONFIG).toBe('1');
+  });
   it('selects the separate FEX app and asks for an ARM64 bottle, independently of regular Preview', async () => {
     const stable = await crossOverWithGptk(await tmp()), preview = await crossOverWithGptk(await tmp());
     const arm = { ...await crossOverWithGptk(await tmp()), supportsArm64: true };

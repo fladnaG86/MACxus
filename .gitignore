@@ -31,3 +31,7 @@ docs/internal/
 
 # Generated compatibility pack source archives (prepared during macOS packaging)
 /assets/compatibility-packs/*/source/
+
+# This pack consists of our own small, committed source recipe.
+!/assets/compatibility-packs/bond-public-config-v1/source/
+/assets/compatibility-packs/bond-public-config-v1/payload/

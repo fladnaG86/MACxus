@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "bond-public-config-v1",
+  "storeId": "9PN198B459VB",
+  "engine": "crossover-preview",
+  "version": "20261015",
+  "buildTag": "cxpreview-20261015-rc1",
+  "recipe": "winhttp-forwarder-v1",
+  "environment": {
+    "MACXUS_007_PUBLIC_CONFIG": "1"
+  },
+  "dllSHA256": "594114d604cba920bf2fd4b4a15c7a704361bff6a4bf6e1558420e20a56f3a66",
+  "baseNativeSHA256": "e4bd839a5d49a5f43f452308007e727e565a02142e887cfb38e2c41ba4b64a52",
+  "toolchain": {
+    "gcc": "16.2.0"
+  },
+  "sources": {
+    "winhttp.c": "93816be1f1f85e1a29506afc8fe7175af2c42ce6edc57f714090e84496aa4d30",
+    "winhttp.def": "72b74f7b41626760c4cc0e614a9a614eb293aea2cdffff039138859620e41831",
+    "build.mjs": "34de7a12e3ab9320ef5df0ab8055f81a98b18cd1150d073d0fe9ad3a0dbd9d11",
+    "test.c": "b921b789b49220a64e56e1c82ef95c3b050e067377030a182daa2d099485e316"
+  },
+  "licenseSHA256": "295f102e5a13c347d7d9e0eeec06d058744d89da14312afe64b30299eaa35964",
+  "acceptance": "Offline candidate; live portable-pack test pending; private broader control succeeded"
+}
