@@ -12,7 +12,7 @@
     "clean": "node -e \"for (const p of ['dist','dist-electron']) require('node:fs').rmSync(p,{recursive:true,force:true})\"",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
     "test": "vitest run",
-    "test:runtime-tools": "node --import ./scripts/test-environment.mjs --test scripts/eac-trace-summary.test.mjs scripts/wine-exception-metadata.test.mjs scripts/assemble-shared-runtime.test.mjs scripts/build-runtime-dxvk.test.mjs scripts/verify-runtime-base.test.mjs scripts/runtime-compat/staging.test.mjs scripts/runtime-tests/build-store-probes.test.mjs scripts/runtime-tests/build-user-privilege-probe.test.mjs scripts/runtime-tests/build-gamesave-sync-probe.test.mjs scripts/runtime-tests/build-user-audio-probe.test.mjs scripts/compatibility-packs.test.mjs scripts/compatibility-pack-build.test.mjs scripts/runtime-tests/build-title-auth-probes.test.mjs scripts/runtime-tests/probe-output.test.mjs",
+    "test:runtime-tools": "node --import ./scripts/test-environment.mjs --test scripts/eac-trace-summary.test.mjs scripts/wine-exception-metadata.test.mjs scripts/assemble-shared-runtime.test.mjs scripts/build-runtime-dxvk.test.mjs scripts/verify-runtime-base.test.mjs scripts/runtime-compat/staging.test.mjs scripts/runtime-tests/build-store-probes.test.mjs scripts/runtime-tests/build-user-privilege-probe.test.mjs scripts/runtime-tests/build-gamesave-sync-probe.test.mjs scripts/runtime-tests/build-user-audio-probe.test.mjs scripts/compatibility-packs.test.mjs scripts/compatibility-pack-build.test.mjs scripts/runtime-tests/build-title-auth-probes.test.mjs scripts/runtime-tests/probe-output.test.mjs scripts/runtime-packs.test.mjs",
     "test:ci-tools": "node --import ./scripts/test-environment.mjs --test scripts/ci/*.test.mjs",
     "build:mac-backend": "tsc -p tsconfig.electron.json && node scripts/build-mac-backend.mjs",
     "prepare:mac-runtime-dlls": "node scripts/prepare-mac-runtime-dlls.mjs",
@@ -22,7 +22,7 @@
     "pack": "npm run build && electron-builder --linux dir --publish never",
     "compatibility:generate": "node scripts/compatibility/generate.mjs",
     "compatibility:check": "node scripts/compatibility/generate.mjs --check",
-    "prepare:mac-media-pack": "node scripts/prepare-compatibility-packs.mjs",
+    "prepare:mac-media-pack": "node scripts/prepare-mac-media-packs.mjs",
     "stage:mac-release-sources": "node scripts/stage-compatibility-pack-sources.mjs release",
     "test:compatibility": "node --test scripts/ci/compatibility.test.mjs"
   },

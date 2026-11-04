@@ -1,0 +1,48 @@
+{
+  "game": "007 First Light",
+  "recordedAt": "2026-11-02T17:32:30.632374+00:00",
+  "sharedRuntimeCandidate": "63f5e7cb0b68f83dcb75da929b74e0f591b4992b",
+  "launchPath": "Installed MACxus normal Play handler, CrossOver Preview",
+  "priorObservation": {
+    "AzureBlobGET": 400,
+    "AzureBlobHEAD": 400,
+    "AzureError": "InvalidAuthenticationInfo",
+    "authorizationClassification": "Present, unsupported scheme; exact value not recorded",
+    "recognizedSASQueryKeysPresent": false
+  },
+  "privateControl": {
+    "sourceSHA256": "63c4a5601425e9e530ab1838fc0f29adc3155883b8248c241560cdaacf853764",
+    "DLLSHA256": "70301d68ec6c35dce889485da6c84a2ad0c2d4be5a1db842afd46fddb11e595e",
+    "change": "Omit unsupported Authorization only for Azure Blob requests without recognized SAS query keys",
+    "omittedHeaderLocation": "Inline header block supplied to WinHttpSendRequest",
+    "omissionCount": 2,
+    "newSharedRuntimeChange": false,
+    "includedInPR": false,
+    "productionFixProposed": false
+  },
+  "result": {
+    "userReportedOnlineSuccess": true,
+    "AzureBlobGET": 200,
+    "AzureBlobGETBytesDelivered": 344,
+    "AzureBlobHEAD": 200,
+    "AzureBlobHEADResponseBodyBytes": 0,
+    "gameLeftRunning": true
+  },
+  "offlineValidation": {
+    "targetedControlChecksPassed": 54,
+    "forwardedHTTPProbeChecks": 55,
+    "forwardedInheritanceProbeChecks": 59,
+    "exportsMatch": 49,
+    "recognizedSchemesAndSASRequestsPreservedInTargetedTests": true,
+    "credentialMarkersAbsentFromDiagnosticOutput": true
+  },
+  "limits": [
+    "Successful isolated control identifies inappropriate Authorization as a cause of these configuration failures.",
+    "The exact original value and why the title supplied it remain unestablished.",
+    "This does not prove Windows WinHTTP parity or establish a safe shared rule for arbitrary services.",
+    "No claim that every online feature is validated.",
+    "The shared PR alone still has no demonstrated 007 online acceptance.",
+    "No game code, vendor binaries, credentials, raw URLs or response bodies are committed."
+  ],
+  "originalGameAndApplicationsModified": false
+}

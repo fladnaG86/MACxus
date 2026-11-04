@@ -73,9 +73,8 @@ PR #26 was returned to draft, and the failed trial's log was preserved locally.
 
 A diagnostics-only comparison retains the exact old wildcard matcher while
 adding the reviewed numeric refusal logging. Its five account-free probes pass,
-including 1,191 privilege checks and 88 token ABI checks. A new user trial of
-this comparison is pending. It is an experimental local comparison, not the
-full PR candidate or a newly established online fix. See
+including 1,191 privilege checks and 88 token ABI checks. Its later user trial is described below. It is an experimental local comparison,
+not the full PR candidate or a newly established online fix. See
 [`live-validation.json`](live-validation.json) for the path-free record.
 
 The diagnostics-only trial reproduced the configuration-fetch error and XSTS
@@ -105,3 +104,26 @@ Before claiming an online fix, test a controlled 007 run and inspect the new
 still fails. A successful token request also needs validation against the game's
 actual online service. Preserve the numeric refusal rather than treating HTTP
 400 as proof of a particular title/audience/account problem.
+
+## Successful private Azure configuration control
+
+A response-time HTTP observer established that the title's Azure Blob GET and
+HEAD requests carried an Authorization value outside the observer's recognized
+schemes. No recognized SAS query keys were detected. Azure returned HTTP 400;
+the GET's error code was `InvalidAuthenticationInfo`. This was separate from the
+now-successful Xbox token exchange. Credential values were not recorded.
+
+A private comparison omitted that unsupported header only for these unsigned
+Azure Blob requests. The trace records two omissions from the inline header
+block supplied to `WinHttpSendRequest`. Both requests then returned HTTP 200,
+the GET delivered 344 bytes of configuration data, and the user reported that
+online now works. The successful game session was left running. The control
+passed 54 targeted checks, alongside forwarding, callback and privacy checks.
+
+This establishes that inappropriate Authorization caused these observed
+configuration failures. It does not establish why the game supplied that value,
+Windows behavior, or a safe universal header-removal policy. The host-scoped
+control remains private and is not included in this PR or a compatibility pack.
+The shared runtime candidate alone still lacks demonstrated 007 online
+acceptance; all online features have not been tested. See the path-free
+[`azure-anonymous-control.json`](azure-anonymous-control.json) receipt.

@@ -1,0 +1,95 @@
+{
+  "recordedAt": "2026-11-02T19:59:10.865366+00:00",
+  "scope": "007 public configuration portable candidate; not a universal online fix",
+  "manifest": "assets/compatibility-packs/bond-public-config-v1/manifest.json",
+  "DLLSHA256": "594114d604cba920bf2fd4b4a15c7a704361bff6a4bf6e1558420e20a56f3a66",
+  "productionSourceContracts": {
+    "checks": 218,
+    "failures": 0,
+    "realWinHTTPHandlesCreatedWithoutSending": true
+  },
+  "launcherAndExistingHaloTests": {
+    "passed": 52,
+    "failed": 0
+  },
+  "runtimeTools": {
+    "passed": 44,
+    "failed": 0,
+    "skipped": 7,
+    "skipReason": "Existing Linux-only runtime checks on macOS"
+  },
+  "packaging": {
+    "actualASARCompletenessAndTamperChecks": "passed",
+    "sourcePathReproductionRoots": 2,
+    "rootsIncludeSpaces": true,
+    "sameDLLBytes": true,
+    "acceptedCompiler": "MinGW-w64 GCC 16.2.0",
+    "cleanToolchainRebuild": false,
+    "entryPoint": "DllMain; no CRT startup objects or TLS/constructors",
+    "debugData": "stripped at link time",
+    "CRTLibraryBottleComparison": {
+      "bottles": [
+        "arm64_golden_gate",
+        "arm64_sequoia"
+      ],
+      "sameNewDLLBytes": true,
+      "sameCompilerExecutable": true,
+      "scope": "Installed compiler with each bottle library set; complete second compiler could not execute due to host dependency mismatch"
+    }
+  },
+  "originalWinHTTPForwarding": {
+    "exportNamesAndOrdinalsMatch": 49,
+    "HTTPProbeChecksPerVariant": 55,
+    "inheritedCallbackChecksPerVariant": 59,
+    "invalidOptionAndCallbackIdentityControls": "passed",
+    "transport": "Private loopback; synthetic payloads only",
+    "repeatedOnNewRecipe": true
+  },
+  "typecheck": "passed",
+  "compiledLauncherSchemaLoad": "passed",
+  "livePortablePackValidation": false,
+  "comparison": "The earlier private broader control achieved user-reported online success; this tighter candidate was not launched in a game.",
+  "currentUserSession": "Not stopped or relaunched during packaging work",
+  "independentReview": "81a5f90 passed. c9dd5c9 recheck found one P2 cleanup ownership issue; new inventory-only grace and regressions awaiting fresh recheck.",
+  "publication": "No upstream submission; no installation or merge",
+  "credentialRegressionLoopback": {
+    "exitCode": 0,
+    "duplicateAuthorizationPreserved": true,
+    "storedAuthorizationOverridePreserved": true,
+    "singleUnsupportedInlineRemoved": true,
+    "requests": 9,
+    "configuredCredentialsPreserved": true,
+    "bypassedCredentialGuardNegativeControlShowsBasic": true,
+    "remoteRequests": false,
+    "targetEligibilityMocked": true
+  },
+  "initialIndependentReview": {
+    "candidate": "a000efa5c5caefafddbb20f6b0cba42108d103d1",
+    "disposition": "Requested changes",
+    "findings": [
+      "Duplicate Authorization could expose an overridden credential",
+      "Ordinary setup destinations were incompletely preflighted",
+      "Absent pack directory did not fall back as documented"
+    ],
+    "resolutions": [
+      "Duplicate fields preserve the complete inline block; stored Authorization and WinHttpSetCredentials requests are excluded; ASCII comparison is locale-independent",
+      "Halo and native packs share the complete ordinary setup preflight; linked temporary/runtime/runner/registry targets and escaping C: mappings have regressions",
+      "Absent pack directory falls back; present missing/invalid metadata still fails"
+    ],
+    "independentRecheck": "81a5f9016090a1ca6c25ec54de152f2b9e76b07a passed; prior findings closed"
+  },
+  "buildFollowUp": {
+    "rebuildArgumentDispatchedToBothPackBuilders": true,
+    "runtimeRebuildSkipsPayloadCache": true,
+    "detachRace": "After a missing-mount error, poll authoritative inventory only; reject foreign mountpoint ownership; require owned-image absence before success; never force detach",
+    "gameLaunched": false,
+    "cleanupOwnershipRegressions": "Foreign occupant present immediately or appearing during grace, with owned image present or absent: all rejected, no second detach",
+    "focusedTestsPassed": 14,
+    "ciTools": {
+      "passed": 90,
+      "skipped": 1,
+      "failed": 0
+    },
+    "liveOwnedAPFSCleanupSmoke": "passed normal and already-detached paths"
+  }
+}
