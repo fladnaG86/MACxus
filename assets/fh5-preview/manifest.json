@@ -28,6 +28,7 @@
   },
   "gameValidation": "Original portable pack reached normal Play and multiplayer; separate calibration/identity trials passed; latest integrated installed build has user-confirmed launch only",
   "knownLimitations": [
+    "Only M5 Max game-tested; other M3 or newer Macs are experimental and untested, with a visible opt-in warning",
     "35 ms latency display reported in a separate normal-Play calibration trial; input-to-display accuracy, actual sleep/resume and long-session drift remain unvalidated",
     "Black road surfaces remain; marketplace purchase details report an error and purchasing is not accepted",
     "Metal 4 timestamp slot retirement has a bounded 4096-slot implementation",
@@ -36,6 +37,6 @@
   ],
   "sourceArchive": {
     "name": "fh5-preview-v1-source.tar.gz",
-    "sha256": "919f02d3a4310b5f66831e67cb19fd50cf0076b5dafd809fa1182f9c56d209ed"
+    "sha256": "a330c4be6e016d96924eea93e7a9b02a10b663e05f5825f18c40da6b7f92d598"
   }
 }

@@ -8,11 +8,11 @@ support for other titles. Source-check success is not release or game acceptance
 | --- | --- | --- |
 | [Halo movies](HALO-PREVIEW-MEDIA.md) | Exact catalog route; Rosetta Preview engine | Startup movies and specified controller input tested; full gameplay acceptance is not established by those tests. |
 | [007 public configuration](../assets/compatibility-packs/bond-public-config-v1/README.md) | Store `9PN198B459VB`; Preview Rosetta `20261015`, build `cxpreview-20261015-rc1` | Private broader control reached online. The narrower portable pack has offline contracts and build checks; live portable-pack acceptance is pending. |
-| [FH5 Preview](../assets/fh5-preview/README.md) | Store `9NNX1VVR3KNQ`; opt-in **FH5 Preview compatibility pack** in that game's settings on macOS; M5 Max, macOS 26+, Metal 4 and the exact Preview build above | Original normal-Play pack reached multiplayer; later calibration/identity and integrated-launch tests have separate evidence. Black road areas and marketplace purchase errors remain. |
+| [FH5 Preview](../assets/fh5-preview/README.md) | Store `9NNX1VVR3KNQ`; opt-in **FH5 Preview compatibility pack** in that game's settings on macOS; M3 or newer, macOS 26+, Metal 4 and the exact Preview build above | Only M5 Max game-tested; other models experimental and untested. Original normal-Play pack reached multiplayer; later calibration/identity and integrated-launch tests have separate evidence. Black road areas and marketplace purchase errors remain. |
 
 See the [compatibility matrix](COMPATIBILITY.md) and its per-game reports for the
 actual tested configurations. Requirements such as macOS 26+ do not mean every
-version or compatible-looking Mac has been tested. No Steam-edition or general
+version or compatible-looking Mac has been tested. The [FH5 hardware assessment](FH5-PREVIEW-HARDWARE.md) explains why M3/M4 can try the pack without receiving a working-game report. No Steam-edition or general
 multiplayer compatibility follows from these Store-title reports.
 
 The sections below describe the catalog's `wine-engine-overlay` handler used by

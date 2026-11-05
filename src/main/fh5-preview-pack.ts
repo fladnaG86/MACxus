@@ -126,7 +126,12 @@ export async function prepareFH5PreviewPack(request: Request, deps: FH5PackDeps)
   if (!request.enabled) return undefined;
   if (request.storeId?.toUpperCase() !== FH5_STORE_ID || !request.gameRoot) throw Error('The FH5 Preview pack is available only for the FH5 Store package.');
   const host = deps.host ? await deps.host() : { platform: process.platform, darwinMajor: Number.parseInt(release(), 10), chip: (await deps.execute('/usr/sbin/sysctl', ['-n', 'machdep.cpu.brand_string'])).output.trim() };
-  if (host.platform !== 'darwin' || host.darwinMajor < 25 || host.chip !== 'Apple M5 Max') throw Error('This FH5 pack is currently validated only for Apple M5 Max on macOS 26 or newer.');
+  // M3 introduced hardware ray tracing; Apple's feature tables place the Metal 4
+  // command/counter APIs used here below that generation. Only M5 Max has game
+  // acceptance: allow other M3+ models as experimental, with native checks retained.
+  const chip = /^Apple M([1-9]\d*)(?: (?:Pro|Max|Ultra))?$/.exec(host.chip);
+  if (host.platform !== 'darwin' || !Number.isInteger(host.darwinMajor) || host.darwinMajor < 25 || !chip || chip[0] !== host.chip || Number(chip[1]) < 3) throw Error('This FH5 pack requires an Apple M3 or newer Mac on macOS 26 or newer. Only M5 Max has been game-tested.');
+  if (host.chip !== 'Apple M5 Max') request.log('Warning: FH5 Preview compatibility pack is experimental and untested on this Mac. Only Apple M5 Max has been game-tested; startup, rendering and GPU timing may fail.');
   const original = request.engine;
   if (!original || original.supportsArm64 || original.version !== '20261015') throw Error('The FH5 pack requires CrossOver Preview Rosetta 20261015.');
   const manifest = JSON.parse(await fs.readFile(path.join(deps.assets, 'manifest.json'), 'utf8')) as Manifest;

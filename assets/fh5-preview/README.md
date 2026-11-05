@@ -1,10 +1,17 @@
 # FH5 Preview source pack
 
 An opt-in, source-built compatibility pack for the **FH5 Microsoft Store package**
-(`9NNX1VVR3KNQ`) on **M5 Max**, macOS 26+, CrossOver Preview **Rosetta 20261015**
+(`9NNX1VVR3KNQ`) on **M3 or newer**, macOS 26+, CrossOver Preview **Rosetta 20261015**
 (build `cxpreview-20261015-rc1`). Metal 4 is required. This is the portable
 packaging of components previously exercised in private FH5 driving, benchmark
-and online tests. These are unpublished test builds, with separate acceptance:
+and online tests. **Only M5 Max has been game-tested. Other M3 or newer Macs
+are experimental and untested: startup, rendering and GPU timing may fail.**
+Apple documents the required Metal 4 command/counter features on earlier GPU
+families than M3; this makes M3/M4 plausible candidates, not verified FH5 targets.
+See the [hardware assessment](https://github.com/zachspartofaday/MACxus/blob/upstream/fh5-preview-pack/docs/FH5-PREVIEW-HARDWARE.md).
+The launcher retains the exact engine fingerprints and native counter/calibration
+checks; the model gate does not substitute for those checks. M1/M2 remain outside
+this pack's experimental scope. These are unpublished test builds, with separate acceptance:
 
 - The original normal-Play portable pack reached an online session and multiplayer.
   Store/DLC entries were visible, but marketplace purchase details returned an error.

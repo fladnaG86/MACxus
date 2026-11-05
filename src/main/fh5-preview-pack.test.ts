@@ -28,7 +28,7 @@ async function fixture() {
     preparedLoaderSHA256: hash('vendor lib/wine/x86_64-unix/wine' + ' signed fixture') };
   await fs.writeFile(path.join(assets, 'manifest.json'), JSON.stringify(manifest));
   const installation = { root: engine, wine: path.join(engine, 'bin/wine'), wineserver: path.join(engine, 'bin/wineserver'), cxbottle: path.join(engine, 'bin/cxbottle'), version: '20261015' };
-  const request = { enabled: true, storeId: FH5_STORE_ID, gameRoot: path.join(root, 'Original game'), dataRoot, engine: installation, runtime: { dir: '/selected runtime/dlls' }, log: () => {} };
+  const request = { enabled: true, storeId: FH5_STORE_ID, gameRoot: path.join(root, 'Original game'), dataRoot, engine: installation, runtime: { dir: '/selected runtime/dlls' }, log: vi.fn() };
   const execute = vi.fn(async (tool: string, args: string[]) => {
     if (tool.endsWith('/ditto')) {
       const [from, to] = args.slice(-2);
@@ -60,6 +60,7 @@ it('prepares a relocated private engine/bottle without modifying a hard-linked v
   const f = await fixture();
   try {
     const pack = (await prepareFH5PreviewPack(f.request, f.deps))!;
+    expect(f.request.log).not.toHaveBeenCalledWith(expect.stringContaining('experimental and untested'));
     expect(pack.addonDiscoveryParent).toBe(FH5_STORE_ID);
     expect(pack.runner.compatibilityDataPath).toContain('compatibility-packs/fh5-preview-v1/');
     expect(pack.runner.launchCommand).not.toBe(pack.runner.command);
@@ -88,6 +89,34 @@ it('prepares a relocated private engine/bottle without modifying a hard-linked v
     expect(f.execute.mock.calls.slice(before).some(([tool]) => tool.endsWith('/ditto'))).toBe(false);
   } finally { await fs.rm(f.root, { recursive: true, force: true }); }
 });
+
+it.each(['Apple M3', 'Apple M3 Pro', 'Apple M3 Max', 'Apple M3 Ultra', 'Apple M4', 'Apple M4 Pro', 'Apple M4 Max', 'Apple M5', 'Apple M5 Pro', 'Apple M6', 'Apple M6 Max'])('allows %s only as an explicitly untested configuration', async chip => {
+  const f = await fixture();
+  try {
+    f.deps.host = async () => ({ platform: 'darwin', darwinMajor: 25, chip });
+    const pack = (await prepareFH5PreviewPack(f.request, f.deps))!;
+    expect(f.request.log).toHaveBeenCalledWith(expect.stringContaining('experimental and untested'));
+    const script = await fs.readFile(pack.runner.launchCommand!, 'utf8');
+    expect(script).toContain(`D3DM_DEVICE_DESCRIPTION='${chip} (D3DMetal)'`);
+    expect(script).toContain("D3DM_MTL4='1'");
+    expect(script).toContain("MACXUS_GPU_CLOCK_CALIBRATION='1'");
+  } finally { await fs.rm(f.root, { recursive: true, force: true }); }
+});
+it.each([
+  ['darwin', 25, 'Apple M1 Max'], ['darwin', 25, 'Apple M2 Ultra'],
+  ['darwin', 24, 'Apple M3 Max'], ['darwin', NaN, 'Apple M3 Max'], ['linux', 25, 'Apple M3 Max'],
+  ['darwin', 25, 'Intel Core i9'], ['darwin', 25, 'Apple M03'],
+  ['darwin', 25, 'Apple M3 Max extra'], ['darwin', 25, 'Apple M3\n'],
+] as const)('rejects ineligible host %s/%s/%s before changing files', async (platform, darwinMajor, chip) => {
+  const f = await fixture();
+  try {
+    f.deps.host = async () => ({ platform, darwinMajor, chip });
+    await expect(prepareFH5PreviewPack(f.request, f.deps)).rejects.toThrow('Apple M3 or newer');
+    expect(f.execute).not.toHaveBeenCalled(); expect(f.prepare).not.toHaveBeenCalled();
+    expect(await fs.stat(f.request.dataRoot).catch(() => undefined)).toBeUndefined();
+  } finally { await fs.rm(f.root, { recursive: true, force: true }); }
+});
+
 it('uses Preview IDs with MetalFX on and the accepted fallback off, clearing inherited identity values', async () => {
   const f = await fixture();
   try {
