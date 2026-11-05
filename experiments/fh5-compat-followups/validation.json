@@ -1,0 +1,216 @@
+{
+  "schema": 1,
+  "scope": "Account-free validation; game and integrated normal-Play acceptance pending",
+  "reviewBase": "c5d0415a66920c5788953fcc2a1304603b94f739",
+  "files": {
+    "macxus-metal4-timestamps.dylib": "f77cb14a1c0c5f4ced62a4c6ef70550358ad0a5e7617047a01060891cc081e1e",
+    "windows.web.dll": "d96352f9c95bde5c1b1c790b5eda80ea06b0772b9d44508ed8b6fb1aaa6e68d6",
+    "macxus-clock.dll": "1de8135b98f479edd050de1d0f496a771c42fc4143d0c4f3679ce83e7d3b6026",
+    "d3d12.dll": "077ab7292a121385f43655fb599b5097fd1dfce3fcedfc803e459652a16eb1e3",
+    "macxus-clock.so": "690c1bdef5133b445ddf9818b38aa4cd6ff381cabbb153d2e580db52bf372ab4",
+    "xgameruntime.dll": "7f3b8bc86edbaa3d85c6579160c32c14afa8d3961a164787e1434474d7411636"
+  },
+  "sourceLockSHA256": "fdf7a6fd5db623e9d02b41b1d16759d645d7dba6b7b0c992a4ed83c223007c57",
+  "sourceArchive": {
+    "name": "fh5-preview-v1-source.tar.gz",
+    "sha256": "8306ac4401a2dd50fbf189cc6e3a7476798b10acfd3d91f7c72819af6bf7b8a2"
+  },
+  "payloadsAndReceiptAndSourceArchiveReproducedAcrossRoots": true,
+  "otherFivePayloadsUnchanged": true,
+  "launcherTests": {
+    "passed": 1451,
+    "skipped": 10,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "pythonContracts": 6,
+  "distributionTests": 3,
+  "runtimeSuite": {
+    "gameLaunched": false,
+    "accountUsed": false,
+    "results": [
+      {
+        "name": "wineboot",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "data-fixture",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "input-layout-contracts",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "unused-blend-contracts",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "gpu-clock-reporting",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "io-lifetime",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "stream-debug-contracts",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "nvapi-profile",
+        "exitCode": 0,
+        "summary": [
+          "NVAPI PROFILE CHECKS 66 FAILURES 0 concurrent_calls=2048"
+        ]
+      },
+      {
+        "name": "nvapi-memory",
+        "exitCode": 0,
+        "summary": [
+          "NVAPI MEMORY CHECKS 918 FAILURES 0"
+        ]
+      },
+      {
+        "name": "heap-import",
+        "exitCode": 0,
+        "summary": [
+          "HEAP IMPORT CHECKS 10 FAILURES 0"
+        ]
+      },
+      {
+        "name": "store-addons",
+        "exitCode": 0,
+        "summary": [
+          "CHECKS 774 FAILURES 0",
+          "FH5 ADDON CHECKS 850 FAILURES 0"
+        ]
+      },
+      {
+        "name": "nvapi-provider-accepted",
+        "exitCode": 0,
+        "summary": [
+          "NVAPI PROVIDER CHECKS 5 FAILURES 0 accepted=1 wrapped=1"
+        ]
+      },
+      {
+        "name": "nvapi-provider-foreign",
+        "exitCode": 0,
+        "summary": [
+          "NVAPI PROVIDER CHECKS 5 FAILURES 0 accepted=0 wrapped=0"
+        ]
+      },
+      {
+        "name": "nvapi-provider-replaced-file",
+        "exitCode": 0,
+        "summary": [
+          "NVAPI PROVIDER CHECKS 5 FAILURES 0 accepted=0 wrapped=0"
+        ]
+      },
+      {
+        "name": "heap-import-native",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "clock-missing-bridge",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "clock-math",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "clock-native",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "metal4-counter-probe",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "metal4-state-probe",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "metal4-order-probe",
+        "exitCode": 0,
+        "summary": []
+      },
+      {
+        "name": "metal4-lifetime-probe",
+        "exitCode": 0,
+        "summary": []
+      }
+    ]
+  },
+  "providerControls": {
+    "pinnedProviderAccepted": true,
+    "sameBasenameAndSizeForeignProviderRejected": true,
+    "foreignMappedImageWithGenuineBackingFileRejected": true,
+    "nativeProfileHandleForwarded": true,
+    "legacyMemoryMatchesNativeExCapacity": true
+  },
+  "legacyMemoryContracts": 918,
+  "profileContracts": 66,
+  "profileConcurrentCalls": 2048,
+  "heapContracts": 10,
+  "nativeHeapImportHRESULT": "80004001",
+  "nativeOrdinaryHeapHRESULT": "00000000",
+  "compatibilityDatabase": [
+    {
+      "case": "launcher-snapshot",
+      "exitCode": 0,
+      "missingDatabaseErrors": 0,
+      "signatureErrorLines": [],
+      "loadedDatabase27": true,
+      "memoryQuerySucceeded": true
+    },
+    {
+      "case": "corrupted-signature",
+      "exitCode": 0,
+      "missingDatabaseErrors": 0,
+      "signatureErrorLines": [
+        "002c:err:cxcompatdb:verify_file invalid signature",
+        "0038:err:cxcompatdb:verify_file invalid signature",
+        "0048:err:cxcompatdb:verify_file invalid signature",
+        "0070:err:cxcompatdb:verify_file invalid signature",
+        "008c:err:cxcompatdb:verify_file invalid signature",
+        "00a8:err:cxcompatdb:verify_file invalid signature",
+        "0024:err:cxcompatdb:verify_file invalid signature",
+        "00f4:err:cxcompatdb:verify_file invalid signature",
+        "0110:err:cxcompatdb:verify_file invalid signature"
+      ],
+      "loadedDatabase27": false,
+      "memoryQuerySucceeded": true
+    }
+  ],
+  "gpuIntegration": {
+    "queryFrequency": 24000000,
+    "calibrationSucceeded": true,
+    "timestampValuesChangedOnReplay": true,
+    "cpuRecordingClockNotUsed": true
+  },
+  "gameLaunched": false,
+  "accountUsed": false,
+  "installedAppChanged": false,
+  "newWorktreesCreated": false,
+  "freshSolReview": "pending",
+  "limitations": [
+    "No FH5 fallback attribution or matching vendor title rule established",
+    "Normal Play and combined benchmark acceptance pending",
+    "No performance, Windows parity or black-road fix claimed"
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "schema": 1,
+  "scope": "Production candidate; no installed-app or normal-Play acceptance claimed",
+  "payloadsReproducedAcrossRoots": true,
+  "sourceArchiveReproducedAcrossRoots": true,
+  "files": {
+    "macxus-metal4-timestamps.dylib": "f77cb14a1c0c5f4ced62a4c6ef70550358ad0a5e7617047a01060891cc081e1e",
+    "windows.web.dll": "d96352f9c95bde5c1b1c790b5eda80ea06b0772b9d44508ed8b6fb1aaa6e68d6",
+    "macxus-clock.dll": "1de8135b98f479edd050de1d0f496a771c42fc4143d0c4f3679ce83e7d3b6026",
+    "d3d12.dll": "f3b209cf760835dec36d36f1900e0a653966854fc0d47d405bb40bab0688ffa5",
+    "macxus-clock.so": "690c1bdef5133b445ddf9818b38aa4cd6ff381cabbb153d2e580db52bf372ab4",
+    "xgameruntime.dll": "7f3b8bc86edbaa3d85c6579160c32c14afa8d3961a164787e1434474d7411636"
+  },
+  "sourceArchive": {
+    "name": "fh5-preview-v1-source.tar.gz",
+    "sha256": "0d87aa160b3671109e3ce883d72b767599b1f83851ff508f75180f472a2a0e28"
+  },
+  "sourceLockSHA256": "050c49cdd6435e1e90fc67f46ccd4ce32e0caeb1438e6f85a3a8f2a952916a69",
+  "otherFivePayloadsByteIdentical": true,
+  "focusedLauncherTests": 12,
+  "distributionTests": 3,
+  "pythonContracts": 5,
+  "typecheck": "passed",
+  "profileContractChecks": 64,
+  "profileConcurrentCalls": 2048,
+  "syntheticPackProbes": [
+    {
+      "name": "wineboot",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "data-fixture",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "input-layout-contracts",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "unused-blend-contracts",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "gpu-clock-reporting",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "io-lifetime",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "stream-debug-contracts",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "nvapi-profile",
+      "exitCode": 0,
+      "summary": [
+        "NVAPI PROFILE CHECKS 64 FAILURES 0 concurrent_calls=2048"
+      ]
+    },
+    {
+      "name": "store-addons",
+      "exitCode": 0,
+      "summary": [
+        "CHECKS 774 FAILURES 0",
+        "FH5 ADDON CHECKS 850 FAILURES 0"
+      ]
+    },
+    {
+      "name": "clock-missing-bridge",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "clock-math",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "clock-native",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "metal4-counter-probe",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "metal4-state-probe",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "metal4-order-probe",
+      "exitCode": 0,
+      "summary": []
+    },
+    {
+      "name": "metal4-lifetime-probe",
+      "exitCode": 0,
+      "summary": []
+    }
+  ],
+  "productionIntegration": {
+    "gameLaunched": false,
+    "accountUsed": false,
+    "results": [
+      {
+        "name": "profile-off",
+        "exitCode": 0
+      },
+      {
+        "name": "profile-on",
+        "exitCode": 0
+      },
+      {
+        "name": "gpu-calibrated-queries",
+        "exitCode": 0
+      }
+    ]
+  },
+  "gameAcceptance": "Full-patch-chain prototype only; see prototype-acceptance.json",
+  "normalPlay": "pending",
+  "solReview": "pending",
+  "limitations": [
+    "Base/current-global equivalence is not claimed for arbitrary NVIDIA providers",
+    "This is an explicit FH5 policy for fingerprinted Preview components",
+    "The displayed version is the provider compatibility version, not an installed NVIDIA macOS driver",
+    "Prototype timing mistakes are excluded from full-build evidence"
+  ]
+}

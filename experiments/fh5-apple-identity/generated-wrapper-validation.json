@@ -1,0 +1,22 @@
+{
+  "gameLaunched": false,
+  "accountUsed": false,
+  "actualProductionGeneratedWrapper": true,
+  "inheritedIdentityPoisonedForBothCases": true,
+  "cases": [
+    {
+      "metalFX": "1",
+      "exitCode": 0,
+      "adapter": "ADAPTER vendor=10de device=2684 dedicated_video=115448725504 dedicated_system=0 shared_system=115448725504 flags=0 name=Apple M5 Max (D3DMetal)"
+    },
+    {
+      "metalFX": "0",
+      "exitCode": 0,
+      "adapter": "ADAPTER vendor=10de device=2786 dedicated_video=115448725504 dedicated_system=0 shared_system=115448725504 flags=0 name=Apple M5 Max (D3DMetal)"
+    }
+  ],
+  "calibratedD3D12Submissions": 32,
+  "focusedLauncherTestsPassed": 12,
+  "typecheck": "passed",
+  "productionPayloadsUnchanged": true
+}

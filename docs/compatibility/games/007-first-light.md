@@ -3,7 +3,7 @@
 
 [Compatibility index / Indice compatibilità](../../COMPATIBILITY.md)
 
-Store: microsoft-store · Store ID: Not reported / Non riportato
+Store: microsoft-store · Store ID: 9PN198B459VB
 
 [English](#english) · [Italiano](#italiano)
 
@@ -15,6 +15,7 @@ Compare individual test configurations. No report overrides another or applies t
 | --- | --- | --- | --- | --- | --- |
 | [✅ Works (offline)](#en-bond-preview-rosetta-m5max) | CrossOver Preview (Rosetta) 20261015 | 27.2 | M5 Max | D3DMetal | Gameplay |
 | [❌ Fails](#en-bond-preview-arm-launch) | CrossOver Preview (ARM64/FEX) | Not reported | Not reported | Not reported | Launch |
+| [◐ Limited test](#en-bond-preview-public-config-control) | CrossOver Preview (Rosetta) | Not reported | Not reported | D3DMetal | Menu, Online features |
 
 <a id="en-bond-preview-rosetta-m5max"></a>
 ### ✅ Works (offline) · CrossOver Preview (Rosetta) 20261015
@@ -90,6 +91,47 @@ Report ID: `bond-preview-arm-launch`
 
 [↑ Index / Indice](../../COMPATIBILITY.md)
 
+<a id="en-bond-preview-public-config-control"></a>
+### ◐ Limited test · CrossOver Preview (Rosetta)
+
+The user reported online access after the isolated configuration control; observed configuration GET/HEAD requests changed from HTTP 400 to 200. This test does not establish gameplay, every online feature, or live acceptance of the portable pack. The earlier offline and ARM/FEX reports remain separate.
+
+| Environment | Reported value |
+| --- | --- |
+| Layer/version | CrossOver Preview (Rosetta) |
+| Architecture | x86&#95;64 / Rosetta |
+| macOS | Not reported |
+| Chip | Not reported |
+| Mac model / memory | Not reported |
+| Graphics backend/version | D3DMetal |
+| MACxus build | Private configuration control with shared runtime candidate 63f5e7c |
+| Runtime build | Not reported |
+| Game version | Not reported |
+| Test date | 2026-11-02 |
+| Test scope | Menu, Online features |
+
+**Feature checks (within the stated scope)**
+
+| Launch | Gameplay | Video | Audio | Online |
+| --- | --- | --- | --- | --- |
+| Passed | Not reported | Not reported | Not reported | Passed |
+
+Controller tests: **not reported**.
+
+**Required settings / patches**
+
+- Private broader WinHTTP configuration control with shared runtime candidate 63f5e7c. This is distinct from the narrower portable bond-public-config-v1 pack, whose live game acceptance remains pending.
+
+**Evidence**
+
+- [Maintainer report 1](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/xsts-endpoint-routing/azure-anonymous-control.json>)
+- [Maintainer report 2](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/xsts-endpoint-routing/portable-pack-validation.json>)
+- [Maintainer report 3](<https://github.com/fladnaG86/MACxus/pull/23>)
+
+Report ID: `bond-preview-public-config-control`
+
+[↑ Index / Indice](../../COMPATIBILITY.md)
+
 ## Italiano
 
 Confronta le singole configurazioni provate. Nessun resoconto annulla gli altri o si applica a un ambiente non provato. Seleziona un risultato per fonti e requisiti completi.
@@ -98,6 +140,7 @@ Confronta le singole configurazioni provate. Nessun resoconto annulla gli altri 
 | --- | --- | --- | --- | --- | --- |
 | [✅ Funziona (offline)](#it-bond-preview-rosetta-m5max) | CrossOver Preview (Rosetta) 20261015 | 27.2 | M5 Max | D3DMetal | Gioco |
 | [❌ Non funziona](#it-bond-preview-arm-launch) | CrossOver Preview (ARM64/FEX) | Non riportato | Non riportato | Non riportato | Avvio |
+| [◐ Prova limitata](#it-bond-preview-public-config-control) | CrossOver Preview (Rosetta) | Non riportato | Non riportato | D3DMetal | Menu, Funzioni online |
 
 <a id="it-bond-preview-rosetta-m5max"></a>
 ### ✅ Funziona (offline) · CrossOver Preview (Rosetta) 20261015
@@ -170,5 +213,46 @@ Prove controller: **non riportate**.
 - [Resoconto storico 1](<https://github.com/fladnaG86/MACxus/pull/8>)
 
 Report ID: `bond-preview-arm-launch`
+
+[↑ Index / Indice](../../COMPATIBILITY.md)
+
+<a id="it-bond-preview-public-config-control"></a>
+### ◐ Prova limitata · CrossOver Preview (Rosetta)
+
+L’utente ha confermato l’accesso online dopo il controllo isolato della configurazione; le richieste GET/HEAD osservate sono passate da HTTP 400 a 200. La prova non verifica il gioco completo, tutte le funzioni online o il pack portabile nel gioco. Restano separati i precedenti resoconti offline e ARM/FEX.
+
+| Ambiente | Valore riportato |
+| --- | --- |
+| Motore/versione | CrossOver Preview (Rosetta) |
+| Architettura | x86&#95;64 / Rosetta |
+| macOS | Non riportato |
+| Chip | Non riportato |
+| Modello Mac / memoria | Non riportato |
+| Backend grafico/versione | D3DMetal |
+| Build MACxus | Private configuration control with shared runtime candidate 63f5e7c |
+| Build runtime | Non riportato |
+| Versione gioco | Non riportato |
+| Data prova | 2026-11-02 |
+| Ambito prova | Menu, Funzioni online |
+
+**Verifiche funzionali (nell’ambito indicato)**
+
+| Avvio | Gioco | Video | Audio | Online |
+| --- | --- | --- | --- | --- |
+| Verificato | Non riportato | Non riportato | Non riportato | Verificato |
+
+Prove controller: **non riportate**.
+
+**Impostazioni / patch richieste**
+
+- Controllo privato WinHTTP più ampio con il runtime condiviso candidato 63f5e7c. È distinto dal pack portabile più ristretto bond-public-config-v1, ancora da verificare nel gioco.
+
+**Fonti**
+
+- [Resoconto manutentore 1](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/xsts-endpoint-routing/azure-anonymous-control.json>)
+- [Resoconto manutentore 2](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/xsts-endpoint-routing/portable-pack-validation.json>)
+- [Resoconto manutentore 3](<https://github.com/fladnaG86/MACxus/pull/23>)
+
+Report ID: `bond-preview-public-config-control`
 
 [↑ Index / Indice](../../COMPATIBILITY.md)

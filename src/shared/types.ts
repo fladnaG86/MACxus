@@ -89,6 +89,7 @@ export interface RuntimeStatus {
 
 export interface GameLaunchTools {
   dualSenseCompatibility?: boolean;
+  fh5PreviewCompatibility?: boolean;
   offlineWithoutAntiCheat?: boolean;
   /** macOS: Apple's Metal performance HUD (MTL_HUD_ENABLED) over the game. */
   metalHud?: boolean;

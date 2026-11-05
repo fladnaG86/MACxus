@@ -145,7 +145,7 @@ test('generation checks missing/stale/obsolete views and removes only obsolete g
 test('500 games across different initials produce one continuous alphabetical table per language', () => {
   const large = { schemaVersion: 1, games: Array.from({ length: 500 }, (_, index) => {
     const item = structuredClone(catalog.games[0]);
-    item.id = `game-${index}`; item.title = `${['007', 'Alpha', 'Bravo', 'Étoile', 'Zeta'][index % 5]} ${String(index).padStart(3, '0')}`;
+    item.id = `game-${index}`; item.storeId = null; item.title = `${['007', 'Alpha', 'Bravo', 'Étoile', 'Zeta'][index % 5]} ${String(index).padStart(3, '0')}`;
     item.reports.forEach((report, reportIndex) => report.id = `report-${index}-${reportIndex}`);
     return item;
   }) };

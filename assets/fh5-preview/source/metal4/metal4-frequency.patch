@@ -1,0 +1,11 @@
+--- a/d3d12.c
++++ b/d3d12.c
+@@ -251,7 +251,7 @@
+     for(UINT index=0;index<count;index++)
+         list->lpVtbl->CopyBufferRegion(list,destination,offset+(UINT64)index*8,h->marker,((UINT64)h->count+start+index)*8,8);
+ }
+-static HRESULT STDMETHODCALLTYPE hook_GetTimestampFrequency(ID3D12CommandQueue *queue,UINT64 *frequency){if(!frequency)return E_INVALIDARG;*frequency=1000000000;return S_OK;}
++static HRESULT STDMETHODCALLTYPE hook_GetTimestampFrequency(ID3D12CommandQueue *queue,UINT64 *frequency){if(!frequency)return E_INVALIDARG;char text[32];DWORD n=GetEnvironmentVariableA("MACXUS_GPU_TIMESTAMP_FREQUENCY",text,sizeof text);if(!n||n>=sizeof text)return E_FAIL;*frequency=_strtoui64(text,NULL,10);return *frequency?S_OK:E_FAIL;}
+ // Calibration, copy queues, bundles, reset/retirement and multi-queue concurrency
+ // need separate validation. Do not invent a CPU/GPU calibration for the prototype.
+ static HRESULT STDMETHODCALLTYPE hook_GetClockCalibration(ID3D12CommandQueue *queue,UINT64 *gpu,UINT64 *cpu){return E_NOTIMPL;}

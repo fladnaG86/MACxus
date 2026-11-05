@@ -1,0 +1,107 @@
+{
+  "gameLaunched": false,
+  "accountUsed": false,
+  "results": [
+    {
+      "name": "math",
+      "exitCode": 0,
+      "summary": [
+        "CLOCK_MATH checks=300003 sleep_jump_rejected=100000 resumed_offset_recomputed=100000"
+      ]
+    },
+    {
+      "name": "native",
+      "exitCode": 0,
+      "summary": [
+        "NATIVE_CALIBRATION samples=64 real_query_brackets=64 frequency=24000000"
+      ]
+    },
+    {
+      "name": "missing-bridge",
+      "exitCode": 0,
+      "summary": [
+        "MISSING_BRIDGE hr=80004001 outputs_preserved=1"
+      ]
+    },
+    {
+      "name": "disabled-hook",
+      "exitCode": 0,
+      "summary": [
+        "CLOCK_REPORTING_OK checks=2064 bounded_notes=15"
+      ]
+    },
+    {
+      "name": "guest-clocks",
+      "exitCode": 0,
+      "summary": [
+        "CLOCK_OK samples=1024 bracketed=1024 monotonic=1024 gpu_frequency=24000000 qpc_frequency=10000000 call_median_ns=600 call_p99_ns=13100 call_max_ns=46000",
+        "CLOCK_THREADS threads=8 samples=8192 monotonic=8192"
+      ]
+    },
+    {
+      "name": "guest-query",
+      "exitCode": 0,
+      "summary": [
+        "CALIBRATED_QUERY iteration=0 bracketed=1",
+        "CALIBRATED_QUERY iteration=1 bracketed=1",
+        "CALIBRATED_QUERY iteration=2 bracketed=1",
+        "CALIBRATED_QUERY iteration=3 bracketed=1",
+        "CALIBRATED_QUERY iteration=4 bracketed=1",
+        "CALIBRATED_QUERY iteration=5 bracketed=1",
+        "CALIBRATED_QUERY iteration=6 bracketed=1",
+        "CALIBRATED_QUERY iteration=7 bracketed=1",
+        "CALIBRATED_QUERY iteration=8 bracketed=1",
+        "CALIBRATED_QUERY iteration=9 bracketed=1",
+        "CALIBRATED_QUERY iteration=10 bracketed=1",
+        "CALIBRATED_QUERY iteration=11 bracketed=1",
+        "CALIBRATED_QUERY iteration=12 bracketed=1",
+        "CALIBRATED_QUERY iteration=13 bracketed=1",
+        "CALIBRATED_QUERY iteration=14 bracketed=1",
+        "CALIBRATED_QUERY iteration=15 bracketed=1",
+        "CALIBRATED_QUERY iteration=16 bracketed=1",
+        "CALIBRATED_QUERY iteration=17 bracketed=1",
+        "CALIBRATED_QUERY iteration=18 bracketed=1",
+        "CALIBRATED_QUERY iteration=19 bracketed=1",
+        "CALIBRATED_QUERY iteration=20 bracketed=1",
+        "CALIBRATED_QUERY iteration=21 bracketed=1",
+        "CALIBRATED_QUERY iteration=22 bracketed=1",
+        "CALIBRATED_QUERY iteration=23 bracketed=1",
+        "CALIBRATED_QUERY iteration=24 bracketed=1",
+        "CALIBRATED_QUERY iteration=25 bracketed=1",
+        "CALIBRATED_QUERY iteration=26 bracketed=1",
+        "CALIBRATED_QUERY iteration=27 bracketed=1",
+        "CALIBRATED_QUERY iteration=28 bracketed=1",
+        "CALIBRATED_QUERY iteration=29 bracketed=1",
+        "CALIBRATED_QUERY iteration=30 bracketed=1",
+        "CALIBRATED_QUERY iteration=31 bracketed=1",
+        "ASYNC_OK iterations=32 reset=31 repeated_resolve=32 future_queue_signal=32"
+      ]
+    }
+  ],
+  "files": {
+    "d3d12.dll": "aeebd1b7fe4aef1c60c449d1c117d92f8412cd2260a96d6077aaf6dfb5da8980",
+    "macxus-metal4-timestamps.dylib": "f77cb14a1c0c5f4ced62a4c6ef70550358ad0a5e7617047a01060891cc081e1e",
+    "dlls/x86_64-windows/macxus-clock.dll": "efa8f952f3b36fee7d06bf2a54a762966cd21d55ab016be500b37e6883aff62f",
+    "dlls/x86_64-unix/macxus-clock.so": "227ad457c422768bf62ac498ec485fe87245fe696e4d91e03bc36ff5d6bd460e"
+  },
+  "scope": "Offline experimental FH5 calibration on M5 Max / Rosetta Preview 20261015 / Metal 4",
+  "basePackCommit": "8e0c3e2c97ebbdceb259d69735c24d3eb44da94b",
+  "productionPackChanged": false,
+  "guestLatencyTimingNote": "Synthetic API call overhead only; not an input-to-display or game benchmark measurement",
+  "limits": [
+    "No FH5 trial yet",
+    "Actual sleep/resume untested; simulated offset-transition cases only",
+    "Private prepared loader needed for native injection; original loader exercises missing-bridge fallback",
+    "No production module staging or reproducibility acceptance"
+  ],
+  "independentReview": {
+    "head": "54e5a79a05066fbfa25bfddfa6d5ce74846acfbf",
+    "findings": [
+      "P2 template DLL symlink overwrite in runner"
+    ],
+    "clockMathAndABIFindings": [],
+    "rerunEvidence": "Independent real native, PE and D3D12 tests, additional math/fault injection and cold concurrency/reload tests passed",
+    "runnerResolution": "Exclusive sibling copy with atomic replacement; linked write ancestors, external C: and linked registry files rejected; output/template overlap rejected",
+    "regressions": "6 isolation tests passed; full runner rerun with linked DLL template passed and sentinel unchanged"
+  }
+}

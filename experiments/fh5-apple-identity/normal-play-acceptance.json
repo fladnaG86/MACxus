@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "implementationCommit": "0d2cd0272aa61f4fe7dc0419876c0c7ceb4b3005",
+  "entryPoint": "Normal MACxus Play in installed Apple-name app",
+  "target": "FH5 Store / M5 Max / Preview Rosetta20261015 / Metal4",
+  "userReport": "All work; Apple M5 Max shown",
+  "accepted": {
+    "drivingBenchmark": true,
+    "DLSSDLAAAvailable": true,
+    "GPUName": "Apple M5 Max (D3DMetal)",
+    "manualVendorDeviceOverridesAbsentInDLSSMode": true,
+    "sixCalibratedPayloadsUnchanged": true
+  },
+  "identityBounds": {
+    "DLSSMode": "Preview supplies NVIDIA10de/2684compatibilityIDs",
+    "MetalFXOffOrUnset": "Previous10de/2786fallbackretained",
+    "nativeAppleVendorIdentityWithDLSS": "Unresolved; not claimed"
+  },
+  "screenshotAttribution": "Earlier52.6latency109FPSscreenshot belongs to previous privatefixed-IDApple-namecomparison, not thisnormalPlayrun",
+  "limits": [
+    "User gameplay observation; not independent measurement",
+    "No controlled FPS,frame-generation or input-latency acceptance",
+    "No new multiplayer claim for thisidentitytrial",
+    "DefaultAMDstartupissue and nativeAppleIDDLSS unresolved",
+    "Black-road investigation excluded"
+  ]
+}

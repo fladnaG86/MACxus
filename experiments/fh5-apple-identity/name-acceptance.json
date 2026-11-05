@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "scope": "Apple GPU description with accepted NVIDIA compatibility IDs",
+  "baseCommit": "f91cbfcdc02462d1bfd1e5f3ebb86ac9bfe62a8c",
+  "onlyIdentityFieldChanged": "D3DM_DEVICE_DESCRIPTION",
+  "description": "Apple M5 Max (D3DMetal)",
+  "vendorId": "0x10de",
+  "deviceId": "0x2786",
+  "acceptedSixCalibrationModulesUnchanged": true,
+  "originalAGSRetained": true,
+  "actualWrapperPreflight": {
+    "adapterProbePassed": true,
+    "calibratedD3D12Submissions": 32
+  },
+  "userReport": "Works; DLSS/DLAA available; Apple M5 Max shown",
+  "gameAcceptance": {
+    "drivingBenchmarkWorks": true,
+    "DLSSDLAAAvailable": true,
+    "AppleM5MaxShown": true
+  },
+  "limits": [
+    "Description correction only; vendor/device remain NVIDIA compatibility IDs",
+    "True Apple vendor identity with DLSS not accepted",
+    "No performance comparison",
+    "Black-road investigation excluded"
+  ]
+}

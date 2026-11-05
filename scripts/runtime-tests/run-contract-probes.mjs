@@ -3,6 +3,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
+import { createProbeOutput, refusalOutputFailed } from './probe-output.mjs';
 const [runtimeArg, testsArg, workArg] = process.argv.slice(2);
 if (!runtimeArg || !testsArg || !workArg || process.argv.length !== 5) throw new Error('Usage: run-contract-probes.mjs RUNTIME TEST_EXECUTABLE_DIRECTORY WORK_PARENT');
 const runtime = await fs.realpath(runtimeArg);
@@ -26,15 +27,15 @@ const server = path.join(files, 'bin/wineserver');
 async function run(executable, args, timeout = 60000, overrides = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, { env: { ...env, ...overrides }, stdio: ['ignore', 'pipe', 'pipe'] });
-    let output = '', timedOut = false;
-    const collect = bytes => { if (output.length < 512000) output += bytes.toString().slice(0, 512000 - output.length); };
-    child.stdout.on('data', collect); child.stderr.on('data', collect);
+    let timedOut = false;
+    const capture = createProbeOutput();
+    child.stdout.on('data', capture.collect); child.stderr.on('data', capture.collect);
     const timer = setTimeout(() => {
       timedOut = true;
       try { execFileSync(server, ['-k'], { env, timeout: 5000, stdio: 'ignore' }); } catch { child.kill('SIGKILL'); }
     }, timeout);
     child.once('error', e => { clearTimeout(timer); reject(e); });
-    child.once('close', code => { clearTimeout(timer); resolve({ code, output, timedOut }); });
+    child.once('close', code => { clearTimeout(timer); resolve({ code, ...capture.snapshot(), timedOut }); });
   });
 }
 const results = [];
@@ -50,7 +51,7 @@ try {
     await fs.copyFile(path.join(files, 'lib', library, 'x86_64-windows', name), temporary, fs.constants.COPYFILE_EXCL);
     await fs.rename(temporary, dest);
   }
-  for (const name of ['appstate', 'appstate-source', 'appconstrained', 'appconstrained-source', 'hlsl-state-keywords', 'game-relaunch', 'taskqueue-teardown', 'taskqueue-contract', 'taskqueue-close', 'async-provider-contract', 'async-completion-lifetime', 'async-schedule', 'gamesave-files', 'gamesave-sync', 'gamesave-transfer', 'winrt-json', 'token-dispatch', 'user-privilege', 'store-entitlements', 'package-content', 'package-identity', 'package-legacy', 'package-chunks', 'package-monitors', 'package-progress-bytes', 'system-device-id', 'user-device-association', 'user-audio']) {
+  for (const name of ['appstate', 'appstate-source', 'appconstrained', 'appconstrained-source', 'hlsl-state-keywords', 'game-relaunch', 'taskqueue-teardown', 'taskqueue-contract', 'taskqueue-close', 'async-provider-contract', 'async-completion-lifetime', 'async-schedule', 'gamesave-files', 'gamesave-sync', 'gamesave-transfer', 'winrt-json', 'token-dispatch', 'user-privilege', 'windows-title-auth', 'title-endpoint', 'preferred-udp-port', 'store-entitlements', 'store-products', 'package-content', 'package-identity', 'package-legacy', 'package-chunks', 'package-monitors', 'package-progress-bytes', 'system-device-id', 'user-device-association', 'user-audio']) {
     const result = await run(wine, [path.join(tests, `${name}-probe.exe`)]);
     await fs.writeFile(path.join(root, `${name}.log`), result.output, { mode: 0o600 });
     const summary = result.output.split(/\r?\n/).filter(line => /^(FAIL |CHECKS |QUEUE |ASYNC |CHUNK METADATA CHECKS )/.test(line));
@@ -65,6 +66,17 @@ try {
       if (finish.code || finish.timedOut) throw new Error(`File-provider shutdown failed; see ${root}`);
     }
   }
+  // Exercise refusal parsing separately: success-path JSON tracing is outside
+  // this check, while the synthetic error's full stdout/stderr must stay clean.
+  const refusal = await run(wine, [path.join(tests, 'user-privilege-probe.exe'), '--refusal-only'], 60000,
+    { WINEDEBUG: '-all,trace+web' });
+  await fs.writeFile(path.join(root, 'xsts-refusal-trace.log'), refusal.output, { mode: 0o600 });
+  const refusalSummary = refusal.output.split(/\r?\n/).filter(line => /^(FAIL |REFUSAL_CHECKS )/.test(line));
+  const responseLeaked = refusal.output.includes('RESPONSE_BODY_MUST_STAY_PRIVATE') ||
+    refusal.output.includes('response-private.example.test');
+  results.push({ name: 'xsts-refusal-trace', code: refusal.code, timedOut: refusal.timedOut, outputTruncated: refusal.outputTruncated, responseLeaked, summary: refusalSummary });
+  console.log(`xsts-refusal-trace: exit=${refusal.code} timeout=${refusal.timedOut}\n${refusalSummary.join('\n')}`);
+  if (refusalOutputFailed(refusal)) throw new Error(`XSTS refusal privacy probe failed; see ${root}`);
   const pgs = await run(wine, [path.join(tests, 'playfab-folder/playfab-folder-probe.exe')], 60000,
     { WINEDLLOVERRIDES: `${env.WINEDLLOVERRIDES};xgameruntime=n;playfabgamesave=n;nexus_pgs_native=n` });
   await fs.writeFile(path.join(root, 'playfab-folder.log'), pgs.output, { mode: 0o600 });

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "implementationCommit": "4c8939e6851b2f510c50bba6ef501e36d4f84340",
+  "entryPoint": "Normal MACxus Play in installed six-module calibrated app",
+  "target": "FH5 Store / M5 Max / Rosetta Preview 20261015 / Metal 4",
+  "payloadSHA256": {
+    "macxus-metal4-timestamps.dylib": "f77cb14a1c0c5f4ced62a4c6ef70550358ad0a5e7617047a01060891cc081e1e",
+    "windows.web.dll": "d96352f9c95bde5c1b1c790b5eda80ea06b0772b9d44508ed8b6fb1aaa6e68d6",
+    "macxus-clock.dll": "1de8135b98f479edd050de1d0f496a771c42fc4143d0c4f3679ce83e7d3b6026",
+    "d3d12.dll": "4834ca3c96d8e2673b711536d124dc3a2ce1cefb4b1f18931ac0b5b41ac2960d",
+    "macxus-clock.so": "690c1bdef5133b445ddf9818b38aa4cd6ff381cabbb153d2e580db52bf372ab4",
+    "xgameruntime.dll": "7f3b8bc86edbaa3d85c6579160c32c14afa8d3961a164787e1434474d7411636"
+  },
+  "userConfirmation": {
+    "at": "2026-11-03T12:24:28.488077+00:00",
+    "answer": "Driving/benchmark works; latency is plausible",
+    "entryPoint": "Latest normal MACxus Play run",
+    "numericLatency": "35 ms, supplied in follow-up"
+  },
+  "packagedChecks": {
+    "sixModuleHashesVerified": true,
+    "calibrationEnabled": true,
+    "clockDiagnosticsOff": true,
+    "NVIDIACompatibilityIdentityDLSSAndHUDRetained": true,
+    "drivingAndBenchmark": "User confirmed working",
+    "latencyDisplay": "User confirmed plausible",
+    "numericLatency": "35 ms",
+    "averageLatencyMilliseconds": 35
+  },
+  "separatePrivateTrial": {
+    "averageLatencyDisplayed": 61.1,
+    "calibrationHRESULT": "S_OK",
+    "scalarSampleCallCount": 131072,
+    "benchmarkFinishedReply": "User explicitly attributed to earlier private diagnostic run"
+  },
+  "limits": [
+    "Displayed latency is not independently measured input-to-display latency",
+    "No new FPS or frame-generation correctness acceptance",
+    "Actual host sleep/resume and long-session drift untested",
+    "No new multiplayer test claimed for calibrated packaged run; baseline multiplayer acceptance retained separately",
+    "Black-road investigation excluded",
+    "35 ms packaged and 61.1 private results are different runs, not a controlled performance comparison"
+  ]
+}

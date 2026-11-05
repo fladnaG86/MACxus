@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { AccountGames, Cover, GameLaunchToolFields, GameTitle, HomePage, LibraryPagination, LibraryProductCard, StoreProductCard, Sidebar, type LibraryFilters } from './App';
+import { I18nProvider } from './i18n';
 import { defaultLaunchTools } from '../shared/launch-tools';
 import { demoSnapshot } from '../shared/demo-data';
 import type { AccountLibraryPage } from '../shared/types';
@@ -202,4 +203,26 @@ it('offers a package-relative executable override on every platform and shows th
   expect(html).toContain('Custom executable');
   expect(html).toMatch(/<input[^>]*value="Binaries\/WinGDK\/Game-WinGDK-Shipping\.exe"/);
   expect(renderToStaticMarkup(<GameLaunchToolFields value={defaultLaunchTools} change={() => {}} />)).toContain('Custom executable');
+});
+
+
+it('offers the FH5 pack only for its Store identity on macOS', () => {
+  const render = (storeId?: string, mac = true, enabled = false) => renderToStaticMarkup(<GameLaunchToolFields value={{ ...defaultLaunchTools, fh5PreviewCompatibility: enabled }} change={() => {}} storeId={storeId} mac={mac} />);
+  for (const storeId of [undefined, '9PN198B459VB', '9NKV34XDW014', 'Forza Horizon 5', '9NNX1VVR3KNQ-extra']) {
+    expect(render(storeId)).not.toContain('FH5 Preview compatibility pack');
+    expect(render(storeId, true, true)).not.toContain('FH5 Preview compatibility pack');
+  }
+  expect(render('9NNX1VVR3KNQ')).toContain('FH5 Preview compatibility pack');
+  expect(render('9nnx1vvr3knq', true, true)).toContain('checked');
+  expect(render('9NNX1VVR3KNQ', false)).not.toContain('FH5 Preview compatibility pack');
+});
+
+it('shows the untested FH5 hardware warning in both languages before enabling the pack', () => {
+  const render = (language: 'en' | 'it', storeId = '9NNX1VVR3KNQ') => renderToStaticMarkup(<I18nProvider language={language}><GameLaunchToolFields value={defaultLaunchTools} change={() => {}} storeId={storeId} mac /></I18nProvider>);
+  expect(render('en')).toContain('Only M5 Max has been game-tested.');
+  expect(render('en')).toContain('experimental and untested');
+  expect(render('en')).toContain('M3 or newer with macOS 26+');
+  expect(render('it')).toContain('Solo M5 Max è stato provato nel gioco.');
+  expect(render('it')).toContain('sperimentali e non provati');
+  expect(render('en', '9PN198B459VB')).not.toContain('experimental and untested');
 });

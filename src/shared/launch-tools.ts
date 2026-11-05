@@ -1,6 +1,9 @@
 import type { GameLaunchTools } from './types.js';
 
-export const defaultLaunchTools: GameLaunchTools = { dualSenseCompatibility: false, offlineWithoutAntiCheat: false, metalHud: false, dlss: false, mangoHud: false, gamescope: false, gamescopeArgs: '', launchOptions: '' };
+export const FH5_STORE_ID = '9NNX1VVR3KNQ';
+export const supportsFH5PreviewPack = (storeId?: string): boolean => storeId?.toUpperCase() === FH5_STORE_ID;
+
+export const defaultLaunchTools: GameLaunchTools = { fh5PreviewCompatibility: false, dualSenseCompatibility: false, offlineWithoutAntiCheat: false, metalHud: false, dlss: false, mangoHud: false, gamescope: false, gamescopeArgs: '', launchOptions: '' };
 
 /** Command words only, never a shell program. Quotes group literal arguments. */
 export function commandWords(input: string): string[] {
@@ -46,12 +49,13 @@ export function normalizeLaunchTools(value: unknown): GameLaunchTools {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('Invalid game launch tools.');
   const tools = value as Record<string, unknown>;
   if (typeof tools.mangoHud !== 'boolean' || typeof tools.gamescope !== 'boolean' || typeof tools.gamescopeArgs !== 'string' || typeof tools.launchOptions !== 'string') throw Error('Invalid game launch tools.');
+  if (tools.fh5PreviewCompatibility !== undefined && typeof tools.fh5PreviewCompatibility !== 'boolean') throw Error('Invalid FH5 Preview compatibility setting.');
   if (tools.dualSenseCompatibility !== undefined && typeof tools.dualSenseCompatibility !== 'boolean') throw Error('Invalid DualSense compatibility setting.');
   if (tools.offlineWithoutAntiCheat !== undefined && typeof tools.offlineWithoutAntiCheat !== 'boolean') throw Error('Invalid offline anti-cheat setting.');
   if (tools.metalHud !== undefined && typeof tools.metalHud !== 'boolean') throw Error('Invalid Metal HUD setting.');
   if (tools.dlss !== undefined && typeof tools.dlss !== 'boolean') throw Error('Invalid DLSS setting.');
   const executable = normalizeExecutableOverride(tools.executable);
-  const result: GameLaunchTools = { dualSenseCompatibility: tools.dualSenseCompatibility ?? false, offlineWithoutAntiCheat: tools.offlineWithoutAntiCheat ?? false, metalHud: tools.metalHud ?? false, dlss: tools.dlss ?? false, mangoHud: tools.mangoHud, gamescope: tools.gamescope, gamescopeArgs: tools.gamescopeArgs.trim(), launchOptions: tools.launchOptions.trim() };
+  const result: GameLaunchTools = { fh5PreviewCompatibility: tools.fh5PreviewCompatibility ?? false, dualSenseCompatibility: tools.dualSenseCompatibility ?? false, offlineWithoutAntiCheat: tools.offlineWithoutAntiCheat ?? false, metalHud: tools.metalHud ?? false, dlss: tools.dlss ?? false, mangoHud: tools.mangoHud, gamescope: tools.gamescope, gamescopeArgs: tools.gamescopeArgs.trim(), launchOptions: tools.launchOptions.trim() };
   if (executable) result.executable = executable;
   const args = commandWords(result.gamescopeArgs);
   if (args.includes('--') || args.some(arg => arg.includes('%command%'))) throw Error('Gamescope options must not include -- or %command%; Nexus adds the game command.');

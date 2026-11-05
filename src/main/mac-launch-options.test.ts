@@ -144,7 +144,7 @@ it.each(['%command% && echo unsafe', '$(echo unsafe)', '%command% %command%', 'F
 
 it('routes the macOS game command/env through the helper while setup and Stop use the original runner', async () => {
   const source = await fs.readFile(new URL('./index.ts', import.meta.url), 'utf8');
-  expect(source).toContain('prepareMacLaunchOptions(protonRunner.command, game.launchTools,');
+  expect(source).toContain('prepareMacLaunchOptions(protonRunner.launchCommand ?? protonRunner.command, game.launchTools,');
   expect(source).toContain('args[2] = macOptions.command;');
   expect(source).toContain('Object.assign(environment, macOptions.environment);');
   expect(source).toContain('const wineCommand = protonRunner?.command ?? wine;');

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "scope": "Isolated prototype with all three accepted GPU/calibration patches applied",
+  "gameAcceptance": "user reported and screenshot supplied",
+  "startupBlankDialog": false,
+  "driverVersionDisplayed": "576.2",
+  "nativeNvapiDriverVersion": 57602,
+  "driverVersionOverrideAdded": false,
+  "dlaaAndFrameGenerationRetained": true,
+  "realGpuTimestampFrequency": 24000000,
+  "successfulCalibrationCallsObserved": true,
+  "otherFivePayloadsUnchanged": true,
+  "rendererBaselineSourceEqualityVerified": true,
+  "prototypeD3d12SHA256": "5621128e02ad0d71ac7f4d8b249dc02711e6ca2e424070b6f9ce2d8e5ab84ead",
+  "screenshotSHA256": "18384cdcd8b77ff77191b2e5a7bc27b1399f28bf70b48868c4467aa4b6be323f",
+  "performanceComparison": false,
+  "remaining": [
+    "Production integration without investigative hooks",
+    "Reproducible source/payload rebuild",
+    "Independent Sol adversarial review",
+    "Normal MACxus Play acceptance"
+  ]
+}

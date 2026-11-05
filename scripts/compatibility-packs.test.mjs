@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { createHash } from 'node:crypto';
 import { createPackage } from '@electron/asar';
+import { finished } from 'node:stream/promises';
 import { stageCompatibilityPackSources, verifyCompatibilityPacksDirectory, verifyPackagedCompatibilityPacks } from './compatibility-packs.mjs';
 const sha = data => createHash('sha256').update(data).digest('hex');
 const reference = JSON.parse(await fs.readFile(new URL('../assets/compatibility-packs/halo-preview-media-v1/manifest.json', import.meta.url), 'utf8'));
@@ -22,6 +23,7 @@ async function fixture(temp) {
       'source/build-scripts/prepare-compatibility-packs.mjs': 'test-build-recipe',
       'source/build-scripts/compatibility-packs.mjs': 'test-verifier',
       'source/build-scripts/compatibility-pack-build.mjs': 'test-relative-build-policy',
+      'source/build-scripts/fh5-pack.mjs': 'test-optional-fh5-verifier',
       'source/src/shared/compatibility-pack-schema.mjs': 'test-schema',
       'README.md': 'test-attribution-and-instructions',
       [`source/${path.posix.basename(manifest.patch.path)}`]: 'test-source-patch',
@@ -40,15 +42,17 @@ test('verifies every registered pack inside the actual ASAR, with complete sourc
   try {
     const { app, assets } = await fixture(temp);
     await verifyCompatibilityPacksDirectory(assets);
-    const bundled = path.join(temp, 'bundled.asar'); await createPackage(app, bundled);
+    // ASAR returns its output stream before the final disk writes finish.
+    // Wait before verifying the archive or mutating the source fixture.
+    const bundled = path.join(temp, 'bundled.asar'); await finished(await createPackage(app, bundled));
     await assert.rejects(verifyPackagedCompatibilityPacks(bundled), /must be a release asset/);
     const sources = path.join(temp, 'sources');
     await fs.mkdir(sources);
     for (const id of ['synthetic-alpha-v1', 'synthetic-beta-v1']) await fs.rename(path.join(assets, id, 'source', reference.source.archive), path.join(sources, id));
-    const archive = path.join(temp, 'good.asar'); await createPackage(app, archive); await verifyPackagedCompatibilityPacks(archive);
+    const archive = path.join(temp, 'good.asar'); await finished(await createPackage(app, archive)); await verifyPackagedCompatibilityPacks(archive);
     await assert.rejects(verifyCompatibilityPacksDirectory(assets));
     await fs.writeFile(path.join(assets, 'synthetic-beta-v1/payload/beta.dll'), 'corrupt');
-    const corrupt = path.join(temp, 'corrupt.asar'); await createPackage(app, corrupt); await assert.rejects(verifyPackagedCompatibilityPacks(corrupt), /checksum mismatch/);
+    const corrupt = path.join(temp, 'corrupt.asar'); await finished(await createPackage(app, corrupt)); await assert.rejects(verifyPackagedCompatibilityPacks(corrupt), /checksum mismatch/);
     for (const id of ['synthetic-alpha-v1', 'synthetic-beta-v1']) await fs.rename(path.join(sources, id), path.join(assets, id, 'source', reference.source.archive));
     await assert.rejects(verifyCompatibilityPacksDirectory(assets), /checksum mismatch/);
   } finally { await fs.rm(temp, { recursive: true, force: true }); }

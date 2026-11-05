@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "candidate": "105216ab60d6ab76129cfebc267dec967c46a8b2",
+  "incrementalBase": "c5d0415a66920c5788953fcc2a1304603b94f739",
+  "cumulativeBaseConsulted": "8b9481ef510f53e5edcda739b7e76535f32ea57b",
+  "model": "gpt-6.1-sol",
+  "reasoningEffort": "high",
+  "mode": "Default",
+  "result": "No actionable findings in bounded reviewed surface; prior provider identity P2 closed",
+  "independentlyPassed": [
+    "23 focused launcher tests",
+    "6 Python contracts",
+    "3 distribution tests",
+    "typecheck",
+    "66 profile checks and 2048 concurrent calls",
+    "918 memory checks",
+    "10 heap contracts",
+    "Actual pinned/foreign/replaced-backing provider controls",
+    "Signed cache load and corrupted-signature rejection",
+    "Source locks and supplied cross-root build output comparison"
+  ],
+  "limits": [
+    "Independent fresh full compilation was not rerun",
+    "Independent game and GPU replay were not run",
+    "Publication and merge not authorized by review"
+  ],
+  "newWorktreesCreated": false,
+  "ownedWineProcessesStopped": true
+}

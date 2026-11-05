@@ -83,6 +83,9 @@ static void tests( void )
     WCHAR path[MAX_PATH];
     HRESULT invalid = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
     const char *bad[] = {
+        "<Package><Chunk Id=\"1\"/><FileGroup SourcePath=\".\" Include=\"missing.bin\"/></Package>",
+        "<Package><Chunk Id=\"1\"/><Unknown><FileGroup SourcePath=\".\" Include=\"missing.bin\"/></Unknown></Package>",
+        "<Package><Chunk Id=\"1\"/><Features><Feature Id=\"Hidden\"><FileGroup SourcePath=\".\" Include=\"missing.bin\"/></Feature></Features></Package>",
         "<Package><Chunk Id=\"1\"/><Chunk Id=\"1\"/></Package>",
         "<Package><Chunk Id=\"-1\"/></Package>",
         "<Package><Chunk Id=\"4294967296\"/></Package>",
@@ -183,7 +186,7 @@ static void tests( void )
     /* Larger real layouts must not inherit the content helper's old 256-group
      * bound. Conversely, hostile counts/text are rejected before callbacks. */
     {
-        char *large = malloc(1200000);
+        char *large = malloc(16 * 1024 * 1024 + 32);
         SIZE_T used;
         CHECK("large-fixture-allocation", large != NULL);
         if (large)
@@ -197,7 +200,12 @@ static void tests( void )
             for (i = 0; i < 4097; i++) used += sprintf(large + used, "<Chunk Id=\"%u\"/>", i);
             strcpy(large + used, "</Package>"); layout(large);
             enumerate(XPackageChunkSelectorType_Chunk, HRESULT_FROM_WIN32(ERROR_MORE_DATA), 0);
+            /* Large layouts are now accepted up to the dedicated 16 MiB bound;
+             * identity/related-content XML retains its separate 1 MiB limit. */
             memset(large, ' ', 1100000); memcpy(large, "<Package>", 9); strcpy(large + 1100000, "</Package>"); layout(large);
+            enumerate(XPackageChunkSelectorType_Chunk, S_OK, 0);
+            memset(large, ' ', 16 * 1024 * 1024 + 1); memcpy(large, "<Package>", 9);
+            strcpy(large + 16 * 1024 * 1024 + 1, "</Package>"); layout(large);
             enumerate(XPackageChunkSelectorType_Chunk, invalid, 0);
             used = sprintf(large, "<Package><Chunk Id=\"1\" Tags=\"");
             memset(large + used, 'a', 1100); strcpy(large + used + 1100, "\"/></Package>"); layout(large);

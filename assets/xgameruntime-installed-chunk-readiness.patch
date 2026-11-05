@@ -1,0 +1,214 @@
+--- a/dlls/xgameruntime/xpackage.c
++++ b/dlls/xgameruntime/xpackage.c
+@@ -275,22 +275,33 @@
+ /* Installation evidence only, never an ownership or download assertion. Content
+  * lookup validates its layout and declared payload. For the current executable,
+  * also require matching on-disk config/Appx identity and a readable layout. */
+-static HRESULT installed_chunk_package( const char *identifier )
++/* The current executable may use a full-size chunk layout with build-machine
++ * SourcePaths mapped by DestinationPath. Validate it with the same bounded
++ * parser and real file-readability checks used by availability/monitor APIs.
++ * Related-content discovery keeps its existing, separate admission rules. */
++static BOOL current_chunk_layout_ready( const struct content_package *package, const char *identifier )
++{
++    struct chunk_snapshot *snapshot;
++    WCHAR path[MAX_PATH];
++    BOOL ready;
++    UINT i;
++
++    if (FAILED(chunks_resolve( identifier, path )) || wcsicmp( path, package->path ) ||
++        FAILED(chunks_load( identifier, FALSE, &snapshot ))) return FALSE;
++    ready = snapshot->groups && snapshot->registration == XPackageChunkAvailability_Ready;
++    for (i = 0; ready && i < snapshot->count; i++)
++        ready = snapshot->chunks[i].availability == XPackageChunkAvailability_Ready;
++    chunks_free( snapshot );
++    return ready;
++}
++
++static HRESULT installed_current_chunk_package( const char *identifier )
+ {
+     struct content_game current;
+     struct content_package *package;
+     WCHAR path[MAX_PATH], file[MAX_PATH], *sep;
+-    char store[13];
+-    HRESULT hr;
+-    UINT i;
+-
+-    if (!identifier || strlen(identifier) != 32) return E_INVALIDARG;
+-    for (i = 0; i < 32; i++)
+-        if (!((identifier[i] >= '0' && identifier[i] <= '9') ||
+-              (identifier[i] >= 'a' && identifier[i] <= 'f'))) return E_INVALIDARG;
+-
+-    hr = xpackage_query_content_store( identifier, sizeof(store), store );
+-    if (hr != E_GAMEPACKAGE_NO_PACKAGE_IDENTIFIER) return hr;
++    HRESULT hr = E_GAMEPACKAGE_NO_PACKAGE_IDENTIFIER;
++
+     if (!GetModuleFileNameW( NULL, path, ARRAY_SIZE(path) ) || !(sep = wcsrchr(path, '\\')))
+         return E_GAMEPACKAGE_NO_PACKAGE_IDENTIFIER;
+     *sep = 0;
+@@ -306,8 +317,8 @@
+             if (content_load( path, package ) && !package->content &&
+                 !strcmp( current.identity, package->identity ) &&
+                 !strcmp( current.publisher, package->publisher_id ) &&
+-                !strcmp( current.store, package->store ) && content_load_layout( package ) &&
+-                !strcmp( identifier, package->identifier )) hr = S_OK;
++                !strcmp( current.store, package->store ) &&
++                current_chunk_layout_ready( package, identifier )) hr = S_OK;
+             break;
+         }
+         if (!(sep = wcsrchr( path, '\\' )) || sep <= path + 2) break;
+@@ -315,6 +326,25 @@
+     }
+     free( package );
+     return hr;
++}
++
++/* A current-package query must not depend on enumerating siblings of a
++ * temporary RAM launch view. Those siblings may be unrelated host temp files.
++ * Preserve bounded related-content discovery for non-current identifiers. */
++static HRESULT installed_chunk_package( const char *identifier )
++{
++    char store[13];
++    HRESULT hr;
++    UINT i;
++
++    if (!identifier || strlen(identifier) != 32) return E_INVALIDARG;
++    for (i = 0; i < 32; i++)
++        if (!((identifier[i] >= '0' && identifier[i] <= '9') ||
++              (identifier[i] >= 'a' && identifier[i] <= 'f'))) return E_INVALIDARG;
++
++    hr = installed_current_chunk_package( identifier );
++    if (hr != E_GAMEPACKAGE_NO_PACKAGE_IDENTIFIER) return hr;
++    return xpackage_query_content_store( identifier, sizeof(store), store );
+ }
+ 
+ static HRESULT WINAPI x_package_XPackageChangeChunkInstallOrder( IXPackageImpl4 *iface, const char *packageIdentifier, UINT32 selectorCount, XPackageChunkSelector *selectors )
+--- a/dlls/xgameruntime/xpackage_chunks.h
++++ b/dlls/xgameruntime/xpackage_chunks.h
+@@ -4,6 +4,8 @@
+ #define CHUNKS_MAX 4096
+ #define CHUNKS_TEXT_MAX 1024
+ #define CHUNKS_FILES_MAX 65536
++#define CHUNKS_GROUPS_MAX 65536
++#define CHUNKS_ENTRIES_MAX 131072
+ 
+ struct chunk_file
+ {
+@@ -20,7 +22,7 @@
+ };
+ struct chunk_snapshot
+ {
+-    UINT count, groups;
++    UINT count, groups, visited_entries;
+     XPackageChunkAvailability registration;
+     BOOL track_sizes;
+     UINT file_count, file_capacity;
+@@ -202,7 +204,6 @@
+     WCHAR *p;
+     WIN32_FIND_DATAW data;
+     HANDLE find, readable;
+-    UINT entries;
+     BOOL found;
+     LARGE_INTEGER size;
+     HRESULT hr;
+@@ -210,7 +211,7 @@
+     for (node = chunk->children; node; node = node->next)
+     {
+         if (node->type != XML_ELEMENT_NODE) continue;
+-        if (strcmp((char *)node->name, "FileGroup") || ++snapshot->groups > 16384 ||
++        if (strcmp((char *)node->name, "FileGroup") || ++snapshot->groups > CHUNKS_GROUPS_MAX ||
+             !content_text(node, "Include", include, sizeof(include)) || !content_relative(include, TRUE))
+             return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+         if (xmlHasProp(node, (xmlChar *)"Exclude") || node->children) return E_NOTIMPL;
+@@ -233,10 +234,10 @@
+         if (!content_join(directory, wide, pattern)) return HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+         if ((find = FindFirstFileW(pattern, &data)) == INVALID_HANDLE_VALUE)
+         { *availability = XPackageChunkAvailability_Unavailable; continue; }
+-        found = FALSE; entries = 0;
++        found = FALSE;
+         do
+         {
+-            if (++entries > 16384) { FindClose(find); return HRESULT_FROM_WIN32(ERROR_MORE_DATA); }
++            if (++snapshot->visited_entries > CHUNKS_ENTRIES_MAX) { FindClose(find); return HRESULT_FROM_WIN32(ERROR_MORE_DATA); }
+             if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+             found = TRUE;
+             /* Include can contain a relative subdirectory before its leaf. */
+@@ -332,14 +333,29 @@
+     } while (FindNextFileW(find, &data));
+     FindClose(find);
+     if (!layout_valid || layouts != 1) goto done;
+-    doc = content_read_xml(file);
++    doc = content_read_layout_xml(file);
+     root = doc ? xmlDocGetRootElement(doc) : NULL;
+     if (!root || strcmp((char *)root->name, "Package")) goto done;
+     for (node = root->children; node; node = node->next)
+     {
+         struct installed_chunk *chunk;
+         if (node->type != XML_ELEMENT_NODE) continue;
+-        if (strcmp((char *)node->name, "Chunk")) continue;
++        /* Only these two root structures are consumed. Unknown containers
++         * must not hide FileGroups whose missing payload would be ignored. */
++        if (!strcmp((char *)node->name, "Features"))
++        {
++            xmlNodePtr feature;
++            for (feature = node->children; feature; feature = feature->next)
++            {
++                xmlNodePtr child;
++                if (feature->type != XML_ELEMENT_NODE) continue;
++                if (strcmp((char *)feature->name, "Feature")) goto done;
++                for (child = feature->children; child; child = child->next)
++                    if (child->type == XML_ELEMENT_NODE) goto done;
++            }
++            continue;
++        }
++        if (strcmp((char *)node->name, "Chunk")) goto done;
+         if (!content_text(node, "Id", id, sizeof(id))) goto done;
+         if (!strcmp(id, "Registration"))
+         {
+--- a/dlls/xgameruntime/xpackage_content.h
++++ b/dlls/xgameruntime/xpackage_content.h
+@@ -9,6 +9,9 @@
+ #define CONTENT_MAX_DIRECTORIES 512
+ #define CONTENT_MAX_IDS 256
+ #define CONTENT_XML_LIMIT (1024 * 1024)
++/* Base-game layouts can enumerate tens of thousands of files. Identity and
++ * related-content manifests retain their smaller bound. */
++#define CONTENT_LAYOUT_XML_LIMIT (16 * 1024 * 1024)
+ 
+ struct content_game
+ {
+@@ -101,7 +104,7 @@
+     return TRUE;
+ }
+ 
+-static xmlDocPtr content_read_xml( const WCHAR *path )
++static xmlDocPtr content_read_xml_limited( const WCHAR *path, DWORD limit )
+ {
+     HANDLE file;
+     LARGE_INTEGER size;
+@@ -111,7 +114,7 @@
+     file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+     if (file == INVALID_HANDLE_VALUE) return NULL;
+-    if (!GetFileSizeEx(file, &size) || size.QuadPart <= 0 || size.QuadPart > CONTENT_XML_LIMIT ||
++    if (!GetFileSizeEx(file, &size) || size.QuadPart <= 0 || size.QuadPart > limit ||
+         !(bytes = malloc(size.QuadPart))) { CloseHandle(file); return NULL; }
+     if (ReadFile(file, bytes, size.QuadPart, &read, NULL) && read == size.QuadPart)
+     {
+@@ -121,6 +124,16 @@
+     free(bytes);
+     CloseHandle(file);
+     return doc;
++}
++
++static xmlDocPtr content_read_xml( const WCHAR *path )
++{
++    return content_read_xml_limited(path, CONTENT_XML_LIMIT);
++}
++
++static inline xmlDocPtr content_read_layout_xml( const WCHAR *path )
++{
++    return content_read_xml_limited(path, CONTENT_LAYOUT_XML_LIMIT);
+ }
+ 
+ static BOOL content_version( const char *text, XVersion *version )

@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "scope": "Apple display name with Preview-selected compatibility IDs in DLSS mode",
+  "baseCommit": "f91cbfcdc02462d1bfd1e5f3ebb86ac9bfe62a8c",
+  "manualVendorDeviceOverrides": false,
+  "description": "Apple M5 Max (D3DMetal)",
+  "actualAdapterProbe": {
+    "vendorId": "0x10de",
+    "deviceId": "0x2684"
+  },
+  "userReport": "Driving/benchmark and DLSS/DLAA work",
+  "calibratedSixModulePayloadUnchanged": true,
+  "originalAGSRetained": true,
+  "installedAppAndAcceptedBottlesUnmodified": true,
+  "limits": [
+    "Preview still reports NVIDIA compatibility IDs internally",
+    "This does not establish native Apple vendor identity with DLSS",
+    "No FPS or input-latency comparison",
+    "Default AMD IDs with DLSS off are not accepted; production keeps previous NVIDIA-ID fallback in that mode",
+    "Black-road investigation excluded"
+  ]
+}

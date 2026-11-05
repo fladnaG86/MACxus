@@ -1,5 +1,6 @@
 // Release step: the complete compatibility pack source archives are published
 // as assets of the same release as the DMG instead of inside app.asar.
+import { stageFH5Source } from './fh5-pack.mjs';
 import { stageCompatibilityPackSources } from './compatibility-packs.mjs';
 
 const output = process.argv[2];
@@ -7,3 +8,5 @@ if (!output || process.argv.length !== 3) throw Error('Usage: stage-compatibilit
 for (const { file, sha256 } of await stageCompatibilityPackSources('assets/compatibility-packs', output)) {
   console.log(`Release asset (complete LGPL source, upload with the DMG): ${file} sha256 ${sha256}`);
 }
+
+for (const { file, sha256 } of await stageFH5Source('assets/fh5-preview', output)) console.log(`FH5 source release asset: ${file} sha256 ${sha256}`);

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "installedCodeCommit": "c2bb656e029f7713db0ecf18340994dcb0d88d40",
+  "source": "User play-test confirmation after normal MACxus Play launch",
+  "userConfirmedLaunch": true,
+  "oldPackErrorReproduced": true,
+  "pinnedProviderAliasFixIncluded": true,
+  "packagedFreshAndCachedEnginePreparationVerified": true,
+  "installedPackPreparationSucceeded": true,
+  "performanceComparison": false,
+  "newMultiplayerOrMarketplaceValidationClaimed": false,
+  "limits": [
+    "Earlier normal-Play/multiplayer and private benchmark records retain their original candidate scopes",
+    "No fresh Windows parity, long-session, sleep/resume, or black-road fix claimed"
+  ]
+}

@@ -1,11 +1,14 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import type { MacEngine } from '../shared/types.js';
+import { supportsFH5PreviewPack } from '../shared/launch-tools.js';
 import { bundledRuntimeDllDirectory, findCrossOver, findCrossOverPreview, findCrossOverPreviewFex, prepareCrossOverRunner, runtimeOverrideDirectory, type CrossOverInstall, type RuntimeDllSource } from './crossover.js';
 import { highballEngineInstalled, highballOverrideDirectory, highballShimDirectory, prepareHighballRunner } from './highball-engine.js';
 import { CROSSOVER_MISSING } from './mac-launch.js';
 import { effectiveMacEngine, loadMacProfiles, macProfileFor, type MacProfiles } from './mac-profiles.js';
 import type { ProtonRunner } from './proton.js';
+import { prepareFH5PreviewPack, defaultFH5Assets, defaultFH5Execute } from './fh5-preview-pack.js';
+import { prepareGameRuntimePack } from './game-runtime-pack.js';
 import { prepareGameCompatibilityPack, type CompatibilityPack, type CompatibilityPackRequest } from './game-compatibility-pack.js';
 
 export const D3DMETAL_MISSING = 'D3DMetal non trovato: serve CrossOver installato';
@@ -27,6 +30,7 @@ export interface MacRunnerDeps {
   prepareCrossOver: (cx: CrossOverInstall, bottlesRoot: string, runtimeDlls: RuntimeDllSource, log: (line: string) => void, architecture?: 'win64' | 'arm64') => Promise<ProtonRunner>;
   prepareHighball: (engineRoot: string, appleGptk: string, crossOverLib64: string, bottlesRoot: string, runtimeDlls: RuntimeDllSource, extraEnv: Record<string, string>, log: (line: string) => void, engineOverrideDir: string, d3d12ShimDir: string) => Promise<ProtonRunner>;
   profiles: () => Promise<MacProfiles>;
+  prepareRuntimeCompatibility?: (request: CompatibilityPackRequest) => Promise<CompatibilityPack | undefined>;
   prepareCompatibility?: (request: CompatibilityPackRequest) => Promise<CompatibilityPack | undefined>;
 }
 
@@ -39,6 +43,7 @@ const defaultDeps: MacRunnerDeps = {
   prepareHighball: prepareHighballRunner,
   profiles: () => loadMacProfiles(),
   prepareCompatibility: prepareGameCompatibilityPack,
+  prepareRuntimeCompatibility: request => prepareGameRuntimePack(request),
 };
 
 export interface MacRunnerRequest {
@@ -46,6 +51,8 @@ export interface MacRunnerRequest {
   storeId: string | undefined;
   dataRoot: string;
   runtimeDllDir: string;
+  gameRoot?: string;
+  fh5PreviewCompatibility?: boolean;
   log: (line: string) => void;
 }
 
@@ -54,6 +61,7 @@ export interface MacRunner {
   engine: MacEngine;
   /** Whitelisted per-game environment to add to the launch. */
   profileEnv: Record<string, string>;
+  addonDiscoveryParent?: string;
 }
 
 /**
@@ -71,6 +79,11 @@ export async function prepareMacRunner(request: MacRunnerRequest, deps: MacRunne
   const profileEnv = { ...(profile?.env ?? {}) };
   const bottlesRoot = path.join(request.dataRoot, 'bottles');
   const runtimeDlls: RuntimeDllSource = { dir: request.runtimeDllDir, overrideDir: runtimeOverrideDirectory(request.dataRoot), bundledDir: await bundledRuntimeDllDirectory(request.runtimeDllDir) };
+  if (request.fh5PreviewCompatibility && supportsFH5PreviewPack(request.storeId)) {
+    const fh5 = await prepareFH5PreviewPack({ enabled: true, storeId: request.storeId, gameRoot: request.gameRoot, dataRoot: request.dataRoot, engine: preview, runtime: runtimeDlls, log: request.log },
+      { assets: defaultFH5Assets, execute: defaultFH5Execute, prepare: deps.prepareCrossOver });
+    return { runner: fh5!.runner, engine: 'crossover-preview', profileEnv: {}, addonDiscoveryParent: fh5!.addonDiscoveryParent };
+  }
   if (!runtimeDlls.bundledDir) request.log('Le DLL patchate di MACxus non corrispondono a questo runtime: uso quelle del runtime (alcuni giochi potrebbero non funzionare).');
   const profileText = profile
     ? `profilo ${request.storeId?.toUpperCase()}${profile.note ? ` (${profile.note})` : ''}${Object.keys(profileEnv).length ? `, variabili: ${Object.keys(profileEnv).join(', ')}` : ''}`
@@ -87,15 +100,18 @@ export async function prepareMacRunner(request: MacRunnerRequest, deps: MacRunne
   request.log(`Motore Wine: ${label} ${crossOver.version || ''}`.trimEnd() + `; ${profileText}.`);
   // Preview must never upgrade the user's regular CrossOver bottle in place.
   const selectedBottles = isPreview ? path.join(request.dataRoot, engine === 'crossover-preview-fex' ? 'bottles-crossover-preview-fex' : 'bottles-crossover-preview') : bottlesRoot;
-  const pack = await deps.prepareCompatibility?.({ storeId: request.storeId, engine, installation: crossOver, dataRoot: request.dataRoot, log: request.log });
+  const packRequest = { storeId: request.storeId, engine, installation: crossOver, dataRoot: request.dataRoot, log: request.log };
+  const pack = await deps.prepareCompatibility?.(packRequest) ?? await deps.prepareRuntimeCompatibility?.(packRequest);
   // Register a new bottle's Windows components with the matching vendor engine.
   // The media replacement is validated for decoding, not first-boot registration.
   // Existing bottles take the normal idempotent setup path; none are shared with
   // other games. The packed runner is written last and used only after setup.
   if (pack) {
     await pack.validatePrefix(path.join(pack.bottlesRoot, 'xbox'));
-    await deps.prepareCrossOver(crossOver, pack.bottlesRoot, runtimeDlls, request.log, 'win64');
-    await pack.validatePrefix(path.join(pack.bottlesRoot, 'xbox'));
+    if (pack.installation !== crossOver) {
+      await deps.prepareCrossOver(crossOver, pack.bottlesRoot, runtimeDlls, request.log, 'win64');
+      await pack.validatePrefix(path.join(pack.bottlesRoot, 'xbox'));
+    }
   }
   const runner = await deps.prepareCrossOver(pack?.installation ?? crossOver, pack?.bottlesRoot ?? selectedBottles, runtimeDlls, request.log, engine === 'crossover-preview-fex' ? 'arm64' : 'win64');
   if (pack) await pack.configurePrefix(runner.compatibilityDataPath);

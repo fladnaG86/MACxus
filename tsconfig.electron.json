@@ -12,6 +12,6 @@
     "types": ["node"],
     "allowJs": true
   },
-  "include": ["src/main/**/*.ts", "src/preload/**/*.cts", "src/shared/**/*.ts", "src/shared/compatibility-pack-schema.mjs"],
+  "include": ["src/main/**/*.ts", "src/preload/**/*.cts", "src/shared/**/*.ts", "src/shared/compatibility-pack-schema.mjs", "src/shared/runtime-pack-schema.mjs"],
   "exclude": ["**/*.test.ts"]
 }

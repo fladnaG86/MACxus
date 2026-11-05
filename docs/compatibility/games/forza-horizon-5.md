@@ -14,6 +14,8 @@ Compare individual test configurations. No report overrides another or applies t
 | Result / details | Layer / version | macOS | Chip | Graphics | Tested scope |
 | --- | --- | --- | --- | --- | --- |
 | [⚠️ Works with limits](#en-forza-horizon-5-highball-m1max-mac12) | Highball engine-wine-11.0-20261014T003801Z | 27.2 | M1 Max | D3DMetal | Menu, Gameplay |
+| [⚠️ Works with limits](#en-fh5-preview-portable-m5max-online) | CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1) | Not reported | M5 Max | D3DMetal | Gameplay, Online features |
+| [◐ Limited test](#en-fh5-preview-integrated-m5max-launch) | CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1) | Not reported | M5 Max | D3DMetal | Launch |
 
 <a id="en-forza-horizon-5-highball-m1max-mac12"></a>
 ### ⚠️ Works with limits · Highball engine-wine-11.0-20261014T003801Z
@@ -54,6 +56,89 @@ Report ID: `forza-horizon-5-highball-m1max-mac12`
 
 [↑ Index / Indice](../../COMPATIBILITY.md)
 
+<a id="en-fh5-preview-portable-m5max-online"></a>
+### ⚠️ Works with limits · CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1)
+
+Normal MACxus Play reached driving/menu, and the user confirmed an online session and multiplayer. Store/DLC entries were visible, but opening marketplace purchase details returned an error; purchasing is not accepted. Black road/material regions remain unresolved. No controlled performance, Steam, other-hardware or long-session result is claimed.
+
+| Environment | Reported value |
+| --- | --- |
+| Layer/version | CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1) |
+| Architecture | x86&#95;64 / Rosetta |
+| macOS | Not reported |
+| Chip | M5 Max |
+| Mac model / memory | Not reported |
+| Graphics backend/version | D3DMetal |
+| MACxus build | Unpublished normal-Play test build (source 609375a1) |
+| Runtime build | Not reported |
+| Game version | Not reported |
+| Test date | Not reported |
+| Test scope | Gameplay, Online features |
+
+**Feature checks (within the stated scope)**
+
+| Launch | Gameplay | Video | Audio | Online |
+| --- | --- | --- | --- | --- |
+| Passed | Issues | Not reported | Not reported | Passed |
+
+Controller tests: **not reported**.
+
+**Required settings / patches**
+
+- Unpublished normal-Play test build from source 609375a1; enable the FH5 Preview compatibility pack for Store ID 9NNX1VVR3KNQ. M5 Max, Metal 4 and the fingerprinted Preview Rosetta build are required. This baseline used NVIDIA compatibility identity, DLSS and real GPU timestamps, without clock calibration.
+
+**Evidence**
+
+- [Maintainer report 1](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-preview-portable/normal-play-acceptance.json>)
+- [Maintainer report 2](<https://github.com/fladnaG86/MACxus/pull/24>)
+
+Report ID: `fh5-preview-portable-m5max-online`
+
+[↑ Index / Indice](../../COMPATIBILITY.md)
+
+<a id="en-fh5-preview-integrated-m5max-launch"></a>
+### ◐ Limited test · CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1)
+
+The user confirmed launch after the pinned-provider alias correction removed the invalid-pack preparation error. This latest acceptance covers launch only; multiplayer and marketplace were not retested. Earlier, separate normal-Play trials confirmed a plausible 35 ms latency display and the Apple M5 Max name with DLSS/DLAA. Those trials do not measure input-to-display latency or validate native Apple vendor IDs with DLSS. Black road areas, purchasing, real sleep/resume, long-session drift, Steam and broader hardware coverage remain unresolved or untested.
+
+| Environment | Reported value |
+| --- | --- |
+| Layer/version | CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1) |
+| Architecture | x86&#95;64 / Rosetta |
+| macOS | Not reported |
+| Chip | M5 Max |
+| Mac model / memory | Not reported |
+| Graphics backend/version | D3DMetal |
+| MACxus build | Installed fork build (source c2bb656e) |
+| Runtime build | Not reported |
+| Game version | Not reported |
+| Test date | 2026-11-04 |
+| Test scope | Launch |
+
+**Feature checks (within the stated scope)**
+
+| Launch | Gameplay | Video | Audio | Online |
+| --- | --- | --- | --- | --- |
+| Passed | Not reported | Not reported | Not reported | Not reported |
+
+Controller tests: **not reported**.
+
+**Required settings / patches**
+
+- Installed fork build c2bb656e with fh5-preview-v1 enabled for the FH5 Store package; M5 Max, Metal 4, macOS 26+ and Preview Rosetta 20261015 are recipe requirements. The exact tested macOS/game versions were not recorded in this acceptance.
+- Uses a separate engine and bottle. Disabling the pack returns to the normal setup while retaining the pack bottle and saves; saves are not automatically migrated. Requires a build containing the verified pack, not just the shared runtime fixes.
+
+**Evidence**
+
+- [Maintainer report 1](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-compat-followups/installed-play-acceptance.json>)
+- [Maintainer report 2](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-clock-calibration/normal-play-acceptance.json>)
+- [Maintainer report 3](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-apple-identity/normal-play-acceptance.json>)
+- [Maintainer report 4](<https://github.com/fladnaG86/MACxus/pull/24>)
+
+Report ID: `fh5-preview-integrated-m5max-launch`
+
+[↑ Index / Indice](../../COMPATIBILITY.md)
+
 ## Italiano
 
 Confronta le singole configurazioni provate. Nessun resoconto annulla gli altri o si applica a un ambiente non provato. Seleziona un risultato per fonti e requisiti completi.
@@ -61,6 +146,8 @@ Confronta le singole configurazioni provate. Nessun resoconto annulla gli altri 
 | Risultato / dettagli | Motore / versione | macOS | Chip | Grafica | Ambito provato |
 | --- | --- | --- | --- | --- | --- |
 | [⚠️ Funziona con limiti](#it-forza-horizon-5-highball-m1max-mac12) | Highball engine-wine-11.0-20261014T003801Z | 27.2 | M1 Max | D3DMetal | Menu, Gioco |
+| [⚠️ Funziona con limiti](#it-fh5-preview-portable-m5max-online) | CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1) | Non riportato | M5 Max | D3DMetal | Gioco, Funzioni online |
+| [◐ Prova limitata](#it-fh5-preview-integrated-m5max-launch) | CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1) | Non riportato | M5 Max | D3DMetal | Avvio |
 
 <a id="it-forza-horizon-5-highball-m1max-mac12"></a>
 ### ⚠️ Funziona con limiti · Highball engine-wine-11.0-20261014T003801Z
@@ -98,5 +185,88 @@ Prove controller: **non riportate**.
 - [Resoconto manutentore 1](<https://github.com/fladnaG86/MACxus/blob/main/docs/DISCOVERIES.md#20-forza-horizon-5-gpu-identity-and-timestamp-queries>)
 
 Report ID: `forza-horizon-5-highball-m1max-mac12`
+
+[↑ Index / Indice](../../COMPATIBILITY.md)
+
+<a id="it-fh5-preview-portable-m5max-online"></a>
+### ⚠️ Funziona con limiti · CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1)
+
+Play normale di MACxus ha raggiunto guida/menu; l’utente ha confermato sessione online e multiplayer. Le voci Store/DLC erano visibili, ma i dettagli d’acquisto davano un errore marketplace; gli acquisti non sono verificati. Restano zone nere della strada/materiali. Nessun risultato controllato su prestazioni, Steam, altro hardware o sessioni lunghe.
+
+| Ambiente | Valore riportato |
+| --- | --- |
+| Motore/versione | CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1) |
+| Architettura | x86&#95;64 / Rosetta |
+| macOS | Non riportato |
+| Chip | M5 Max |
+| Modello Mac / memoria | Non riportato |
+| Backend grafico/versione | D3DMetal |
+| Build MACxus | Unpublished normal-Play test build (source 609375a1) |
+| Build runtime | Non riportato |
+| Versione gioco | Non riportato |
+| Data prova | Non riportato |
+| Ambito prova | Gioco, Funzioni online |
+
+**Verifiche funzionali (nell’ambito indicato)**
+
+| Avvio | Gioco | Video | Audio | Online |
+| --- | --- | --- | --- | --- |
+| Verificato | Problemi | Non riportato | Non riportato | Verificato |
+
+Prove controller: **non riportate**.
+
+**Impostazioni / patch richieste**
+
+- Build di prova non pubblicata con Play normale, sorgenti 609375a1; attivare FH5 Preview compatibility pack per lo Store ID 9NNX1VVR3KNQ. Richiede M5 Max, Metal 4 e la build Preview Rosetta verificata. Questa base usava identità compatibile NVIDIA, DLSS e timestamp GPU reali, senza calibrazione degli orologi.
+
+**Fonti**
+
+- [Resoconto manutentore 1](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-preview-portable/normal-play-acceptance.json>)
+- [Resoconto manutentore 2](<https://github.com/fladnaG86/MACxus/pull/24>)
+
+Report ID: `fh5-preview-portable-m5max-online`
+
+[↑ Index / Indice](../../COMPATIBILITY.md)
+
+<a id="it-fh5-preview-integrated-m5max-launch"></a>
+### ◐ Prova limitata · CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1)
+
+L’utente ha confermato l’avvio dopo la correzione dell’alias del provider verificato che eliminava l’errore di preparazione del pack. Questa accettazione copre solo l’avvio; multiplayer e marketplace non sono stati riprovati. Prove precedenti e separate con Play normale hanno confermato latenza visualizzata plausibile di 35 ms e nome Apple M5 Max con DLSS/DLAA. Non misurano la latenza input-schermo né verificano ID vendor Apple nativi con DLSS. Restano irrisolti o non provati zone nere della strada, acquisti, sospensione/ripresa reale, deriva su sessioni lunghe, Steam e altro hardware.
+
+| Ambiente | Valore riportato |
+| --- | --- |
+| Motore/versione | CrossOver Preview (Rosetta) 20261015 (cxpreview-20261015-rc1) |
+| Architettura | x86&#95;64 / Rosetta |
+| macOS | Non riportato |
+| Chip | M5 Max |
+| Modello Mac / memoria | Non riportato |
+| Backend grafico/versione | D3DMetal |
+| Build MACxus | Installed fork build (source c2bb656e) |
+| Build runtime | Non riportato |
+| Versione gioco | Non riportato |
+| Data prova | 2026-11-04 |
+| Ambito prova | Avvio |
+
+**Verifiche funzionali (nell’ambito indicato)**
+
+| Avvio | Gioco | Video | Audio | Online |
+| --- | --- | --- | --- | --- |
+| Verificato | Non riportato | Non riportato | Non riportato | Non riportato |
+
+Prove controller: **non riportate**.
+
+**Impostazioni / patch richieste**
+
+- Build del fork installata c2bb656e con fh5-preview-v1 attivo per FH5 Store; la ricetta richiede M5 Max, Metal 4, macOS 26+ e Preview Rosetta 20261015. Le versioni esatte di macOS/gioco non sono registrate in questa accettazione.
+- Usa motore e bottle separati. Disattivare il pack ripristina l’avvio normale conservando bottle e salvataggi del pack; i salvataggi non vengono migrati automaticamente. Serve una build contenente il pack verificato, non bastano le correzioni del runtime condiviso.
+
+**Fonti**
+
+- [Resoconto manutentore 1](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-compat-followups/installed-play-acceptance.json>)
+- [Resoconto manutentore 2](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-clock-calibration/normal-play-acceptance.json>)
+- [Resoconto manutentore 3](<https://github.com/zachspartofaday/MACxus/blob/68abfce659df312decb00b8af557437c6709640c/experiments/fh5-apple-identity/normal-play-acceptance.json>)
+- [Resoconto manutentore 4](<https://github.com/fladnaG86/MACxus/pull/24>)
+
+Report ID: `fh5-preview-integrated-m5max-launch`
 
 [↑ Index / Indice](../../COMPATIBILITY.md)
